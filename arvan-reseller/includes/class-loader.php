@@ -92,9 +92,11 @@ class Arvan_Reseller_Loader {
 		$this->services['settings']      = new Arvan_Reseller_Settings();
 		$this->services['cron']          = new Arvan_Reseller_Cron( $this->services['billing'], $this->services['database'], $this->services['api'], $this->services['notifications'], $this->services['provisioning'], $this->services['settlement'] );
 		$this->services['rest']          = new Arvan_Reseller_REST_API( $this->services['database'], $this->services['wallet'], $this->services['payment'], $this->services['provisioning'], $this->services['billing'], $this->services['api'], $this->services['cron'], $this->services['settings'] );
+		$this->services['shortcodes']    = new Arvan_Reseller_Shortcodes();
 
 		$this->services['cron']->register_hooks();
 		$this->services['rest']->register_hooks();
+		$this->services['shortcodes']->register_hooks();
 
 		if ( is_admin() ) {
 			$this->services['admin_menu'] = new Arvan_Reseller_Admin_Menu( $this->services['settings'] );
