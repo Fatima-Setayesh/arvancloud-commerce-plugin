@@ -40,9 +40,11 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 				<a href="#ar-product"><?php esc_html_e( 'سرور ابری', 'arvan-reseller' ); ?></a>
 				<a href="#ar-billing"><?php esc_html_e( 'کیف پول و مصرف', 'arvan-reseller' ); ?></a>
 				<a href="#ar-security"><?php esc_html_e( 'امنیت', 'arvan-reseller' ); ?></a>
+				<a href="#ar-guide"><?php esc_html_e( 'راهنما', 'arvan-reseller' ); ?></a>
 			</nav>
 			<div class="ar-store-header__actions">
 				<span class="ar-env ar-env--<?php echo esc_attr( $mode ); ?>" title="<?php echo esc_attr( $mode_label ); ?>"><span></span><?php echo esc_html( $mode_label ); ?></span>
+				<a class="ar-store-entry" href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'ورود', 'arvan-reseller' ); ?></a>
 				<a class="ar-button ar-button--secondary ar-store-login" href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'پنل مشتری', 'arvan-reseller' ); ?></a>
 			</div>
 		</div>
@@ -51,9 +53,9 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 	<main id="ar-store-main">
 		<section class="ar-store-hero" id="ar-product">
 			<div class="ar-store-hero__copy">
-				<span class="ar-eyebrow"><span class="ar-icon" data-icon="server" aria-hidden="true"></span><?php esc_html_e( 'زیرساخت ابری، بدون پیچیدگی فروشگاه‌های عمومی', 'arvan-reseller' ); ?></span>
-				<h1><?php esc_html_e( 'سرور ابری، ساده و شفاف', 'arvan-reseller' ); ?></h1>
-				<p><?php echo esc_html( $description ); ?></p>
+				<span class="ar-eyebrow"><span class="ar-icon" data-icon="server" aria-hidden="true"></span><?php esc_html_e( 'زیرساخت ابری بدون پیچیدگی', 'arvan-reseller' ); ?></span>
+				<h1><?php esc_html_e( 'سرور ابری، سریع، شفاف و قابل مدیریت', 'arvan-reseller' ); ?></h1>
+				<p><?php echo esc_html( $description ); ?> <?php esc_html_e( 'برآورد قیمت، ثبت سفارش و مدیریت چرخه سرویس در یک تجربه یکپارچه انجام می‌شود.', 'arvan-reseller' ); ?></p>
 				<div class="ar-hero__actions">
 					<a class="ar-button ar-button--accent ar-button--large" href="<?php echo esc_url( $create_url ); ?>"><span class="ar-icon" data-icon="plus" aria-hidden="true"></span><?php esc_html_e( 'ساخت سرور ابری', 'arvan-reseller' ); ?></a>
 					<a class="ar-button ar-button--secondary ar-button--large" href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'ورود به پنل مشتری', 'arvan-reseller' ); ?></a>
@@ -81,17 +83,37 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 					<span class="ar-icon" data-icon="chart" aria-hidden="true"></span>
 					<div><strong><?php esc_html_e( 'قیمت‌گذاری سمت سرور', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'مبلغ نهایی پس از انتخاب پلن از سامانه دریافت می‌شود؛ مرورگر قیمت را حدس نمی‌زند.', 'arvan-reseller' ); ?></small></div>
 				</div>
-				<a class="ar-button ar-button--primary ar-button--block" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'شروع پیکربندی سرور', 'arvan-reseller' ); ?><span class="ar-icon" data-icon="arrow" aria-hidden="true"></span></a>
+				<a class="ar-button ar-button--accent ar-button--block" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'شروع پیکربندی سرور', 'arvan-reseller' ); ?><span class="ar-icon" data-icon="arrow" aria-hidden="true"></span></a>
 			</article>
 		</section>
 
-		<section class="ar-store-facts" id="ar-billing" aria-label="<?php esc_attr_e( 'ویژگی‌های محصول', 'arvan-reseller' ); ?>">
-			<article><span class="ar-feature__icon ar-icon" data-icon="wallet" aria-hidden="true"></span><div><h2><?php esc_html_e( 'کیف پول پیش‌پرداخت', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'موجودی، تراکنش‌ها و هشدار کاهش اعتبار را شفاف دنبال کنید.', 'arvan-reseller' ); ?></p></div></article>
-			<article><span class="ar-feature__icon ar-icon" data-icon="chart" aria-hidden="true"></span><div><h2><?php esc_html_e( 'مصرف قابل پیگیری', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'هزینه پایه، سهم فروشنده و مبلغ دریافت‌شده با مقدار دقیق نمایش داده می‌شود.', 'arvan-reseller' ); ?></p></div></article>
-			<article id="ar-security"><span class="ar-feature__icon ar-icon" data-icon="shield" aria-hidden="true"></span><div><h2><?php esc_html_e( 'دسترسی امن', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'ورود وردپرس، نشست احرازشده و بررسی مالکیت از اطلاعات مشتری محافظت می‌کند.', 'arvan-reseller' ); ?></p></div></article>
+		<section class="ar-store-features" id="ar-billing" aria-labelledby="ar-features-title">
+			<div class="ar-section-heading ar-section-heading--center"><span><?php esc_html_e( 'تجربه یکپارچه سرویس', 'arvan-reseller' ); ?></span><h2 id="ar-features-title"><?php esc_html_e( 'هرآنچه برای خرید و مدیریت سرور نیاز دارید', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'از برآورد تا صورتحساب، همه مراحل با داده معتبر سامانه و در یک رابط روشن انجام می‌شود.', 'arvan-reseller' ); ?></p></div>
+			<div class="ar-store-facts">
+				<article><span class="ar-feature__icon ar-icon" data-icon="chart" aria-hidden="true"></span><div><h3><?php esc_html_e( 'پرداخت به‌اندازه مصرف', 'arvan-reseller' ); ?></h3><p><?php esc_html_e( 'هزینه‌های ثبت‌شده و بازه‌های مصرف را با واحد و ارز واقعی دنبال کنید.', 'arvan-reseller' ); ?></p></div></article>
+				<article><span class="ar-feature__icon ar-icon" data-icon="wallet" aria-hidden="true"></span><div><h3><?php esc_html_e( 'کیف پول پیش‌پرداخت', 'arvan-reseller' ); ?></h3><p><?php esc_html_e( 'موجودی، تراکنش‌ها و هشدار کاهش اعتبار همیشه در دسترس است.', 'arvan-reseller' ); ?></p></div></article>
+				<article><span class="ar-feature__icon ar-icon" data-icon="server" aria-hidden="true"></span><div><h3><?php esc_html_e( 'کنترل کامل سرویس', 'arvan-reseller' ); ?></h3><p><?php esc_html_e( 'وضعیت ساخت، شناسه منبع، مصرف و چرخه سرویس را یکجا ببینید.', 'arvan-reseller' ); ?></p></div></article>
+				<article id="ar-security"><span class="ar-feature__icon ar-icon" data-icon="shield" aria-hidden="true"></span><div><h3><?php esc_html_e( 'امنیت حساب', 'arvan-reseller' ); ?></h3><p><?php esc_html_e( 'نشست وردپرس، کنترل مالکیت و درخواست‌های احرازشده از حساب محافظت می‌کنند.', 'arvan-reseller' ); ?></p></div></article>
+			</div>
 		</section>
 
-		<section class="ar-store-flow">
+		<section class="ar-infrastructure" aria-labelledby="ar-infrastructure-title">
+			<div class="ar-infrastructure__content">
+				<span class="ar-eyebrow"><span class="ar-icon" data-icon="globe" aria-hidden="true"></span><?php esc_html_e( 'عملیات ابری یکپارچه', 'arvan-reseller' ); ?></span>
+				<h2 id="ar-infrastructure-title"><?php esc_html_e( 'زیرساخت ابری برای کسب‌وکارهای در حال رشد', 'arvan-reseller' ); ?></h2>
+				<p><?php esc_html_e( 'پیکربندی سرور، برآورد مصرف، کنترل کیف پول و مشاهده چرخه منبع در یک فضای عملیاتی منسجم کنار هم قرار گرفته‌اند.', 'arvan-reseller' ); ?></p>
+				<ul><li><span class="ar-icon" data-icon="check" aria-hidden="true"></span><?php esc_html_e( 'انتخاب مستقیم از کاتالوگ سرویس', 'arvan-reseller' ); ?></li><li><span class="ar-icon" data-icon="check" aria-hidden="true"></span><?php esc_html_e( 'برآورد معتبر پیش از سفارش', 'arvan-reseller' ); ?></li><li><span class="ar-icon" data-icon="check" aria-hidden="true"></span><?php esc_html_e( 'مالکیت امن منابع در حساب مشتری', 'arvan-reseller' ); ?></li></ul>
+			</div>
+			<div class="ar-infrastructure__visual" aria-hidden="true">
+				<div class="ar-network-orbit ar-network-orbit--one"></div><div class="ar-network-orbit ar-network-orbit--two"></div>
+				<div class="ar-network-node ar-network-node--a"><span class="ar-icon" data-icon="server"></span></div>
+				<div class="ar-network-node ar-network-node--b"><span class="ar-icon" data-icon="wallet"></span></div>
+				<div class="ar-network-node ar-network-node--c"><span class="ar-icon" data-icon="chart"></span></div>
+				<div class="ar-network-core"><span class="ar-icon" data-icon="globe"></span><strong><?php esc_html_e( 'پنل ابری', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'سرویس، مصرف، کیف پول', 'arvan-reseller' ); ?></small></div>
+			</div>
+		</section>
+
+		<section class="ar-store-flow" id="ar-guide">
 			<div class="ar-section-heading"><span><?php esc_html_e( 'مسیر سفارش', 'arvan-reseller' ); ?></span><h2><?php esc_html_e( 'از انتخاب تا شناسه سرویس، در یک فرایند روشن', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'کاتالوگ و برآورد از سامانه می‌آیند و وضعیت ساخت تا دریافت شناسه منبع قابل مشاهده است.', 'arvan-reseller' ); ?></p></div>
 			<ol>
 				<li><span>۱</span><div><strong><?php esc_html_e( 'انتخاب پیکربندی', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'منطقه، سیستم‌عامل و منابع', 'arvan-reseller' ); ?></small></div></li>
