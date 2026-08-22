@@ -1,4 +1,4 @@
-=== ArvanCloud Commerce Backend ===
+=== ArvanCloud Commerce Plugin ===
 Contributors: fatima-setayesh
 Tags: arvancloud, cloud-server, wallet, billing
 Requires at least: 6.4
@@ -6,7 +6,7 @@ Requires PHP: 8.2
 Stable tag: 1.1.0
 License: GPLv2 or later
 
-Secure WordPress backend for prepaid Cloud Server resale with deterministic Mock Mode.
+Standalone Persian RTL Cloud Server reseller product with a secure prepaid backend and deterministic Mock Mode.
 
 == Description ==
 
@@ -14,6 +14,12 @@ The plugin provides an integer-money wallet, immutable ledger, mock top-up payme
 idempotent Cloud Server orders, hourly prepaid billing, low-balance notification,
 zero-balance suspension, configurable termination, settlement aggregation, audit logs,
 and a versioned REST API.
+
+The presentation layer adds an independent storefront, WordPress authentication entry,
+customer portal, catalog-driven Cloud Server configurator, backend estimate, wallet and
+Mock payment workflow, responsive service/billing screens, and a complete reseller
+operations console. It uses native PHP, vanilla JavaScript and scoped CSS with no page
+builder, commerce plugin, frontend framework or runtime CDN dependency.
 
 Mock Mode is the default and never performs an HTTP request. Live Mode uses only the
 published ArvanCloud IaaS v3 operations at `https://ecc.[region].arvanapis.ir/v3`.
@@ -86,6 +92,19 @@ invoices and notifications. Admin routes cover safe settings, connection testing
 customers, wallets, payments/refunds, orders, resources, usage, settlements, audit
 logs, cron health and manual billing/reconciliation.
 See `docs/backend.md` for the exact contract.
+
+== Storefront and portal ==
+
+Use the protected Setup action to create required pages without duplicates, or place
+these shortcodes manually in normal WordPress pages:
+
+`[arvan_reseller_store]`
+
+`[arvan_reseller_portal]`
+
+Logged-out portal visitors authenticate through normal WordPress APIs. Site registration
+is offered only when enabled in WordPress. The customer UI works with a minimal default
+theme and uses a dedicated mobile navigation at small viewports.
 
 == Known API limitations ==
 
