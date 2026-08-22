@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin menu controller.
+ * Admin operations-console navigation and page setup controller.
  *
  * @package Arvan_Reseller
  */
@@ -11,105 +11,159 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Arvan_Reseller_Admin_Menu {
 
-	/**
-	 * Settings controller.
-	 *
-	 * @var Arvan_Reseller_Settings
-	 */
+	/** @var Arvan_Reseller_Settings */
 	private $settings;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param Arvan_Reseller_Settings $settings Settings controller.
-	 */
+	/** @param Arvan_Reseller_Settings $settings Settings controller. */
 	public function __construct( Arvan_Reseller_Settings $settings ) {
 		$this->settings = $settings;
 	}
 
-	/**
-	 * Register admin hooks.
-	 *
-	 * @return void
-	 */
+	/** Register admin hooks. @return void */
 	public function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_assets' ) );
+		add_action( 'admin_post_arvan_reseller_create_pages', array( $this, 'create_portal_pages' ) );
 	}
 
-	/**
-	 * Register plugin admin pages.
-	 *
-	 * @return void
-	 */
+	/** Enqueue console assets before the admin page head is printed. @return void */
+	public function maybe_enqueue_assets() {
+		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 0 === strpos( $slug, 'arvan-reseller' ) ) {
+			Arvan_Reseller_Presentation::enqueue( 'admin' );
+		}
+	}
+
+	/** Register the complete operations console. @return void */
 	public function register_menu() {
 		if ( ! Arvan_Reseller_Security::can_manage_plugin( $this->settings->get_capability() ) ) {
 			return;
 		}
 
+		$capability = $this->settings->get_capability();
+		$callback   = array( $this, 'render_app' );
+
 		add_menu_page(
 			esc_html__( 'Arvan Reseller', 'arvan-reseller' ),
 			esc_html__( 'Arvan Reseller', 'arvan-reseller' ),
-			$this->settings->get_capability(),
+			$capability,
 			'arvan-reseller',
-			array( $this, 'render_settings_page' ),
-			'dashicons-cloud'
+			$callback,
+			'dashicons-cloud',
+			56
 		);
 
-		add_submenu_page(
-			'arvan-reseller',
-			esc_html__( 'Settings', 'arvan-reseller' ),
-			esc_html__( 'Settings', 'arvan-reseller' ),
-			$this->settings->get_capability(),
-			$this->settings->get_page_slug(),
-			array( $this, 'render_settings_page' )
+		$pages = array(
+			'arvan-reseller'             => array( __( 'Operations Dashboard', 'arvan-reseller' ), __( 'Dashboard', 'arvan-reseller' ) ),
+			'arvan-reseller-setup'       => array( __( 'Reseller Setup', 'arvan-reseller' ), __( 'Setup', 'arvan-reseller' ) ),
+			'arvan-reseller-customers'   => array( __( 'Customers', 'arvan-reseller' ), __( 'Customers', 'arvan-reseller' ) ),
+			'arvan-reseller-payments'    => array( __( 'Payments', 'arvan-reseller' ), __( 'Payments', 'arvan-reseller' ) ),
+			'arvan-reseller-orders'      => array( __( 'Orders', 'arvan-reseller' ), __( 'Orders', 'arvan-reseller' ) ),
+			'arvan-reseller-resources'   => array( __( 'Cloud Servers', 'arvan-reseller' ), __( 'Cloud Servers', 'arvan-reseller' ) ),
+			'arvan-reseller-usage'       => array( __( 'Usage and Billing', 'arvan-reseller' ), __( 'Usage / Billing', 'arvan-reseller' ) ),
+			'arvan-reseller-settlements' => array( __( 'Internal Settlements', 'arvan-reseller' ), __( 'Settlements', 'arvan-reseller' ) ),
+			'arvan-reseller-health'      => array( __( 'System Health', 'arvan-reseller' ), __( 'Health', 'arvan-reseller' ) ),
+			'arvan-reseller-audit'       => array( __( 'Audit Log', 'arvan-reseller' ), __( 'Audit', 'arvan-reseller' ) ),
+			'arvan-reseller-settings'    => array( __( 'Settings', 'arvan-reseller' ), __( 'Settings', 'arvan-reseller' ) ),
 		);
 
-		add_submenu_page(
-			'arvan-reseller',
-			esc_html__( 'Customers', 'arvan-reseller' ),
-			esc_html__( 'Customers', 'arvan-reseller' ),
-			$this->settings->get_capability(),
-			'arvan-reseller-customers',
-			array( $this, 'render_placeholder_page' )
-		);
-
-		add_submenu_page(
-			'arvan-reseller',
-			esc_html__( 'Resources', 'arvan-reseller' ),
-			esc_html__( 'Resources', 'arvan-reseller' ),
-			$this->settings->get_capability(),
-			'arvan-reseller-resources',
-			array( $this, 'render_placeholder_page' )
-		);
-	}
-
-	/**
-	 * Render the settings page.
-	 *
-	 * @return void
-	 */
-	public function render_settings_page() {
-		Arvan_Reseller_Security::assert_capability( $this->settings->get_capability() );
-
-		$view_file = ARVAN_RESELLER_PATH . 'admin/views/settings-page.php';
-
-		if ( file_exists( $view_file ) ) {
-			$page_slug = $this->settings->get_page_slug();
-			require $view_file;
+		foreach ( $pages as $slug => $labels ) {
+			add_submenu_page(
+				'arvan-reseller',
+				esc_html( $labels[0] ),
+				esc_html( $labels[1] ),
+				$capability,
+				$slug,
+				$callback
+			);
 		}
 	}
 
-	/**
-	 * Render a placeholder admin page.
-	 *
-	 * @return void
-	 */
-	public function render_placeholder_page() {
+	/** Render a page of the operations console. @return void */
+	public function render_app() {
 		Arvan_Reseller_Security::assert_capability( $this->settings->get_capability() );
+		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'arvan-reseller'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page = $this->page_key( $slug );
 
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Arvan Reseller', 'arvan-reseller' ) . '</h1>';
-		echo '<p>' . esc_html__( 'This section is reserved for a future admin module.', 'arvan-reseller' ) . '</p>';
-		echo '</div>';
+		Arvan_Reseller_Presentation::enqueue( 'admin' );
+		echo Arvan_Reseller_Presentation::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			'admin/views/app.php',
+			array(
+				'page'         => $page,
+				'settings'     => $this->settings->get_settings(),
+				'create_nonce' => wp_create_nonce( 'arvan_reseller_create_pages' ),
+			)
+		);
+	}
+
+	/** Create required theme-independent pages without duplication. @return void */
+	public function create_portal_pages() {
+		Arvan_Reseller_Security::assert_capability( $this->settings->get_capability() );
+		check_admin_referer( 'arvan_reseller_create_pages' );
+
+		$stored      = get_option( 'arvan_reseller_pages', array() );
+		$definitions = array(
+			'store'  => array(
+				'title'   => __( 'Cloud Server', 'arvan-reseller' ),
+				'slug'    => 'cloud-server',
+				'content' => '[arvan_reseller_store]',
+			),
+			'portal' => array(
+				'title'   => __( 'Cloud Portal', 'arvan-reseller' ),
+				'slug'    => 'arvan-portal',
+				'content' => '[arvan_reseller_portal]',
+			),
+		);
+
+		foreach ( $definitions as $key => $definition ) {
+			$current_id = isset( $stored[ $key ] ) ? absint( $stored[ $key ] ) : 0;
+			if ( $current_id && 'trash' !== get_post_status( $current_id ) && null !== get_post( $current_id ) ) {
+				continue;
+			}
+
+			$existing  = get_page_by_path( $definition['slug'] );
+			$shortcode = trim( $definition['content'], '[]' );
+			if ( $existing instanceof WP_Post && has_shortcode( $existing->post_content, $shortcode ) ) {
+				$stored[ $key ] = (int) $existing->ID;
+				continue;
+			}
+
+			$page_id = wp_insert_post(
+				array(
+					'post_title'   => $definition['title'],
+					'post_name'    => $definition['slug'],
+					'post_content' => $definition['content'],
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+				),
+				true
+			);
+			if ( is_wp_error( $page_id ) ) {
+				wp_die( esc_html__( 'The customer pages could not be created safely.', 'arvan-reseller' ) );
+			}
+			$stored[ $key ] = (int) $page_id;
+		}
+
+		update_option( 'arvan_reseller_pages', $stored, false );
+		wp_safe_redirect( add_query_arg( array( 'page' => 'arvan-reseller-setup', 'pages-created' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/** @param string $slug Menu slug. @return string */
+	private function page_key( $slug ) {
+		$map = array(
+			'arvan-reseller'             => 'dashboard',
+			'arvan-reseller-setup'       => 'setup',
+			'arvan-reseller-customers'   => 'customers',
+			'arvan-reseller-payments'    => 'payments',
+			'arvan-reseller-orders'      => 'orders',
+			'arvan-reseller-resources'   => 'resources',
+			'arvan-reseller-usage'       => 'usage',
+			'arvan-reseller-settlements' => 'settlements',
+			'arvan-reseller-health'      => 'health',
+			'arvan-reseller-audit'       => 'audit',
+			'arvan-reseller-settings'    => 'settings',
+		);
+		return isset( $map[ $slug ] ) ? $map[ $slug ] : 'dashboard';
 	}
 }
