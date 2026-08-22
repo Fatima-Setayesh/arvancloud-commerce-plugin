@@ -37,7 +37,7 @@
 	--ar-shadow-1: 0 1px 2px rgb(17 39 67 / 5%);
 	--ar-shadow-2: 0 8px 24px rgb(17 39 67 / 8%);
 	--ar-shadow-3: 0 20px 50px rgb(5 27 53 / 18%);
-	--ar-font: Vazirmatn, Tahoma, Arial, "Segoe UI", sans-serif;
+	--ar-font: Vazirmatn, IRANSansX, "Segoe UI", Tahoma, Arial, sans-serif;
 	--ar-font-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 	--ar-icon-sm: 16px;
 	--ar-icon-md: 20px;
@@ -55,6 +55,9 @@
 	font-family: var(--ar-font);
 	font-size: 14px;
 	line-height: 1.65;
+	max-width: 100%;
+	min-width: 0;
+	text-align: right;
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -76,7 +79,8 @@
 .arvan-reseller-app button:disabled { cursor: not-allowed; opacity: .58; }
 .arvan-reseller-app :focus-visible { outline: 3px solid color-mix(in srgb, var(--ar-color-focus) 55%, transparent); outline-offset: 2px; }
 .arvan-reseller-app code,
-.arvan-reseller-app .ar-ltr { direction: ltr; font-family: var(--ar-font-mono); unicode-bidi: isolate; }
+.arvan-reseller-app .ar-ltr { direction: ltr; font-family: var(--ar-font-mono); max-width: 100%; overflow-wrap: anywhere; unicode-bidi: isolate; }
+.arvan-reseller-app .ar-money { display: inline-block; font-variant-numeric: tabular-nums; max-width: 100%; unicode-bidi: isolate; white-space: nowrap; }
 .arvan-reseller-app .screen-reader-text { border: 0; clip: rect(1px, 1px, 1px, 1px); clip-path: inset(50%); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; word-wrap: normal !important; }
 .arvan-reseller-app .screen-reader-text:focus { background: var(--ar-color-surface); clip: auto !important; clip-path: none; height: auto; margin: 0; padding: var(--ar-space-3); width: auto; }
 
@@ -121,7 +125,7 @@
 .ar-brand--light { color: var(--ar-color-secondary) !important; }
 .ar-brand--light small { color: var(--ar-color-text-muted); }
 
-.ar-app-frame { background: var(--ar-color-background); display: flex; min-height: 760px; position: relative; width: 100%; }
+.ar-app-frame { background: var(--ar-color-background); display: flex; max-width: 100%; min-height: 760px; min-width: 0; position: relative; width: 100%; }
 .ar-sidebar { background: var(--ar-color-secondary); color: #dce8f5; display: flex; flex: 0 0 var(--ar-sidebar-width); flex-direction: column; inset-block: 0; inset-inline-end: 0; min-height: 100%; padding: var(--ar-space-6) var(--ar-space-4); position: sticky; top: 0; z-index: var(--ar-z-sidebar); }
 .ar-sidebar .ar-brand { padding: 0 var(--ar-space-2) var(--ar-space-6); }
 .ar-sidebar__nav { display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; }
@@ -140,7 +144,7 @@
 .ar-avatar { align-items: center; background: var(--ar-color-primary-soft); border: 1px solid #c7ddf6; border-radius: 50%; color: var(--ar-color-primary); display: inline-flex; font-weight: 800; height: 38px; justify-content: center; width: 38px; }
 .ar-mobile-menu { display: none; }
 .ar-main { flex: 1; min-width: 0; padding: var(--ar-space-6); }
-.ar-page { margin-inline: auto; max-width: var(--ar-container); width: 100%; }
+.ar-page { margin-inline: auto; max-width: var(--ar-container); min-width: 0; width: 100%; }
 
 .ar-page-head { align-items: flex-end; display: flex; gap: var(--ar-space-4); justify-content: space-between; margin-block-end: var(--ar-space-6); }
 .ar-page-head h1 { font-size: clamp(22px, 2vw, 30px); line-height: 1.3; margin-block-end: 6px; }
@@ -148,12 +152,12 @@
 .ar-page-actions { align-items: center; display: flex; flex-wrap: wrap; gap: var(--ar-space-2); }
 .ar-eyebrow { align-items: center; color: var(--ar-color-primary); display: inline-flex; font-size: 12px; font-weight: 800; gap: var(--ar-space-2); letter-spacing: .02em; margin-block-end: var(--ar-space-3); text-transform: uppercase; }
 
-.ar-grid { display: grid; gap: var(--ar-space-4); }
+.ar-grid { display: grid; gap: var(--ar-space-4); min-width: 0; }
 .ar-grid--metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .ar-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ar-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ar-layout-main { display: grid; gap: var(--ar-space-4); grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr); margin-block-start: var(--ar-space-4); }
-.ar-stack { display: flex; flex-direction: column; gap: var(--ar-space-4); }
+.ar-stack { display: flex; flex-direction: column; gap: var(--ar-space-4); min-width: 0; }
 
 .ar-card { background: var(--ar-color-surface); border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-lg); box-shadow: var(--ar-shadow-1); min-width: 0; padding: var(--ar-space-5); }
 .ar-card--flush { padding: 0; }
@@ -166,10 +170,10 @@
 .ar-metric { position: relative; }
 .ar-metric__icon { align-items: center; background: var(--ar-color-primary-soft); border-radius: 12px; color: var(--ar-color-primary); display: flex; height: 42px; justify-content: center; margin-block-end: var(--ar-space-4); width: 42px; }
 .ar-metric__label { color: var(--ar-color-text-muted); display: block; font-size: 12px; }
-.ar-metric__value { display: block; font-size: clamp(22px, 2vw, 30px); font-weight: 800; letter-spacing: -.02em; line-height: 1.25; margin-block: 5px; }
+.ar-metric__value { display: block; font-size: clamp(22px, 2vw, 30px); font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; margin-block: 5px; overflow-wrap: anywhere; }
 .ar-metric__meta { color: var(--ar-color-text-muted); font-size: 11px; }
 
-.ar-table-wrap { max-width: 100%; overflow-x: auto; }
+.ar-table-wrap { max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; }
 .ar-table { border-collapse: collapse; font-size: 13px; width: 100%; }
 .ar-table th { background: #f7f9fc; color: var(--ar-color-text-muted); font-size: 11px; font-weight: 800; padding: 12px 14px; text-align: start; white-space: nowrap; }
 .ar-table td { border-block-start: 1px solid var(--ar-color-border); padding: 13px 14px; text-align: start; vertical-align: middle; }
@@ -238,7 +242,7 @@
 .ar-tab.is-active { border-color: var(--ar-color-primary); color: var(--ar-color-primary); }
 
 .ar-chart { min-height: 240px; position: relative; }
-.ar-chart svg { height: 220px; overflow: visible; width: 100%; }
+.ar-chart svg { display: block; height: 220px; max-width: 100%; overflow: visible; width: 100%; }
 .ar-chart-grid line { stroke: #e6ecf2; stroke-width: 1; }
 .ar-chart-line { fill: none; stroke: var(--ar-color-primary); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
 .ar-chart-area { fill: url(#ar-chart-gradient); opacity: .28; }

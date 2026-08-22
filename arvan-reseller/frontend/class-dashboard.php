@@ -22,11 +22,18 @@ class Arvan_Reseller_Dashboard {
 		Arvan_Reseller_Presentation::enqueue( 'customer' );
 
 		if ( ! is_user_logged_in() ) {
+			$redirect_to     = get_permalink();
+			$requested_route = isset( $_GET['ar-route'] ) ? sanitize_key( wp_unslash( $_GET['ar-route'] ) ) : '';
+			$allowed_routes  = array( 'dashboard', 'services', 'create-server', 'wallet', 'billing', 'orders', 'notifications' );
+			if ( in_array( $requested_route, $allowed_routes, true ) ) {
+				$redirect_to = add_query_arg( 'ar-route', $requested_route, $redirect_to );
+			}
+
 			return Arvan_Reseller_Presentation::render(
 				'frontend/views/auth.php',
 				array(
-					'redirect_to'    => get_permalink(),
-					'can_register'   => (bool) get_option( 'users_can_register' ),
+					'redirect_to'      => $redirect_to,
+					'can_register'     => (bool) get_option( 'users_can_register' ),
 					'registration_url' => wp_registration_url(),
 				)
 			);
