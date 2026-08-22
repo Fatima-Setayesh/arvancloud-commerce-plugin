@@ -26,7 +26,7 @@ Status reflects the `feat/product-experience` implementation and does not overst
 | Mock | Partial | Full UI flow implemented; local WordPress execution unavailable. |
 | Live | Not attempted | API key absent; connection test not run. |
 | Documentation | Complete | Product, UI, setup, Live, demo, packaging, and status docs added. |
-| ZIP | Partial | Clean command documented; archive awaits final committed HEAD. |
+| ZIP | Complete | Clean runtime archive created and contents inspected; SHA-256 recorded below. |
 | Demo | Complete | Five-minute script prepared. Deterministic reset/seed route is unavailable. |
 | Deployment | Partial | Checklist prepared; staging validation pending. |
 
@@ -47,6 +47,7 @@ The UI does not invent these values. The smallest future backend work is to exte
 - Git branch created from synchronized `backend` and published upstream.
 - JavaScript entry files pass `node --check`.
 - `git diff --check` passes.
+- `dist/arvan-reseller-1.1.0.zip` was built from committed runtime files and inspected; SHA-256: `FA92F771F1C1F334BB353944999CD322E6990CC6084E8561269D105C3A6BD296`.
 - PHP CLI is not installed locally, so required PHP 8.2 lint is pending.
 - No unrelated WordPress installation was altered.
 - No dependency was installed and no existing backend suite was rerun.
