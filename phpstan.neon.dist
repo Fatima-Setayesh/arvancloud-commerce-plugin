@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    paths:
+        - arvan-reseller
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
+    scanFiles:
+        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+    excludePaths:
+        analyse:
+            - arvan-reseller/frontend/*
+            - arvan-reseller/admin/views/*
+    treatPhpDocTypesAsCertain: false
