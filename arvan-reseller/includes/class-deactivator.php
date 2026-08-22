@@ -29,6 +29,10 @@ class Arvan_Reseller_Deactivator {
 	 */
 	private static function clear_scheduled_tasks() {
 		wp_clear_scheduled_hook( 'arvan_reseller_usage_sync' );
-		delete_transient( 'arvan_reseller_usage_sync_lock' );
+		wp_clear_scheduled_hook( 'arvan_reseller_reconciliation' );
+		wp_clear_scheduled_hook( 'arvan_reseller_settlement' );
+		delete_option( 'arvan_reseller_usage_sync_lock' );
+		delete_option( 'arvan_reseller_reconciliation_lock' );
+		delete_option( 'arvan_reseller_settlement_lock' );
 	}
 }

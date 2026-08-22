@@ -37,7 +37,7 @@ class Arvan_Reseller_Settings {
 	 *
 	 * @var string
 	 */
-	private $capability = 'manage_options';
+	private $capability = 'manage_arvan_reseller';
 
 	/**
 	 * Register settings hooks.
@@ -95,10 +95,22 @@ class Arvan_Reseller_Settings {
 		$this->register_field( 'company_name', 'Company Name', 'text', 'arvan_reseller_company_section' );
 		$this->register_field( 'company_logo_url', 'Logo URL', 'url', 'arvan_reseller_company_section' );
 		$this->register_field( 'company_contact_info', 'Contact Information', 'textarea', 'arvan_reseller_company_section' );
-		$this->register_field( 'api_base_url', 'API URL', 'url', 'arvan_reseller_connection_section' );
+		$this->register_field( 'company_about', 'About', 'textarea', 'arvan_reseller_company_section' );
+		$this->register_field( 'logo_attachment_id', 'Logo Attachment ID', 'number', 'arvan_reseller_company_section' );
+		$this->register_field( 'mode', 'API Mode (mock/live)', 'text', 'arvan_reseller_connection_section' );
+		$this->register_field( 'region', 'ArvanCloud Region', 'text', 'arvan_reseller_connection_section' );
+		$this->register_field( 'availability_zone', 'Availability Zone', 'text', 'arvan_reseller_connection_section' );
 		$this->register_field( 'api_key', 'API Key', 'password', 'arvan_reseller_connection_section' );
 		$this->register_field( 'reseller_share_percent', 'Reseller Share Percentage', 'number', 'arvan_reseller_reseller_section' );
+		$this->register_field( 'currency', 'Currency Code', 'text', 'arvan_reseller_reseller_section' );
 		$this->register_field( 'default_wallet_threshold', 'Default Wallet Threshold', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'minimum_topup', 'Minimum Top-up', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'maximum_topup', 'Maximum Top-up', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'termination_policy', 'Termination Policy (disabled/immediate/grace)', 'text', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'termination_grace_hours', 'Termination Grace Hours', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'suspend_policy', 'Suspend Policy (zero_balance/disabled)', 'text', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'notification_enabled', 'Low-balance Email (1/0)', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'delete_data_on_uninstall', 'Delete Data on Uninstall (1/0)', 'number', 'arvan_reseller_wallet_section' );
 	}
 
 	/**
@@ -143,23 +155,45 @@ class Arvan_Reseller_Settings {
 			return $this->get_settings();
 		}
 
-		$current = $this->get_settings();
-		$input   = is_array( $input ) ? $input : array();
+		$current         = $this->get_settings();
+		$input           = is_array( $input ) ? $input : array();
+		$share_minor     = Arvan_Reseller_Money::to_minor( $this->get_input_value( $input, 'reseller_share_percent' ) );
+		$threshold_minor = Arvan_Reseller_Money::to_minor( $this->get_input_value( $input, 'default_wallet_threshold' ) );
+		$share_minor     = is_wp_error( $share_minor ) ? 0 : max( 0, min( 200000, $share_minor ) );
+		$threshold_minor = is_wp_error( $threshold_minor ) ? 0 : max( 0, $threshold_minor );
+		$minimum_minor   = Arvan_Reseller_Money::to_minor( $this->get_input_value( $input, 'minimum_topup' ) );
+		$maximum_minor   = Arvan_Reseller_Money::to_minor( $this->get_input_value( $input, 'maximum_topup' ) );
+		$minimum_minor   = is_wp_error( $minimum_minor ) || $minimum_minor <= 0 ? Arvan_Reseller_Money::scale() : $minimum_minor;
+		$maximum_minor   = is_wp_error( $maximum_minor ) || $maximum_minor < $minimum_minor ? $minimum_minor : $maximum_minor;
 
-		$sanitized = array(
+		$mode           = sanitize_key( $this->get_input_value( $input, 'mode' ) );
+		$policy         = sanitize_key( $this->get_input_value( $input, 'termination_policy' ) );
+		$suspend_policy = sanitize_key( $this->get_input_value( $input, 'suspend_policy' ) );
+		$currency       = strtoupper( preg_replace( '/[^A-Za-z]/', '', $this->get_input_value( $input, 'currency' ) ) );
+		$region         = strtolower( trim( $this->get_input_value( $input, 'region' ) ) );
+		$region         = preg_match( '/^[a-z0-9][a-z0-9-]{1,39}$/', $region ) && false === strpos( $region, '--' ) ? $region : '';
+		$sanitized      = array(
 			'version'                  => ARVAN_RESELLER_VERSION,
 			'company_name'             => Arvan_Reseller_Security::sanitize_text( $this->get_input_value( $input, 'company_name' ) ),
 			'company_logo_url'         => esc_url_raw( $this->get_input_value( $input, 'company_logo_url' ) ),
 			'company_contact_info'     => Arvan_Reseller_Security::sanitize_textarea( $this->get_input_value( $input, 'company_contact_info' ) ),
-			'api_base_url'             => esc_url_raw( $this->get_input_value( $input, 'api_base_url' ) ),
+			'company_about'            => Arvan_Reseller_Security::sanitize_textarea( $this->get_input_value( $input, 'company_about' ) ),
+			'logo_attachment_id'       => absint( $this->get_input_value( $input, 'logo_attachment_id' ) ),
+			'mode'                     => in_array( $mode, array( 'mock', 'live' ), true ) ? $mode : 'mock',
+			'region'                   => $region,
+			'availability_zone'        => Arvan_Reseller_Security::sanitize_text( $this->get_input_value( $input, 'availability_zone' ) ),
 			'api_timeout'              => isset( $current['api_timeout'] ) ? absint( $current['api_timeout'] ) : 20,
-			'usage_endpoint'           => isset( $current['usage_endpoint'] ) ? (string) $current['usage_endpoint'] : '',
-			'resource_create_endpoint' => isset( $current['resource_create_endpoint'] ) ? (string) $current['resource_create_endpoint'] : '',
-			'resource_get_endpoint'    => isset( $current['resource_get_endpoint'] ) ? (string) $current['resource_get_endpoint'] : '',
-			'resource_suspend_endpoint' => isset( $current['resource_suspend_endpoint'] ) ? (string) $current['resource_suspend_endpoint'] : '',
-			'resource_terminate_endpoint' => isset( $current['resource_terminate_endpoint'] ) ? (string) $current['resource_terminate_endpoint'] : '',
-			'reseller_share_percent'   => min( 20, max( 0, (float) Arvan_Reseller_Security::sanitize_decimal( $this->get_input_value( $input, 'reseller_share_percent' ), 2 ) ) ),
-			'default_wallet_threshold' => max( 0, (float) Arvan_Reseller_Security::sanitize_decimal( $this->get_input_value( $input, 'default_wallet_threshold' ), 4 ) ),
+			'product_type'             => 'cloud_server',
+			'currency'                 => 3 === strlen( $currency ) ? $currency : 'IRR',
+			'suspend_policy'           => in_array( $suspend_policy, array( 'zero_balance', 'disabled' ), true ) ? $suspend_policy : 'zero_balance',
+			'termination_policy'       => in_array( $policy, array( 'disabled', 'immediate', 'grace' ), true ) ? $policy : 'disabled',
+			'termination_grace_hours'  => max( 1, min( 8760, absint( $this->get_input_value( $input, 'termination_grace_hours' ) ) ) ),
+			'notification_enabled'     => empty( $input['notification_enabled'] ) ? 0 : 1,
+			'delete_data_on_uninstall' => empty( $input['delete_data_on_uninstall'] ) ? 0 : 1,
+			'reseller_share_percent'   => Arvan_Reseller_Money::format( $share_minor ),
+			'default_wallet_threshold' => Arvan_Reseller_Money::format( $threshold_minor ),
+			'minimum_topup'            => Arvan_Reseller_Money::format( $minimum_minor ),
+			'maximum_topup'            => Arvan_Reseller_Money::format( $maximum_minor ),
 		);
 
 		$api_key = Arvan_Reseller_Security::sanitize_api_key( $this->get_input_value( $input, 'api_key' ) );
@@ -168,7 +202,7 @@ class Arvan_Reseller_Settings {
 			Arvan_Reseller_Security::store_encrypted_option( $this->api_key_option, $api_key );
 		}
 
-		return wp_parse_args( $sanitized, $this->get_defaults() );
+		return array_merge( $this->get_defaults(), $current, $sanitized );
 	}
 
 	/**
@@ -291,19 +325,27 @@ class Arvan_Reseller_Settings {
 	 */
 	private function get_defaults() {
 		return array(
-			'version'                   => ARVAN_RESELLER_VERSION,
-			'company_name'              => '',
-			'company_logo_url'          => '',
-			'company_contact_info'      => '',
-			'api_base_url'              => '',
-			'api_timeout'               => 20,
-			'usage_endpoint'            => '',
-			'resource_create_endpoint'  => '',
-			'resource_get_endpoint'     => '',
-			'resource_suspend_endpoint' => '',
-			'resource_terminate_endpoint' => '',
-			'reseller_share_percent'    => 0,
-			'default_wallet_threshold'  => 0,
+			'version'                  => ARVAN_RESELLER_VERSION,
+			'company_name'             => '',
+			'company_logo_url'         => '',
+			'company_contact_info'     => '',
+			'company_about'            => '',
+			'logo_attachment_id'       => 0,
+			'mode'                     => 'mock',
+			'region'                   => 'ir-thr-mock',
+			'availability_zone'        => 'mock-zone-1',
+			'api_timeout'              => 20,
+			'product_type'             => 'cloud_server',
+			'currency'                 => 'IRR',
+			'suspend_policy'           => 'zero_balance',
+			'termination_policy'       => 'disabled',
+			'termination_grace_hours'  => 72,
+			'notification_enabled'     => 1,
+			'delete_data_on_uninstall' => 0,
+			'reseller_share_percent'   => 0,
+			'default_wallet_threshold' => 0,
+			'minimum_topup'            => '1.0000',
+			'maximum_topup'            => '1000000000.0000',
 		);
 	}
 

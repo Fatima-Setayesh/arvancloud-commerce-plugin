@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<ruleset name="Arvan Reseller">
+  <description>WordPress Coding Standards and security checks.</description>
+  <file>arvan-reseller</file>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <arg name="extensions" value="php"/>
+  <arg name="parallel" value="4"/>
+  <rule ref="WordPress-Core">
+    <!-- The existing project autoloader intentionally uses class-database.php style names. -->
+    <exclude name="WordPress.Files.FileName"/>
+    <!-- Table names come only from Arvan_Reseller_Database's private allowlist. -->
+    <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+    <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+  </rule>
+  <rule ref="WordPress-Extra">
+    <exclude name="WordPress.Files.FileName"/>
+  </rule>
+  <rule ref="WordPress.Security">
+    <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+    <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+  </rule>
+  <rule ref="WordPress.WP.CronInterval"/>
+  <!-- Binary authenticated-encryption envelopes require reversible base64 transport. -->
+  <rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode">
+    <severity>0</severity>
+  </rule>
+  <rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode">
+    <severity>0</severity>
+  </rule>
+  <!-- `$resource` is the domain object name used consistently by the adapter contract. -->
+  <rule ref="Universal.NamingConventions.NoReservedKeywordParameterNames.resourceFound">
+    <severity>0</severity>
+  </rule>
+  <config name="minimum_supported_wp_version" value="6.4"/>
+</ruleset>

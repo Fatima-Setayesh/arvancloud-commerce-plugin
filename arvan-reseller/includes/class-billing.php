@@ -48,48 +48,86 @@ class Arvan_Reseller_Billing {
 	/**
 	 * Calculate total usage cost.
 	 *
-	 * @param float $usage_amount Usage amount.
-	 * @param float $unit_price Unit price.
-	 * @return float
+	 * @param int|string $usage_amount Usage quantity (four-decimal precision).
+	 * @param int|string $unit_price Unit price.
+	 * @return string|WP_Error Fixed-decimal money string or error.
 	 */
 	public function calculate_usage_cost( $usage_amount, $unit_price ) {
-		return round( max( 0, (float) $usage_amount ) * max( 0, (float) $unit_price ), 4 );
+		$quantity_scaled  = Arvan_Reseller_Money::to_minor( $usage_amount );
+		$unit_price_minor = Arvan_Reseller_Money::to_minor( $unit_price );
+
+		if ( is_wp_error( $quantity_scaled ) || is_wp_error( $unit_price_minor ) || $quantity_scaled < 0 || $unit_price_minor < 0 ) {
+			return new WP_Error( 'arvan_reseller_invalid_usage_amount', __( 'Usage and unit price must be non-negative decimal values.', 'arvan-reseller' ) );
+		}
+
+		$cost_minor = Arvan_Reseller_Money::multiply_scaled( $quantity_scaled, $unit_price_minor );
+
+		return is_wp_error( $cost_minor ) ? $cost_minor : Arvan_Reseller_Money::format( $cost_minor );
 	}
 
 	/**
 	 * Calculate reseller share amount.
 	 *
-	 * @param float $base_cost Cost before share.
-	 * @param float $share_percent Share percent.
-	 * @return float
+	 * @param int|string $base_cost Cost before share.
+	 * @param int|string $share_percent Share percent.
+	 * @return string|WP_Error
 	 */
 	public function calculate_reseller_share_amount( $base_cost, $share_percent ) {
-		$share_percent = $this->normalize_reseller_share( $share_percent );
+		$base_minor   = Arvan_Reseller_Money::to_minor( $base_cost );
+		$basis_points = $this->normalize_reseller_share_basis_points( $share_percent );
 
-		return round( max( 0, (float) $base_cost ) * ( $share_percent / 100 ), 4 );
+		if ( is_wp_error( $base_minor ) || $base_minor < 0 ) {
+			return new WP_Error( 'arvan_reseller_invalid_base_cost', __( 'Base cost must be a non-negative decimal value.', 'arvan-reseller' ) );
+		}
+
+		$share_minor = Arvan_Reseller_Money::percentage( $base_minor, $basis_points );
+
+		return is_wp_error( $share_minor ) ? $share_minor : Arvan_Reseller_Money::format( $share_minor );
 	}
 
 	/**
 	 * Calculate total customer charge.
 	 *
-	 * @param float $usage_amount Usage amount.
-	 * @param float $unit_price Unit price.
-	 * @param float $share_percent Share percent.
-	 * @return array
+	 * @param int|string      $usage_amount Usage amount.
+	 * @param int|string      $unit_price Unit price.
+	 * @param int|string|null $share_percent Share percent.
+	 * @return array|WP_Error
 	 */
 	public function calculate_customer_charge( $usage_amount, $unit_price, $share_percent = null ) {
-		$base_cost       = $this->calculate_usage_cost( $usage_amount, $unit_price );
-		$share_percent   = null === $share_percent ? $this->get_reseller_share_percent() : $this->normalize_reseller_share( $share_percent );
-		$reseller_share  = $this->calculate_reseller_share_amount( $base_cost, $share_percent );
-		$total_charge    = round( $base_cost + $reseller_share, 4 );
+		$quantity_scaled  = Arvan_Reseller_Money::to_minor( $usage_amount );
+		$unit_price_minor = Arvan_Reseller_Money::to_minor( $unit_price );
+		$basis_points     = null === $share_percent ? $this->get_reseller_share_basis_points() : $this->normalize_reseller_share_basis_points( $share_percent );
+
+		if ( is_wp_error( $quantity_scaled ) || is_wp_error( $unit_price_minor ) || $quantity_scaled < 0 || $unit_price_minor < 0 ) {
+			return new WP_Error( 'arvan_reseller_invalid_billing_amount', __( 'Billing values must be non-negative plain decimals.', 'arvan-reseller' ) );
+		}
+
+		$base_cost_minor = Arvan_Reseller_Money::multiply_scaled( $quantity_scaled, $unit_price_minor );
+
+		if ( is_wp_error( $base_cost_minor ) ) {
+			return $base_cost_minor;
+		}
+
+		$reseller_share_minor = Arvan_Reseller_Money::percentage( $base_cost_minor, $basis_points );
+
+		if ( is_wp_error( $reseller_share_minor ) || $reseller_share_minor > PHP_INT_MAX - $base_cost_minor ) {
+			return is_wp_error( $reseller_share_minor ) ? $reseller_share_minor : new WP_Error( 'arvan_reseller_money_overflow', __( 'Billing amount exceeded the supported range.', 'arvan-reseller' ) );
+		}
+
+		$total_charge_minor = $base_cost_minor + $reseller_share_minor;
 
 		return array(
-			'usage_amount'    => round( (float) $usage_amount, 4 ),
-			'unit_price'      => round( (float) $unit_price, 4 ),
-			'base_cost'       => $base_cost,
-			'reseller_share'  => $reseller_share,
-			'share_percent'   => $share_percent,
-			'total_charge'    => $total_charge,
+			'usage_amount'          => Arvan_Reseller_Money::format( $quantity_scaled ),
+			'unit_price'            => Arvan_Reseller_Money::format( $unit_price_minor ),
+			'base_cost'             => Arvan_Reseller_Money::format( $base_cost_minor ),
+			'reseller_share'        => Arvan_Reseller_Money::format( $reseller_share_minor ),
+			'share_percent'         => $this->format_basis_points( $basis_points ),
+			'total_charge'          => Arvan_Reseller_Money::format( $total_charge_minor ),
+			'usage_quantity_scaled' => $quantity_scaled,
+			'unit_price_minor'      => $unit_price_minor,
+			'base_cost_minor'       => $base_cost_minor,
+			'reseller_share_minor'  => $reseller_share_minor,
+			'total_charge_minor'    => $total_charge_minor,
 		);
 	}
 
@@ -151,100 +189,19 @@ class Arvan_Reseller_Billing {
 	 * @return array|WP_Error
 	 */
 	public function provision_resource( $customer_id, $product_type, array $payload, $endpoint = '' ) {
-		if ( ! is_scalar( $customer_id ) || ! is_numeric( (string) $customer_id ) || (int) $customer_id <= 0 ) {
-			return new WP_Error( 'arvan_reseller_invalid_customer', __( 'Invalid customer ID for provisioning.', 'arvan-reseller' ) );
+		if ( '' !== (string) $endpoint ) {
+			return new WP_Error( 'arvan_reseller_endpoint_override_blocked', __( 'Endpoint overrides are not allowed.', 'arvan-reseller' ) );
 		}
 
-		if ( ! $this->database instanceof Arvan_Reseller_Database || ! $this->api_client instanceof Arvan_Reseller_API_Client ) {
-			return new WP_Error( 'arvan_reseller_missing_dependency', __( 'Provisioning service dependencies are not available.', 'arvan-reseller' ) );
+		if ( 'cloud_server' !== sanitize_key( $product_type ) ) {
+			return new WP_Error( 'arvan_reseller_unsupported_product', __( 'Only the documented Cloud Server product is supported.', 'arvan-reseller' ) );
 		}
 
-		try {
-			$customer_id  = absint( $customer_id );
-			$product_type = sanitize_key( $product_type );
+		$settings          = get_option( 'arvan_reseller_settings', array() );
+		$payload['region'] = isset( $payload['region'] ) ? $payload['region'] : (string) ( $settings['region'] ?? '' );
+		$idempotency_key   = isset( $payload['idempotency_key'] ) ? (string) $payload['idempotency_key'] : hash( 'sha256', wp_json_encode( $payload ) );
 
-			if ( '' === $product_type ) {
-				return new WP_Error( 'arvan_reseller_invalid_product_type', __( 'Invalid product type for provisioning.', 'arvan-reseller' ) );
-			}
-
-			$order_reference = $this->build_provisioning_reference( $customer_id, $product_type, $payload );
-			$existing_order  = $this->get_existing_provisioning_order( $customer_id, $order_reference );
-
-			if ( null !== $existing_order ) {
-				return new WP_Error(
-					'arvan_reseller_duplicate_provisioning',
-					__( 'Duplicate provisioning request blocked.', 'arvan-reseller' ),
-					array(
-						'order_id'        => isset( $existing_order['id'] ) ? (int) $existing_order['id'] : 0,
-						'order_reference' => $order_reference,
-						'resource_id'     => isset( $existing_order['resource_id'] ) ? (string) $existing_order['resource_id'] : '',
-					)
-				);
-			}
-
-			$response = $this->api_client->create_resource( $payload, $endpoint );
-
-			if ( is_wp_error( $response ) ) {
-				return $response;
-			}
-
-			if ( ! is_array( $response ) || ! isset( $response['body'] ) || ! is_array( $response['body'] ) ) {
-				return new WP_Error( 'arvan_reseller_invalid_api_response', __( 'Provisioning API response is invalid.', 'arvan-reseller' ) );
-			}
-
-			$resource_id = $this->extract_resource_id_from_response( $response['body'] );
-
-			if ( '' === $resource_id ) {
-				return new WP_Error( 'arvan_reseller_missing_resource_id', __( 'Remote resource ID was not returned by the API.', 'arvan-reseller' ) );
-			}
-
-			$tracked = $this->track_resource( $customer_id, $product_type, $resource_id, 'provisioned', $response['body'] );
-
-			if ( is_wp_error( $tracked ) ) {
-				return $tracked;
-			}
-
-			$order_id = $this->database->create_order(
-				array(
-					'customer_id'     => $customer_id,
-					'product_type'    => $product_type,
-					'status'          => 'provisioned',
-					'resource_id'     => $resource_id,
-					'order_reference' => $order_reference,
-					'details'         => wp_json_encode( $response['body'] ),
-				)
-			);
-
-			if ( false === $order_id ) {
-				$this->update_resource_status( $resource_id, 'provisioned', $response['body'] );
-
-				return new WP_Error(
-					'arvan_reseller_order_creation_failed',
-					__( 'Resource was tracked but order creation failed.', 'arvan-reseller' ),
-					array(
-						'customer_id'     => $customer_id,
-						'product_type'    => $product_type,
-						'resource_id'     => $resource_id,
-						'order_reference' => $order_reference,
-						'db_error'        => $this->database->get_last_error(),
-					)
-				);
-			}
-
-			return array(
-				'resource_id' => $resource_id,
-				'order_id'    => (int) $order_id,
-				'response'    => $response,
-			);
-		} catch ( Throwable $exception ) {
-			return new WP_Error(
-				'arvan_reseller_provisioning_failed',
-				__( 'Provisioning failed unexpectedly.', 'arvan-reseller' ),
-				array(
-					'message' => $exception->getMessage(),
-				)
-			);
-		}
+		return ( new Arvan_Reseller_Provisioning( $this->database, $this->api_client ) )->create_server_order( $customer_id, $payload, $idempotency_key );
 	}
 
 	/**
@@ -270,7 +227,11 @@ class Arvan_Reseller_Billing {
 			);
 		}
 
-		$response = $this->api_client->suspend_resource( $resource_id, $endpoint );
+		if ( '' !== (string) $endpoint ) {
+			return new WP_Error( 'arvan_reseller_endpoint_override_blocked', __( 'Endpoint overrides are not allowed.', 'arvan-reseller' ) );
+		}
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$response = $this->api_client->power_off_server( (string) $resource['region'], $resource_id, (string) ( $settings['availability_zone'] ?? '' ) );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -294,7 +255,19 @@ class Arvan_Reseller_Billing {
 			return new WP_Error( 'arvan_reseller_invalid_ownership', __( 'Customer does not own this resource.', 'arvan-reseller' ) );
 		}
 
-		$response = $this->api_client->terminate_resource( $resource_id, $endpoint );
+		$resource = $this->database->get_resource_by_arvan_id( $resource_id );
+		if ( 'terminated' === (string) $resource['status'] ) {
+			return array(
+				'skipped'     => true,
+				'resource_id' => (string) $resource_id,
+				'status'      => 'terminated',
+			);
+		}
+		if ( '' !== (string) $endpoint ) {
+			return new WP_Error( 'arvan_reseller_endpoint_override_blocked', __( 'Endpoint overrides are not allowed.', 'arvan-reseller' ) );
+		}
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$response = $this->api_client->terminate_server( (string) $resource['region'], $resource_id, (string) ( $settings['availability_zone'] ?? '' ) );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -312,52 +285,92 @@ class Arvan_Reseller_Billing {
 	 * @param array $usage_data Usage data.
 	 * @return array|WP_Error
 	 */
-	public function process_resource_usage(array $resource, array $usage_data ) {
+	public function process_resource_usage( array $resource, array $usage_data ) {
 		$customer_id = absint( $resource['customer_id'] );
 		$resource_id = (string) $resource['resource_id'];
 		$window      = $this->normalize_usage_window( $usage_data, $resource );
+
+		if ( is_wp_error( $window ) ) {
+			return $window;
+		}
 
 		if ( $this->database->usage_log_exists( $window['billing_reference'] ) ) {
 			return new WP_Error( 'arvan_reseller_duplicate_billing', __( 'Duplicate billing attempt blocked.', 'arvan-reseller' ) );
 		}
 
 		$charge = $this->calculate_customer_charge( $window['usage_amount'], $window['unit_price'] );
-		$debit  = $this->wallet->decrease_balance(
-			$customer_id,
-			$charge['total_charge'],
-			'usage_billing',
-			$window['billing_reference'],
-			sprintf(
-				/* translators: %s: resource ID. */
-				__( 'Usage billing for resource %s.', 'arvan-reseller' ),
-				$resource_id
-			)
+
+		if ( is_wp_error( $charge ) ) {
+			return $charge;
+		}
+
+		$owns_transaction = ! $this->database->in_transaction();
+
+		if ( $owns_transaction && ! $this->database->begin_transaction() ) {
+			return new WP_Error( 'arvan_reseller_transaction_start_failed', __( 'Unable to start the billing transaction.', 'arvan-reseller' ) );
+		}
+
+		$debit = array(
+			'transaction_id'  => 0,
+			'applied_minor'   => 0,
+			'uncovered_minor' => 0,
 		);
 
-		if ( is_wp_error( $debit ) ) {
-			return $debit;
+		if ( $charge['total_charge_minor'] > 0 ) {
+			$debit = $this->wallet->charge_up_to_available_minor(
+				$customer_id,
+				$charge['total_charge_minor'],
+				'usage_billing',
+				$window['billing_reference'],
+				sprintf(
+					/* translators: %s: resource ID. */
+					__( 'Usage billing for resource %s.', 'arvan-reseller' ),
+					$resource_id
+				)
+			);
+
+			if ( is_wp_error( $debit ) ) {
+				if ( $owns_transaction ) {
+					$this->database->rollback();
+				}
+
+				return $debit;
+			}
 		}
 
 		$usage_log_id = $this->database->create_usage_log(
 			array(
-				'customer_id'       => $customer_id,
-				'resource_id'       => $resource_id,
-				'usage_amount'      => number_format( $window['usage_amount'], 4, '.', '' ),
-				'unit'              => $window['unit'],
-				'usage_start'       => $window['usage_start'],
-				'usage_end'         => $window['usage_end'],
-				'cost'              => number_format( $charge['total_charge'], 4, '.', '' ),
-				'reseller_share'    => number_format( $charge['reseller_share'], 4, '.', '' ),
-				'billing_reference' => $window['billing_reference'],
-				'api_payload'       => wp_json_encode( $usage_data ),
+				'customer_id'           => $customer_id,
+				'resource_record_id'    => absint( $resource['id'] ),
+				'resource_id'           => $resource_id,
+				'usage_quantity_scaled' => $charge['usage_quantity_scaled'],
+				'quantity_scale'        => Arvan_Reseller_Money::scale(),
+				'unit'                  => $window['unit'],
+				'usage_start'           => $window['usage_start'],
+				'usage_end'             => $window['usage_end'],
+				'base_cost_minor'       => $charge['base_cost_minor'],
+				'reseller_share_minor'  => $charge['reseller_share_minor'],
+				'total_charge_minor'    => $charge['total_charge_minor'],
+				'charged_minor'         => (int) $debit['applied_minor'],
+				'uncovered_minor'       => (int) $debit['uncovered_minor'],
+				'currency'              => $this->get_currency(),
+				'billing_reference'     => $window['billing_reference'],
+				'api_payload'           => wp_json_encode( $usage_data ),
 			)
 		);
 
 		if ( false === $usage_log_id ) {
-			return new WP_Error( 'arvan_reseller_usage_log_failed', __( 'Failed to save usage log.', 'arvan-reseller' ) );
+			if ( $owns_transaction ) {
+				$this->database->rollback();
+			}
+
+			return new WP_Error(
+				$this->database->is_duplicate_error() ? 'arvan_reseller_duplicate_billing' : 'arvan_reseller_usage_log_failed',
+				__( 'Failed to save the idempotent usage record.', 'arvan-reseller' )
+			);
 		}
 
-		$this->database->update(
+		$cursor_updated = $this->database->update(
 			'resources',
 			array(
 				'last_billed_at' => $window['usage_end'],
@@ -371,12 +384,27 @@ class Arvan_Reseller_Billing {
 			array( '%d' )
 		);
 
+		if ( false === $cursor_updated ) {
+			if ( $owns_transaction ) {
+				$this->database->rollback();
+			}
+
+			return new WP_Error( 'arvan_reseller_billing_cursor_failed', __( 'Failed to advance the resource billing cursor.', 'arvan-reseller' ) );
+		}
+
+		if ( $owns_transaction && ! $this->database->commit() ) {
+			return new WP_Error( 'arvan_reseller_transaction_commit_failed', __( 'Unable to commit the billing transaction.', 'arvan-reseller' ) );
+		}
+
 		return array(
-			'usage_log_id'    => $usage_log_id,
-			'transaction_id'  => $debit['transaction_id'],
-			'total_charge'    => $charge['total_charge'],
-			'reseller_share'  => $charge['reseller_share'],
-			'billing_reference' => $window['billing_reference'],
+			'usage_log_id'       => $usage_log_id,
+			'transaction_id'     => (int) $debit['transaction_id'],
+			'total_charge'       => $charge['total_charge'],
+			'total_charge_minor' => $charge['total_charge_minor'],
+			'charged_minor'      => (int) $debit['applied_minor'],
+			'uncovered_minor'    => (int) $debit['uncovered_minor'],
+			'reseller_share'     => $charge['reseller_share'],
+			'billing_reference'  => $window['billing_reference'],
 		);
 	}
 
@@ -396,8 +424,10 @@ class Arvan_Reseller_Billing {
 	 * @return array
 	 */
 	public function build_usage_query_window( array $resource ) {
-		$end_time   = gmdate( 'Y-m-d H:00:00' );
-		$start_time = ! empty( $resource['last_billed_at'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $resource['last_billed_at'] ) ) : gmdate( 'Y-m-d H:00:00', strtotime( '-1 hour' ) );
+		$end_time    = gmdate( 'Y-m-d H:00:00' );
+		$cursor      = ! empty( $resource['last_billed_at'] ) ? (string) $resource['last_billed_at'] : (string) ( $resource['created_at'] ?? '' );
+		$start_stamp = strtotime( $cursor . ' UTC' );
+		$start_time  = false === $start_stamp ? gmdate( 'Y-m-d H:00:00', strtotime( '-1 hour UTC' ) ) : gmdate( 'Y-m-d H:i:s', $start_stamp );
 
 		return array(
 			'start' => $start_time,
@@ -408,23 +438,50 @@ class Arvan_Reseller_Billing {
 	/**
 	 * Resolve the configured reseller share.
 	 *
-	 * @return float
+	 * @return string
 	 */
 	public function get_reseller_share_percent() {
-		$settings = get_option( 'arvan_reseller_settings', array() );
-		$share    = isset( $settings['reseller_share_percent'] ) ? (float) $settings['reseller_share_percent'] : 0;
-
-		return $this->normalize_reseller_share( $share );
+		return $this->format_basis_points( $this->get_reseller_share_basis_points() );
 	}
 
 	/**
-	 * Normalize and cap the reseller share value.
+	 * Resolve configured share as integer basis points.
 	 *
-	 * @param float $share_percent Share percent.
-	 * @return float
+	 * @return int
 	 */
-	private function normalize_reseller_share( $share_percent ) {
-		return round( max( 0, min( 20, (float) $share_percent ) ), 2 );
+	private function get_reseller_share_basis_points() {
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$share    = isset( $settings['reseller_share_percent'] ) ? $settings['reseller_share_percent'] : '0';
+
+		return $this->normalize_reseller_share_basis_points( $share );
+	}
+
+	/**
+	 * Normalize and cap a share percentage to 0..2000 basis points.
+	 *
+	 * @param int|string $share_percent Share percentage.
+	 * @return int
+	 */
+	private function normalize_reseller_share_basis_points( $share_percent ) {
+		$scaled = Arvan_Reseller_Money::to_minor( $share_percent );
+
+		if ( is_wp_error( $scaled ) || $scaled <= 0 ) {
+			return 0;
+		}
+
+		$basis_points = intdiv( $scaled + 50, 100 );
+
+		return min( 2000, $basis_points );
+	}
+
+	/**
+	 * Format basis points as a two-decimal percentage string.
+	 *
+	 * @param int $basis_points Basis points.
+	 * @return string
+	 */
+	private function format_basis_points( $basis_points ) {
+		return intdiv( (int) $basis_points, 100 ) . '.' . str_pad( (string) ( (int) $basis_points % 100 ), 2, '0', STR_PAD_LEFT );
 	}
 
 	/**
@@ -432,85 +489,44 @@ class Arvan_Reseller_Billing {
 	 *
 	 * @param array $usage_data Usage payload.
 	 * @param array $resource Resource record.
-	 * @return array
+	 * @return array|WP_Error
 	 */
 	private function normalize_usage_window( array $usage_data, array $resource ) {
-		$resource_id   = (string) $resource['resource_id'];
-		$usage_start   = ! empty( $usage_data['start'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $usage_data['start'] ) ) : gmdate( 'Y-m-d H:i:s', strtotime( '-1 hour' ) );
-		$usage_end     = ! empty( $usage_data['end'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $usage_data['end'] ) ) : current_time( 'mysql', true );
-		$usage_amount  = isset( $usage_data['usage_amount'] ) ? (float) $usage_data['usage_amount'] : 0.0;
-		$unit_price    = isset( $usage_data['unit_price'] ) ? (float) $usage_data['unit_price'] : 0.0;
-		$unit          = isset( $usage_data['unit'] ) ? sanitize_key( $usage_data['unit'] ) : '';
-		$reference     = $resource_id . ':' . gmdate( 'YmdHis', strtotime( $usage_start ) ) . ':' . gmdate( 'YmdHis', strtotime( $usage_end ) );
+		$resource_id  = (string) $resource['resource_id'];
+		$start_stamp  = ! empty( $usage_data['start'] ) ? strtotime( (string) $usage_data['start'] . ' UTC' ) : strtotime( '-1 hour UTC' );
+		$end_stamp    = ! empty( $usage_data['end'] ) ? strtotime( (string) $usage_data['end'] . ' UTC' ) : time();
+		$usage_amount = isset( $usage_data['usage_amount'] ) ? (string) $usage_data['usage_amount'] : '0';
+		$unit_price   = isset( $usage_data['unit_price'] ) ? (string) $usage_data['unit_price'] : '0';
+		$unit         = isset( $usage_data['unit'] ) ? sanitize_key( $usage_data['unit'] ) : '';
+
+		if ( false === $start_stamp || false === $end_stamp || $start_stamp >= $end_stamp || '' === $resource_id ) {
+			return new WP_Error( 'arvan_reseller_invalid_usage_window', __( 'Usage window is invalid.', 'arvan-reseller' ) );
+		}
+
+		$usage_start = gmdate( 'Y-m-d H:i:s', $start_stamp );
+		$usage_end   = gmdate( 'Y-m-d H:i:s', $end_stamp );
+		$reference   = 'usage:' . hash( 'sha256', absint( $resource['id'] ) . '|' . $resource_id . '|' . $usage_start . '|' . $usage_end );
 
 		return array(
 			'usage_start'       => $usage_start,
 			'usage_end'         => $usage_end,
-			'usage_amount'      => round( $usage_amount, 4 ),
-			'unit_price'        => round( $unit_price, 4 ),
+			'usage_amount'      => $usage_amount,
+			'unit_price'        => $unit_price,
 			'unit'              => $unit,
 			'billing_reference' => $reference,
 		);
 	}
 
 	/**
-	 * Extract a resource ID from API payloads.
+	 * Resolve currency without accepting arbitrary financial units.
 	 *
-	 * @param array $body Response body.
 	 * @return string
 	 */
-	private function extract_resource_id_from_response( array $body ) {
-		$candidates = array(
-			isset( $body['id'] ) ? $body['id'] : '',
-			isset( $body['data']['id'] ) ? $body['data']['id'] : '',
-			isset( $body['resource_id'] ) ? $body['resource_id'] : '',
-		);
+	private function get_currency() {
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$currency = isset( $settings['currency'] ) ? strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $settings['currency'] ) ) : 'IRR';
 
-		foreach ( $candidates as $candidate ) {
-			if ( is_scalar( $candidate ) ) {
-				$resource_id = trim( (string) $candidate );
-
-				if ( '' !== $resource_id ) {
-					return $resource_id;
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * Build a stable provisioning reference for duplicate protection.
-	 *
-	 * @param int    $customer_id Customer ID.
-	 * @param string $product_type Product type.
-	 * @param array  $payload Provisioning payload.
-	 * @return string
-	 */
-	private function build_provisioning_reference( $customer_id, $product_type, array $payload ) {
-		$normalized_payload = wp_json_encode( $payload );
-
-		return 'provision:' . $customer_id . ':' . $product_type . ':' . md5( (string) $normalized_payload );
-	}
-
-	/**
-	 * Find an existing provisioning order by reference.
-	 *
-	 * @param int    $customer_id Customer ID.
-	 * @param string $order_reference Provisioning reference.
-	 * @return array|null
-	 */
-	private function get_existing_provisioning_order( $customer_id, $order_reference ) {
-		$orders = $this->database->get_results_by(
-			'orders',
-			array(
-				'customer_id'     => absint( $customer_id ),
-				'order_reference' => (string) $order_reference,
-			),
-			1
-		);
-
-		return ! empty( $orders[0] ) && is_array( $orders[0] ) ? $orders[0] : null;
+		return 3 === strlen( $currency ) ? $currency : 'IRR';
 	}
 
 	/**

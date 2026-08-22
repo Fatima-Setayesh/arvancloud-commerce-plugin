@@ -81,17 +81,22 @@ class Arvan_Reseller_Loader {
 	 * @return void
 	 */
 	public function bootstrap_services() {
-		$this->services['database'] = new Arvan_Reseller_Database();
-		$this->services['api']      = new Arvan_Reseller_API_Client();
-		$this->services['wallet']   = new Arvan_Reseller_Wallet( $this->services['database'] );
-		$this->services['payment']  = new Arvan_Reseller_Payment( $this->services['wallet'], $this->services['database'] );
-		$this->services['billing']  = new Arvan_Reseller_Billing( $this->services['database'], $this->services['wallet'], $this->services['api'] );
-		$this->services['cron']     = new Arvan_Reseller_Cron( $this->services['billing'], $this->services['database'], $this->services['api'] );
+		$this->services['database']      = new Arvan_Reseller_Database();
+		$this->services['api']           = new Arvan_Reseller_API_Client();
+		$this->services['wallet']        = new Arvan_Reseller_Wallet( $this->services['database'] );
+		$this->services['payment']       = new Arvan_Reseller_Payment( $this->services['wallet'], $this->services['database'] );
+		$this->services['billing']       = new Arvan_Reseller_Billing( $this->services['database'], $this->services['wallet'], $this->services['api'] );
+		$this->services['provisioning']  = new Arvan_Reseller_Provisioning( $this->services['database'], $this->services['api'] );
+		$this->services['notifications'] = new Arvan_Reseller_Notifications( $this->services['database'] );
+		$this->services['settlement']    = new Arvan_Reseller_Settlement( $this->services['database'] );
+		$this->services['settings']      = new Arvan_Reseller_Settings();
+		$this->services['cron']          = new Arvan_Reseller_Cron( $this->services['billing'], $this->services['database'], $this->services['api'], $this->services['notifications'], $this->services['provisioning'], $this->services['settlement'] );
+		$this->services['rest']          = new Arvan_Reseller_REST_API( $this->services['database'], $this->services['wallet'], $this->services['payment'], $this->services['provisioning'], $this->services['billing'], $this->services['api'], $this->services['cron'], $this->services['settings'] );
 
 		$this->services['cron']->register_hooks();
+		$this->services['rest']->register_hooks();
 
 		if ( is_admin() ) {
-			$this->services['settings']   = new Arvan_Reseller_Settings();
 			$this->services['admin_menu'] = new Arvan_Reseller_Admin_Menu( $this->services['settings'] );
 
 			$this->services['settings']->register_hooks();

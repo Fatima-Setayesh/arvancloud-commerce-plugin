@@ -1,0 +1,27 @@
+{
+  "name": "fatima-setayesh/arvancloud-commerce-plugin",
+  "description": "Development quality gates for the ArvanCloud Commerce WordPress backend.",
+  "license": "GPL-2.0-or-later",
+  "type": "wordpress-plugin",
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "php-parallel-lint/php-parallel-lint": "^1.4",
+    "php-stubs/wordpress-stubs": "^6.8",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^10.5",
+    "wp-coding-standards/wpcs": "^3.2"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "lint": "parallel-lint arvan-reseller tests",
+    "phpcs": "phpcs --standard=phpcs.xml.dist",
+    "phpstan": "phpstan analyse -c phpstan.neon.dist --no-progress",
+    "phpunit": "phpunit -c phpunit.xml.dist",
+    "test": ["@lint", "@phpunit"]
+  }
+}

@@ -3,7 +3,7 @@
  * Plugin Name: Arvan Reseller
  * Plugin URI: https://github.com/
  * Description: A standalone reseller plugin for Arvan Cloud products.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Fatima Team
  * License: GPL-2.0+
  * Requires PHP: 8.2
@@ -16,8 +16,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ARVAN_RESELLER_VERSION', '1.0.0' );
-define( 'ARVAN_RESELLER_DB_VERSION', '1.0.0' );
+define( 'ARVAN_RESELLER_VERSION', '1.1.0' );
+define( 'ARVAN_RESELLER_DB_VERSION', '1.2.0' );
+/**
+ * Monetary values are persisted as integers at four decimal places.
+ *
+ * One major currency unit equals 10,000 internal minor units. This preserves
+ * the precision of the legacy DECIMAL(18,4) columns without using floats.
+ */
+define( 'ARVAN_RESELLER_MONEY_SCALE', 10000 );
 define( 'ARVAN_RESELLER_FILE', __FILE__ );
 define( 'ARVAN_RESELLER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ARVAN_RESELLER_URL', plugin_dir_url( __FILE__ ) );
