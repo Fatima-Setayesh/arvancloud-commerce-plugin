@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">ArvanCloud Commerce plugin architecture</title>
+  <desc id="desc">WordPress REST requests pass through security controls into commerce services, storage, jobs, and Mock or Live cloud adapters.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071724"/><stop offset="1" stop-color="#0b3040"/></linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35d5ec"/><stop offset="1" stop-color="#0b89a7"/></linearGradient>
+    <linearGradient id="coral" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9d86"/><stop offset="1" stop-color="#e46359"/></linearGradient>
+    <filter id="glow"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#00c7dc" flood-opacity=".18"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0l10 5-10 5z" fill="#4ad6e6"/></marker>
+  </defs>
+  <rect width="1600" height="760" rx="34" fill="url(#bg)"/>
+  <g fill="none" stroke="#2bc9dd" opacity=".1"><path d="M0 95H1600M0 190H1600M0 285H1600M0 380H1600M0 475H1600M0 570H1600M0 665H1600"/><path d="M160 0V760M320 0V760M480 0V760M640 0V760M800 0V760M960 0V760M1120 0V760M1280 0V760M1440 0V760"/></g>
+  <text x="80" y="84" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="800" letter-spacing="3" fill="#69dfeb">SYSTEM ARCHITECTURE</text>
+  <text x="80" y="132" font-family="Inter,Segoe UI,sans-serif" font-size="38" font-weight="800" fill="#fff">Secure commerce between WordPress and Cloud Servers</text>
+  <g font-family="Inter,Segoe UI,sans-serif" filter="url(#glow)">
+    <rect x="80" y="210" width="280" height="420" rx="28" fill="#0d2635" stroke="#2bbfd3" stroke-width="2"/>
+    <circle cx="220" cy="300" r="54" fill="url(#cyan)"/><path d="M191 300h58M220 271v58" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+    <text x="220" y="390" font-size="28" font-weight="800" text-anchor="middle" fill="#fff">WordPress</text><text x="220" y="422" font-size="17" text-anchor="middle" fill="#92b5c3">Users · Admins · WP-Cron</text>
+    <rect x="112" y="470" width="216" height="62" rx="15" fill="#123546"/><text x="220" y="508" font-size="18" font-weight="700" text-anchor="middle" fill="#79e4ef">REST API v1</text>
+    <rect x="112" y="548" width="216" height="48" rx="12" fill="#17303c"/><text x="220" y="579" font-size="15" font-weight="700" text-anchor="middle" fill="#ffb09e">Nonce · Capability · Rate limit</text>
+    <rect x="450" y="210" width="430" height="420" rx="28" fill="#0d2635" stroke="#2bbfd3" stroke-width="2"/>
+    <text x="665" y="266" font-size="28" font-weight="800" text-anchor="middle" fill="#fff">Commerce Core</text>
+    <g font-size="17" font-weight="700" text-anchor="middle"><rect x="490" y="310" width="165" height="74" rx="16" fill="#123d4e"/><text x="572" y="354" fill="#8de9f2">Wallet + Ledger</text><rect x="675" y="310" width="165" height="74" rx="16" fill="#123d4e"/><text x="758" y="354" fill="#8de9f2">Payments</text><rect x="490" y="404" width="165" height="74" rx="16" fill="#123d4e"/><text x="572" y="448" fill="#8de9f2">Provisioning</text><rect x="675" y="404" width="165" height="74" rx="16" fill="#123d4e"/><text x="758" y="448" fill="#8de9f2">Usage Billing</text><rect x="490" y="498" width="165" height="74" rx="16" fill="#123d4e"/><text x="572" y="542" fill="#8de9f2">Reconciliation</text><rect x="675" y="498" width="165" height="74" rx="16" fill="#123d4e"/><text x="758" y="542" fill="#8de9f2">Settlement</text></g>
+    <rect x="970" y="210" width="240" height="420" rx="28" fill="#0d2635" stroke="#2bbfd3" stroke-width="2"/>
+    <text x="1090" y="266" font-size="27" font-weight="800" text-anchor="middle" fill="#fff">Adapters</text>
+    <rect x="1010" y="316" width="160" height="104" rx="20" fill="url(#cyan)"/><text x="1090" y="358" font-size="21" font-weight="800" text-anchor="middle" fill="#042330">Mock</text><text x="1090" y="387" font-size="14" font-weight="700" text-anchor="middle" fill="#073443">Zero network</text>
+    <rect x="1010" y="444" width="160" height="104" rx="20" fill="url(#coral)"/><text x="1090" y="486" font-size="21" font-weight="800" text-anchor="middle" fill="#351513">Live</text><text x="1090" y="515" font-size="14" font-weight="700" text-anchor="middle" fill="#50201b">HTTPS allowlist</text>
+    <rect x="1300" y="210" width="220" height="420" rx="28" fill="#0d2635" stroke="#2bbfd3" stroke-width="2"/>
+    <path d="M1360 332c0-54 42-96 96-96 47 0 87 35 94 81 39 5 70 39 70 80 0 45-36 81-81 81h-175c-43 0-78-35-78-78 0-35 23-64 55-74 5-31 30-55 61-61" transform="translate(-50 60) scale(.78)" fill="url(#cyan)" opacity=".9"/>
+    <text x="1410" y="444" font-size="26" font-weight="800" text-anchor="middle" fill="#fff">Cloud Servers</text><text x="1410" y="477" font-size="16" text-anchor="middle" fill="#92b5c3">IaaS v3 boundary</text>
+    <g fill="#163746"><rect x="1338" y="520" width="144" height="20" rx="5"/><rect x="1338" y="551" width="144" height="20" rx="5"/><rect x="1338" y="582" width="144" height="20" rx="5"/></g><g fill="#4ad6e6"><circle cx="1360" cy="530" r="4"/><circle cx="1360" cy="561" r="4"/><circle cx="1360" cy="592" r="4"/></g>
+  </g>
+  <g stroke="#4ad6e6" stroke-width="5" fill="none" marker-end="url(#arrow)"><path d="M368 420H434"/><path d="M888 420H954"/><path d="M1218 420H1284"/></g>
+  <text x="665" y="690" font-family="Inter,Segoe UI,sans-serif" font-size="16" font-weight="700" text-anchor="middle" fill="#76a4b4">Integer money · idempotent writes · immutable audit trail · bounded retries</text>
+</svg>

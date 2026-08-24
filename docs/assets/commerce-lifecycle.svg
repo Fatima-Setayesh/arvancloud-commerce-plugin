@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" role="img" aria-labelledby="title desc">
+  <title id="title">Prepaid Cloud Server commerce lifecycle</title>
+  <desc id="desc">A safe lifecycle from wallet top-up through estimate, order, provisioning, billing, and settlement.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#08141f"/><stop offset="1" stop-color="#0c3441"/></linearGradient>
+    <linearGradient id="node" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#103c4b"/><stop offset="1" stop-color="#0c2735"/></linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#48e0ec"/><stop offset="1" stop-color="#0a89a5"/></linearGradient>
+    <filter id="glow"><feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#2bd2df" flood-opacity=".23"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0l10 5-10 5z" fill="#40d7e4"/></marker>
+  </defs>
+  <rect width="1600" height="700" rx="34" fill="url(#bg)"/>
+  <text x="80" y="78" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="800" letter-spacing="3" fill="#69dfeb">PREPAID LIFECYCLE</text>
+  <text x="80" y="125" font-family="Inter,Segoe UI,sans-serif" font-size="38" font-weight="800" fill="#fff">Every retry is safe. Every money movement is exact.</text>
+  <path d="M304 330C410 183 570 183 676 330M924 330C1030 183 1190 183 1296 330M1296 470C1190 617 1030 617 924 470M676 470C570 617 410 617 304 470" fill="none" stroke="#2fcbd8" stroke-width="5" stroke-dasharray="10 12" opacity=".55"/>
+  <g stroke="#40d7e4" stroke-width="5" fill="none" marker-end="url(#arrow)"><path d="M365 400H505"/><path d="M665 400H725"/><path d="M875 400H935"/><path d="M1095 400H1235"/><path d="M1315 490C1220 590 1060 610 944 515"/><path d="M656 515C540 610 380 590 285 490"/></g>
+  <g font-family="Inter,Segoe UI,sans-serif" text-anchor="middle" filter="url(#glow)">
+    <g transform="translate(245 400)"><circle r="100" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><circle cy="-22" r="31" fill="#31ccdc"/><path d="M-18-22h36M0-40v36" stroke="#062430" stroke-width="7" stroke-linecap="round"/><text y="50" fill="#fff" font-size="23" font-weight="800">Top up</text></g>
+    <g transform="translate(585 400)"><circle r="100" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><path d="M-31-45h62v52h-62zM-20-31h40M-20-18h30" fill="none" stroke="#45dbe7" stroke-width="6" stroke-linecap="round"/><text y="50" fill="#fff" font-size="23" font-weight="800">Estimate</text></g>
+    <g transform="translate(800 400)"><path d="M0-103l84 34v64c0 74-45 111-84 129-39-18-84-55-84-129v-64z" fill="url(#shield)" stroke="#89f3f8" stroke-width="4"/><path d="M-27 0l18 19 40-48" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text y="78" fill="#062430" font-size="20" font-weight="900">IDEMPOTENT</text></g>
+    <g transform="translate(1015 400)"><circle r="100" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><rect x="-36" y="-47" width="72" height="70" rx="10" fill="none" stroke="#45dbe7" stroke-width="6"/><path d="M-21-28h42M-21-10h42M-21 8h42" stroke="#45dbe7" stroke-width="5"/><text y="58" fill="#fff" font-size="23" font-weight="800">Order</text></g>
+    <g transform="translate(1355 400)"><circle r="100" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><path d="M-47 4c3-28 22-45 48-45 24 0 42 14 48 36 22 2 38 19 38 40H-76c0-17 12-29 29-31z" fill="#45dbe7"/><text y="67" fill="#fff" font-size="23" font-weight="800">Provision</text></g>
+    <g transform="translate(1070 566)"><circle r="76" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><circle cy="-12" r="28" fill="none" stroke="#45dbe7" stroke-width="6"/><path d="M0-12V-29M0-12l18 10" stroke="#45dbe7" stroke-width="6" stroke-linecap="round"/><text y="46" fill="#fff" font-size="21" font-weight="800">Bill</text></g>
+    <g transform="translate(530 566)"><circle r="76" fill="url(#node)" stroke="#2ccddd" stroke-width="3"/><path d="M-28-15h56M-28 2h56M-20 19h40" stroke="#45dbe7" stroke-width="7" stroke-linecap="round"/><text y="50" fill="#fff" font-size="21" font-weight="800">Settle</text></g>
+  </g>
+  <g font-family="Inter,Segoe UI,sans-serif" font-size="15" font-weight="700" fill="#8db0bd"><text x="245" y="540" text-anchor="middle">Atomic credit</text><text x="585" y="540" text-anchor="middle">No floats</text><text x="1015" y="540" text-anchor="middle">Unique key</text><text x="1355" y="540" text-anchor="middle">Recoverable</text></g>
+</svg>
