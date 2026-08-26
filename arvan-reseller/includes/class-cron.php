@@ -116,6 +116,7 @@ class Arvan_Reseller_Cron {
 						'customer_id' => (int) $resource['customer_id'],
 					)
 				);
+				$this->record_resource_event( $resource, 'termination', 'remote_not_found' );
 				return array(
 					'skipped' => true,
 					'reason'  => 'remote_not_found',
@@ -149,6 +150,7 @@ class Arvan_Reseller_Cron {
 					'customer_id' => (int) $resource['customer_id'],
 				)
 			);
+			$this->record_resource_event( $resource, 'termination', 'remote_status' );
 			return array(
 				'skipped' => true,
 				'reason'  => 'remote_terminated',
@@ -167,6 +169,7 @@ class Arvan_Reseller_Cron {
 					'customer_id' => (int) $resource['customer_id'],
 				)
 			);
+			$this->record_resource_event( $resource, 'suspension', 'remote_status' );
 			$resource['status'] = 'suspended';
 		}
 		if ( 'suspended' === (string) $resource['status'] ) {
@@ -267,6 +270,7 @@ class Arvan_Reseller_Cron {
 					)
 				);
 				$this->database->create_audit_log( 'resource_suspended_zero_balance', 'resource', (string) $resource['id'], array(), $customer_id, 0 );
+				$this->record_resource_event( $resource, 'suspension', 'zero_balance' );
 				$resource['status']       = 'suspended';
 				$resource['suspended_at'] = $now; }
 			$this->maybe_terminate( $resource, $settings, $zone );
@@ -297,7 +301,21 @@ class Arvan_Reseller_Cron {
 				'customer_id' => (int) $resource['customer_id'],
 			)
 		);
-		$this->database->create_audit_log( 'resource_terminated_by_policy', 'resource', (string) $resource['id'], array( 'policy' => $policy ), (int) $resource['customer_id'], 0 ); }
+		$this->database->create_audit_log( 'resource_terminated_by_policy', 'resource', (string) $resource['id'], array( 'policy' => $policy ), (int) $resource['customer_id'], 0 );
+		$this->record_resource_event( $resource, 'termination', 'policy_' . $policy ); }
+
+	private function record_resource_event( array $resource, $type, $reason ) {
+		$reference = '' !== (string) ( $resource['resource_id'] ?? '' ) ? (string) $resource['resource_id'] : (string) ( $resource['id'] ?? '' );
+		$this->database->record_notification_event(
+			(int) ( $resource['customer_id'] ?? 0 ),
+			$type,
+			$reference,
+			array(
+				'resource_id' => $reference,
+				'reason'      => sanitize_key( (string) $reason ),
+			)
+		);
+	}
 
 	private function resource_currency( array $resource ) {
 		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $resource['currency'] ?? '' ) ) );

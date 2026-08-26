@@ -343,7 +343,11 @@ class Arvan_Reseller_Provisioning {
 
 	private function fail_order( $id, $from, WP_Error $error ) {
 		$this->database->transition_order_status( $id, $from, 'failed', array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );
-		$this->database->create_audit_log( 'provisioning_failed', 'order', (string) $id, array( 'error_code' => $error->get_error_code() ) ); }
+		$order = $this->database->get_row_by( 'orders', array( 'id' => (int) $id ) );
+		$this->database->create_audit_log( 'provisioning_failed', 'order', (string) $id, array( 'error_code' => $error->get_error_code() ), is_array( $order ) ? (int) $order['customer_id'] : 0 );
+		if ( is_array( $order ) ) {
+			$this->database->record_notification_event( (int) $order['customer_id'], 'provisioning_failed', (string) $order['order_reference'], array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );
+		} }
 	private function mark_recovery_required( $id, $resource_id, array $server, $code ) {
 		$order                  = $this->database->get_row_by( 'orders', array( 'id' => (int) $id ) );
 		$details                = is_array( $order ) ? json_decode( (string) $order['details'], true ) : array();
@@ -370,6 +374,9 @@ class Arvan_Reseller_Provisioning {
 				'reason'      => $code,
 			)
 		);
+		if ( is_array( $order ) ) {
+			$this->database->record_notification_event( (int) $order['customer_id'], 'provisioning_failed', (string) $order['order_reference'], array( 'failure_code' => sanitize_key( $code ), 'recovery_required' => true ) );
+		}
 		return new WP_Error(
 			'arvan_reseller_provisioning_recovery_required',
 			__( 'Server was created remotely but local recovery is required.', 'arvan-reseller' ),

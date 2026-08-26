@@ -285,6 +285,7 @@ $tests['mock payment confirmation is atomic idempotent and isolated'] = static f
 	$again = $payments->confirm_payment( 7, $created['payment_reference'] );
 	arvan_test_assert_true( $again['idempotent'], 'repeat confirmation was not idempotent' );
 	arvan_test_assert_same( 1, count( $db->transactions ), 'repeat confirmation duplicated ledger credit' );
+	arvan_test_assert_same( 1, count( $db->notifications ), 'payment event notification was missing or duplicated' );
 };
 
 $tests['admin mock refund is atomic and idempotent'] = static function () {
@@ -330,6 +331,17 @@ $tests['provisioning creates local order then maps one remote resource'] = stati
 	$duplicate = $service->create_server_order( 7, $config, 'order-key-1' );
 	arvan_test_assert_true( $duplicate['idempotent'], 'duplicate order was not idempotent' );
 	arvan_test_assert_same( 1, count( get_option( 'arvan_reseller_mock_resources', array() ) ), 'duplicate order created another server' );
+};
+
+$tests['failed provisioning records one safe customer event'] = static function () {
+	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'mode'=>'mock','currency'=>'IRR','notification_enabled'=>1 );
+	$db = new Arvan_Test_Database(); $service = new Arvan_Reseller_Provisioning( $db, new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ) );
+	$result = $service->create_server_order( 7, array( 'region'=>'ir-thr-mock','availabilityZone'=>'mock-zone-1','flavorId'=>'missing-flavor','imageId'=>'image','name'=>'failed-server','rootVolumeSizeGigaBytes'=>25 ), 'failed-order-key' );
+	arvan_test_assert_same( 'arvan_reseller_flavor_not_found', $result->get_error_code(), 'provisioning failure code was not stable' );
+	arvan_test_assert_same( 1, count( $db->notifications ), 'provisioning failure notification missing' );
+	$notification = array_values( $db->notifications )[0];
+	arvan_test_assert_same( 'provisioning_failed', $notification['notification_type'], 'wrong provisioning notification type' );
+	arvan_test_assert_true( false === strpos( (string) $notification['payload'], 'api_key' ), 'provisioning notification leaked sensitive data' );
 };
 
 $tests['resource contract allowlists useful details without leaking remote payload'] = static function () {

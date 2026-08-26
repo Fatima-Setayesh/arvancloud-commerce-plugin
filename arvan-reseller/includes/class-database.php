@@ -775,6 +775,35 @@ class Arvan_Reseller_Database {
 		return $this->insert( 'notifications', wp_parse_args( $data, $defaults ) );
 	}
 
+	/** Record one idempotent in-app lifecycle notification. @return int|false */
+	public function record_notification_event( $customer_id, $type, $reference, array $payload = array() ) {
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
+			return false;
+		}
+		$type    = sanitize_key( (string) $type );
+		$allowed = array( 'payment_completed', 'payment_failed', 'provisioning_failed', 'suspension', 'termination' );
+		if ( absint( $customer_id ) <= 0 || ! in_array( $type, $allowed, true ) || '' === (string) $reference ) {
+			return false;
+		}
+		$event_key = hash( 'sha256', 'customer-event-v1|' . absint( $customer_id ) . '|' . $type . '|' . (string) $reference );
+		$existing  = $this->get_notification_by_event_key( $event_key );
+		if ( null !== $existing ) {
+			return (int) $existing['id'];
+		}
+		return $this->create_notification(
+			array(
+				'customer_id'       => absint( $customer_id ),
+				'notification_type' => $type,
+				'event_key'         => $event_key,
+				'status'            => 'sent',
+				'channel'           => 'in_app',
+				'payload'           => wp_json_encode( Arvan_Reseller_Security::redact( $payload ) ),
+				'sent_at'           => current_time( 'mysql', true ),
+			)
+		);
+	}
+
 	/** @return array|null */
 	public function get_notification_by_event_key( $event_key ) {
 		return $this->get_row_by( 'notifications', array( 'event_key' => (string) $event_key ) );
