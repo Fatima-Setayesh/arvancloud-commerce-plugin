@@ -17,10 +17,17 @@ class Arvan_Reseller_Settlement {
 		$start     = gmdate( 'Y-m-d H:i:s', $start_ts );
 		$end       = gmdate( 'Y-m-d H:i:s', $end_ts );
 		$currency  = strtoupper( preg_replace( '/[^A-Z]/', '', (string) $currency ) );
+		$currency  = 3 === strlen( $currency ) ? $currency : 'IRR';
+		$invoices  = $this->issue_invoices_for_period( $start, $end, $currency );
+		if ( is_wp_error( $invoices ) ) {
+			return $invoices;
+		}
 		$reference = 'stl_' . hash( 'sha256', 'settlement-v1|' . $start . '|' . $end . '|' . $currency );
 		$existing  = $this->database->get_settlement_by_reference( $reference );
 		if ( null !== $existing && 'completed' === (string) $existing['status'] ) {
-			return $this->serialize( $existing, true ); }
+			$result                  = $this->serialize( $existing, true );
+			$result['invoice_count'] = count( $invoices );
+			return $result; }
 		$totals = $this->database->aggregate_usage_period( $start, $end, $currency );
 		$id     = null !== $existing ? (int) $existing['id'] : $this->database->create_settlement(
 			array(
@@ -124,9 +131,62 @@ class Arvan_Reseller_Settlement {
 				'reference'  => $reference,
 				'status'     => 'completed',
 				'idempotent' => false,
+				'invoice_count' => count( $invoices ),
 			),
 			$totals
 		);
+	}
+
+	/** Issue one immutable daily invoice per customer/currency usage group. @return array|WP_Error */
+	public function issue_invoices_for_period( $start, $end, $currency ) {
+		$results = array();
+		foreach ( $this->database->aggregate_customer_usage_period( $start, $end, $currency ) as $totals ) {
+			$customer_id = absint( $totals['customer_id'] ?? 0 );
+			if ( $customer_id <= 0 ) {
+				continue;
+			}
+			$reference = 'inv_' . hash( 'sha256', 'invoice-v1|' . $customer_id . '|' . $start . '|' . $end . '|' . $currency );
+			$existing  = $this->database->get_invoice_by_reference( $reference );
+			if ( null !== $existing ) {
+				$results[] = array( 'id' => (int) $existing['id'], 'reference' => $reference, 'idempotent' => true );
+				continue;
+			}
+			$uncovered = max( 0, (int) ( $totals['uncovered_minor'] ?? 0 ) );
+			$created   = true;
+			$id        = $this->database->create_invoice(
+				array(
+					'customer_id'          => $customer_id,
+					'invoice_reference'    => $reference,
+					'period_start'         => $start,
+					'period_end'           => $end,
+					'base_cost_minor'      => max( 0, (int) ( $totals['base_cost_minor'] ?? 0 ) ),
+					'reseller_share_minor' => max( 0, (int) ( $totals['reseller_share_minor'] ?? 0 ) ),
+					'total_minor'          => max( 0, (int) ( $totals['total_minor'] ?? 0 ) ),
+					'currency'             => $currency,
+					'status'               => 0 === $uncovered ? 'paid' : 'issued',
+					'metadata'             => wp_json_encode(
+						array(
+							'usage_count'    => max( 0, (int) ( $totals['usage_count'] ?? 0 ) ),
+							'charged_minor'  => max( 0, (int) ( $totals['charged_minor'] ?? 0 ) ),
+							'uncovered_minor' => $uncovered,
+						)
+					),
+				)
+			);
+			if ( false === $id ) {
+				$existing = $this->database->get_invoice_by_reference( $reference );
+				if ( null === $existing ) {
+					return new WP_Error( 'arvan_reseller_invoice_failed', __( 'Unable to persist the customer invoice.', 'arvan-reseller' ) );
+				}
+				$id      = (int) $existing['id'];
+				$created = false;
+			}
+			if ( $created ) {
+				$this->database->create_audit_log( 'invoice_issued', 'invoice', (string) $id, array( 'reference' => $reference, 'status' => 0 === $uncovered ? 'paid' : 'issued' ), $customer_id, 0 );
+			}
+			$results[] = array( 'id' => (int) $id, 'reference' => $reference, 'idempotent' => ! $created );
+		}
+		return $results;
 	}
 
 	public function settle_previous_day() {

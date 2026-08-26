@@ -170,6 +170,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public $payments = array();
 	public $orders = array();
 	public $notifications = array();
+	public $invoices = array();
 	public $settlements = array();
 	public $audits = array();
 	public $fail_ledger = false;
@@ -187,7 +188,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 
 	public function begin_transaction() {
 		if ( ! $this->active ) {
-			$this->snapshot = array( $this->wallets, $this->transactions, $this->usage_records, $this->resources, $this->payments, $this->orders, $this->notifications, $this->settlements, $this->audits );
+			$this->snapshot = array( $this->wallets, $this->transactions, $this->usage_records, $this->resources, $this->payments, $this->orders, $this->notifications, $this->invoices, $this->settlements, $this->audits );
 			$this->active   = true;
 			++$this->begins;
 		}
@@ -205,7 +206,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 
 	public function rollback() {
 		if ( $this->active ) {
-			list( $this->wallets, $this->transactions, $this->usage_records, $this->resources, $this->payments, $this->orders, $this->notifications, $this->settlements, $this->audits ) = $this->snapshot;
+			list( $this->wallets, $this->transactions, $this->usage_records, $this->resources, $this->payments, $this->orders, $this->notifications, $this->invoices, $this->settlements, $this->audits ) = $this->snapshot;
 		}
 
 		$this->active = false;
@@ -353,10 +354,13 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public function get_resources_by_customer_id( $id, $limit = 100, $offset = 0 ) { return array_slice( array_values( array_filter( $this->resources, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ), $offset, $limit ); }
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) { return array_values( array_slice( array_filter( $this->resources, static function( $r ) use ( $after_id ) { return (int) $r['id'] > (int) $after_id && in_array( (string) $r['status'], array( 'active', 'provisioned', 'suspended' ), true ); } ), 0, $limit ) ); }
 	public function get_orders_requiring_recovery( $limit = 50 ) { return array_values( array_filter( $this->orders, static function( $r ) { return ! empty( $r['recovery_required'] ); } ) ); }
-	public function get_row_by( $table, array $where ) { $map=array('orders'=>'orders','resources'=>'resources','notifications'=>'notifications'); if(!isset($map[$table],$where['id'])){return null;} $property=$map[$table]; $row=$this->{$property}[(int)$where['id']]??null; if(null===$row){return null;} foreach($where as $key=>$value){if(!array_key_exists($key,$row)||(string)$row[$key] !== (string)$value){return null;}} return $row; }
+	public function get_row_by( $table, array $where ) { $map=array('orders'=>'orders','resources'=>'resources','notifications'=>'notifications'); if(isset($where['id'],$map[$table])){$property=$map[$table];$row=$this->{$property}[(int)$where['id']]??null;if(null===$row){return null;}foreach($where as $key=>$value){if(!array_key_exists($key,$row)||(string)$row[$key] !== (string)$value){return null;}}return $row;} if('invoices'===$table&&isset($where['invoice_reference'])){return $this->get_invoice_by_reference($where['invoice_reference']);} return null; }
 	public function mark_wallet_low_balance_notified( $wallet_id ) { foreach ( $this->wallets as &$wallet ) { if ( (int) $wallet['id'] === (int) $wallet_id ) { $wallet['low_balance_notified'] = 1; return true; } } return false; }
 	public function get_notification_by_event_key( $key ) { foreach ( $this->notifications as $r ) { if ( $r['event_key'] === $key ) { return $r; } } return null; }
 	public function create_notification( array $data ) { $id=count($this->notifications)+1; $data=wp_parse_args($data,array('status'=>'pending','channel'=>'email','payload'=>'','error_code'=>'','read_at'=>null,'created_at'=>current_time('mysql',true),'sent_at'=>null)); $data['id']=$id; $this->notifications[$id]=$data; return $id; }
+	public function aggregate_customer_usage_period( $start, $end, $currency = 'IRR' ) { unset($start,$end);$groups=array();foreach($this->usage_records as $r){if((string)($r['currency']??'IRR')!==$currency){continue;}$id=(int)($r['customer_id']??0);if(!isset($groups[$id])){$groups[$id]=array('customer_id'=>$id,'currency'=>$currency,'base_cost_minor'=>0,'reseller_share_minor'=>0,'total_minor'=>0,'charged_minor'=>0,'uncovered_minor'=>0,'usage_count'=>0);}foreach(array('base_cost_minor','reseller_share_minor','charged_minor','uncovered_minor') as $key){$groups[$id][$key]+=(int)($r[$key]??0);}$groups[$id]['total_minor']+=(int)($r['total_charge_minor']??0);++$groups[$id]['usage_count'];}return array_values($groups); }
+	public function get_invoice_by_reference( $ref ) { foreach($this->invoices as $r){if($r['invoice_reference']===$ref){return $r;}}return null; }
+	public function create_invoice( array $data ) { if(null!==$this->get_invoice_by_reference($data['invoice_reference'])){return false;}$id=count($this->invoices)+1;$data['id']=$id;$this->invoices[$id]=$data;return $id; }
 	public function aggregate_usage_period( $start, $end, $currency = 'IRR' ) { $out=array('base_cost_minor'=>0,'customer_charge_minor'=>0,'reseller_share_minor'=>0,'usage_count'=>0); foreach($this->usage_records as $r){$out['base_cost_minor']+=(int)$r['base_cost_minor'];$out['customer_charge_minor']+=(int)$r['total_charge_minor'];$out['reseller_share_minor']+=(int)$r['reseller_share_minor'];++$out['usage_count'];} return $out; }
 	public function get_settlement_by_reference( $ref ) { foreach($this->settlements as $r){if($r['settlement_reference']===$ref){return $r;}}return null; }
 	public function create_settlement( array $data ) { $id=count($this->settlements)+1;$data['id']=$id;$this->settlements[$id]=$data;return $id; }

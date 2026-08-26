@@ -860,6 +860,43 @@ class Arvan_Reseller_Database {
 		return $this->get_results_by( 'settlements', array(), $limit, $offset );
 	}
 
+	/** Aggregate an invoicing period by customer for one immutable currency. */
+	public function aggregate_customer_usage_period( $start, $end, $currency = 'IRR' ) {
+		$table = $this->get_table_name( 'usage_records' );
+		$query = $this->wpdb->prepare(
+			"SELECT customer_id, currency, COALESCE(SUM(base_cost_minor),0) base_cost_minor, COALESCE(SUM(reseller_share_minor),0) reseller_share_minor, COALESCE(SUM(total_charge_minor),0) total_minor, COALESCE(SUM(charged_minor),0) charged_minor, COALESCE(SUM(uncovered_minor),0) uncovered_minor, COUNT(*) usage_count FROM {$table} WHERE usage_start >= %s AND usage_end <= %s AND currency = %s GROUP BY customer_id, currency ORDER BY customer_id ASC",
+			(string) $start,
+			(string) $end,
+			$this->normalize_currency( $currency )
+		);
+		$rows = $this->wpdb->get_results( $query, ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/** @return array|null */
+	public function get_invoice_by_reference( $reference ) {
+		return $this->get_row_by( 'invoices', array( 'invoice_reference' => (string) $reference ) );
+	}
+
+	/** @return int|false */
+	public function create_invoice( array $data ) {
+		$defaults = array(
+			'customer_id'          => 0,
+			'invoice_reference'    => '',
+			'period_start'         => current_time( 'mysql', true ),
+			'period_end'           => current_time( 'mysql', true ),
+			'base_cost_minor'      => 0,
+			'reseller_share_minor' => 0,
+			'total_minor'          => 0,
+			'currency'             => 'IRR',
+			'status'               => 'draft',
+			'metadata'             => '',
+			'created_at'           => current_time( 'mysql', true ),
+			'updated_at'           => current_time( 'mysql', true ),
+		);
+		return $this->insert( 'invoices', wp_parse_args( $data, $defaults ) );
+	}
+
 	/** @return array */
 	public function aggregate_usage_period( $start, $end, $currency = 'IRR' ) {
 		$table = $this->get_table_name( 'usage_records' );

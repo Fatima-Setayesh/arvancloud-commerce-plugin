@@ -364,13 +364,16 @@ $tests['notification read transition is idempotent and customer isolated'] = sta
 };
 
 $tests['settlement period is aggregated and idempotent'] = static function () {
-	$db = new Arvan_Test_Database(); $db->usage_records[] = array( 'base_cost_minor' => 100, 'total_charge_minor' => 120, 'reseller_share_minor' => 20 );
+	$db = new Arvan_Test_Database(); $db->usage_records[] = array( 'customer_id'=>7,'currency'=>'IRR','base_cost_minor'=>100,'total_charge_minor'=>120,'reseller_share_minor'=>20,'charged_minor'=>120,'uncovered_minor'=>0 );
 	$settlement = new Arvan_Reseller_Settlement( $db );
 	$first = $settlement->settle_period( '2026-01-01 00:00:00', '2026-01-02 00:00:00', 'IRR' );
 	$second = $settlement->settle_period( '2026-01-01 00:00:00', '2026-01-02 00:00:00', 'IRR' );
 	arvan_test_assert_same( 120, $first['customer_charge_minor'], 'settlement total mismatch' );
 	arvan_test_assert_true( $second['idempotent'], 'settlement retry was not idempotent' );
 	arvan_test_assert_same( 1, count( $db->settlements ), 'settlement duplicated' );
+	arvan_test_assert_same( 1, count( $db->invoices ), 'daily customer invoice was missing or duplicated' );
+	arvan_test_assert_same( 'paid', array_values( $db->invoices )[0]['status'], 'fully covered prepaid invoice status mismatch' );
+	arvan_test_assert_same( 1, $first['invoice_count'], 'settlement did not report issued invoice count' );
 };
 
 $tests['failed low-balance email retries once and then deduplicates'] = static function () {
