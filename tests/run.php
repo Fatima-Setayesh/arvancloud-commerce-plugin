@@ -389,6 +389,25 @@ $tests['settlement period is aggregated and idempotent'] = static function () {
 	arvan_test_assert_same( 1, $first['invoice_count'], 'settlement did not report issued invoice count' );
 };
 
+$tests['daily settlement preserves every immutable usage currency'] = static function () {
+	$db = new Arvan_Test_Database();
+	$db->usage_records[] = array( 'customer_id'=>7,'currency'=>'IRR','base_cost_minor'=>100,'total_charge_minor'=>120,'reseller_share_minor'=>20,'charged_minor'=>120,'uncovered_minor'=>0 );
+	$db->usage_records[] = array( 'customer_id'=>8,'currency'=>'USD','base_cost_minor'=>200,'total_charge_minor'=>240,'reseller_share_minor'=>40,'charged_minor'=>200,'uncovered_minor'=>40 );
+	$previous_settings = $GLOBALS['arvan_test_options']['arvan_reseller_settings'] ?? null;
+	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'currency' => 'EUR' );
+	$result = ( new Arvan_Reseller_Settlement( $db ) )->settle_previous_day();
+	if ( null === $previous_settings ) {
+		unset( $GLOBALS['arvan_test_options']['arvan_reseller_settings'] );
+	} else {
+		$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = $previous_settings;
+	}
+	arvan_test_assert_true( ! is_wp_error( $result ), 'multi-currency daily settlement failed' );
+	arvan_test_assert_same( 2, count( $result['settlements'] ), 'daily job did not settle every usage currency' );
+	arvan_test_assert_same( array( 'IRR', 'USD' ), array_values( array_map( static function ( $row ) { return $row['currency']; }, $result['settlements'] ) ), 'configured currency displaced immutable usage currencies' );
+	arvan_test_assert_same( 2, count( $db->invoices ), 'multi-currency invoices were not issued independently' );
+	arvan_test_assert_same( 'issued', $db->invoices[2]['status'], 'uncovered usage invoice status mismatch' );
+};
+
 $tests['failed low-balance email retries once and then deduplicates'] = static function () {
 	$db = new Arvan_Test_Database(); $db->ensure_wallet( 7 ); $db->wallets[7]['threshold_minor'] = 20000; $db->wallets[7]['balance_minor'] = 10000;
 	$notifications = new Arvan_Reseller_Notifications( $db ); $GLOBALS['arvan_test_mail_count'] = 0; $GLOBALS['arvan_test_mail_success'] = false;

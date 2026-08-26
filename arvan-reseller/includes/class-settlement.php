@@ -130,6 +130,7 @@ class Arvan_Reseller_Settlement {
 				'id'         => (int) $id,
 				'reference'  => $reference,
 				'status'     => 'completed',
+				'currency'   => $currency,
 				'idempotent' => false,
 				'invoice_count' => count( $invoices ),
 			),
@@ -189,9 +190,33 @@ class Arvan_Reseller_Settlement {
 		return $results;
 	}
 
+	/** Settle every currency represented by the previous UTC day's usage. @return array|WP_Error */
 	public function settle_previous_day() {
-		$end = gmdate( 'Y-m-d 00:00:00' );
-		return $this->settle_period( gmdate( 'Y-m-d 00:00:00', strtotime( $end . ' UTC' ) - DAY_IN_SECONDS ), $end, (string) ( get_option( 'arvan_reseller_settings', array() )['currency'] ?? 'IRR' ) ); }
+		$end        = gmdate( 'Y-m-d 00:00:00' );
+		$start      = gmdate( 'Y-m-d 00:00:00', strtotime( $end . ' UTC' ) - DAY_IN_SECONDS );
+		$currencies = $this->database->get_usage_currencies_period( $start, $end );
+
+		// Preserve the established empty-day settlement record for operational visibility.
+		if ( empty( $currencies ) ) {
+			$settings   = get_option( 'arvan_reseller_settings', array() );
+			$currencies = array( (string) ( $settings['currency'] ?? 'IRR' ) );
+		}
+
+		$results = array();
+		foreach ( $currencies as $currency ) {
+			$result = $this->settle_period( $start, $end, $currency );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$results[] = $result;
+		}
+
+		return array(
+			'period_start' => $start,
+			'period_end'   => $end,
+			'settlements'  => $results,
+		);
+	}
 	private function serialize( array $row, $idempotent ) {
 		return array(
 			'id'                    => (int) $row['id'],

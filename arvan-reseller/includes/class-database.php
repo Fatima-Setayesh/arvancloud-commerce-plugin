@@ -873,6 +873,31 @@ class Arvan_Reseller_Database {
 		return is_array( $rows ) ? $rows : array();
 	}
 
+	/** Return every immutable currency represented by usage in a period. */
+	public function get_usage_currencies_period( $start, $end ) {
+		$table = $this->get_table_name( 'usage_records' );
+		$query = $this->wpdb->prepare(
+			"SELECT DISTINCT currency FROM {$table} WHERE usage_start >= %s AND usage_end <= %s ORDER BY currency ASC",
+			(string) $start,
+			(string) $end
+		);
+		$rows  = $this->wpdb->get_col( $query );
+
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$currencies = array();
+		foreach ( $rows as $currency ) {
+			$normalized = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $currency ) );
+			if ( 3 === strlen( $normalized ) ) {
+				$currencies[] = $normalized;
+			}
+		}
+
+		return array_values( array_unique( $currencies ) );
+	}
+
 	/** @return array|null */
 	public function get_invoice_by_reference( $reference ) {
 		return $this->get_row_by( 'invoices', array( 'invoice_reference' => (string) $reference ) );
