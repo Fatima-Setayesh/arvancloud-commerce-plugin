@@ -293,12 +293,12 @@ class Arvan_Reseller_Payment {
 	}
 
 	/** @return array */
-	public function list_customer_payments( $customer_id, $limit = 50 ) {
-		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_payments_by_customer_id( absint( $customer_id ), $limit ) );
+	public function list_customer_payments( $customer_id, $limit = 50, $offset = 0 ) {
+		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_payments_by_customer_id( absint( $customer_id ), $limit, $offset ) );
 	}
 
 	/** @return array */
-	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100 ) {
+	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100, $offset = 0 ) {
 		if ( ! Arvan_Reseller_Security::can_manage_plugin() ) {
 			return array();
 		}
@@ -311,7 +311,7 @@ class Arvan_Reseller_Payment {
 			$where['customer_id'] = absint( $customer_id );
 		}
 
-		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_results_by( 'payments', $where, $limit ) );
+		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_results_by( 'payments', $where, $limit, $offset ) );
 	}
 
 	/** @return array */

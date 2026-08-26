@@ -412,12 +412,12 @@ class Arvan_Reseller_Database {
 	 * @param int $limit Limit.
 	 * @return array
 	 */
-	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '' ) {
+	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '', $offset = 0 ) {
 		$where = array( 'customer_id' => absint( $customer_id ) );
 		if ( '' !== (string) $currency ) {
 			$where['currency'] = $this->normalize_currency( $currency );
 		}
-		return $this->get_results_by( 'wallet_transactions', $where, $limit );
+		return $this->get_results_by( 'wallet_transactions', $where, $limit, $offset );
 	}
 
 	/**
@@ -529,8 +529,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_payments_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'payments', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_payments_by_customer_id( $customer_id, $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'payments', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
 	/**
@@ -615,8 +615,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_resources_by_customer_id( $customer_id ) {
-		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), 500 );
+	public function get_resources_by_customer_id( $customer_id, $limit = 100, $offset = 0 ) {
+		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
 	/** @return array */
@@ -781,8 +781,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_notifications_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'notifications', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_notifications_by_customer_id( $customer_id, $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'notifications', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
 	/** Mark an owned notification read and return the updated safe source row. */
@@ -827,8 +827,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_settlements( $limit = 50 ) {
-		return $this->get_results_by( 'settlements', array(), $limit );
+	public function get_settlements( $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'settlements', array(), $limit, $offset );
 	}
 
 	/** @return array */

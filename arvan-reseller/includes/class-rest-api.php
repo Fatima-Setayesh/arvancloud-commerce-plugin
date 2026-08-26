@@ -183,6 +183,7 @@ class Arvan_Reseller_REST_API {
 				array(
 					'methods'  => WP_REST_Server::READABLE,
 					'callback' => array( $this, 'resources' ),
+					'args'     => $list_args,
 				)
 			)
 		);
@@ -509,9 +510,9 @@ class Arvan_Reseller_REST_API {
 			'status'    => (string) $row['status'],
 		); }
 	public function transactions( $request ) {
-		return array_map( array( $this, 'safe_transaction' ), $this->wallet->get_balance_history( get_current_user_id(), $this->limit( $request ), $this->configured_currency() ) ); }
+		return $this->collection( array_map( array( $this, 'safe_transaction' ), $this->wallet->get_balance_history( get_current_user_id(), $this->fetch_limit( $request ), $this->configured_currency(), $this->offset( $request ) ) ), $request ); }
 	public function payments( $request ) {
-		return $this->payment->list_customer_payments( get_current_user_id(), $this->limit( $request ) ); }
+		return $this->collection( $this->payment->list_customer_payments( get_current_user_id(), $this->fetch_limit( $request ), $this->offset( $request ) ), $request ); }
 	public function create_payment( $request ) {
 		if ( ! Arvan_Reseller_Rate_Limiter::allow( 'payment_create', get_current_user_id(), 5, 5 * MINUTE_IN_SECONDS ) ) {
 			return new WP_Error( 'arvan_reseller_rate_limited', __( 'Too many payment requests.', 'arvan-reseller' ), array( 'status' => 429 ) ); }
@@ -532,8 +533,8 @@ class Arvan_Reseller_REST_API {
 			return new WP_Error( 'arvan_reseller_rate_limited', __( 'Too many provisioning requests.', 'arvan-reseller' ), array( 'status' => 429 ) ); }
 		$p = $this->params( $request );
 		return $this->provisioning->create_server_order( get_current_user_id(), $p, $this->idempotency_key( $request, $p ) ); }
-	public function resources() {
-		return array_map( array( $this, 'safe_resource' ), $this->database->get_resources_by_customer_id( get_current_user_id() ) ); }
+	public function resources( $request ) {
+		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->get_resources_by_customer_id( get_current_user_id(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function resource( $request ) {
 		$row = $this->database->get_row_by(
 			'resources',
@@ -609,17 +610,17 @@ class Arvan_Reseller_REST_API {
 			),
 		); }
 	public function admin_payments( $request ) {
-		return $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->limit( $request ) ); }
+		return $this->collection( $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->fetch_limit( $request ), $this->offset( $request ) ), $request ); }
 	public function refund_payment( $request ) {
 		return $this->payment->refund_payment( sanitize_text_field( (string) $request['reference'] ) ); }
 	public function settlements( $request ) {
-		return array_map(
+		return $this->collection( array_map(
 			function ( $r ) {
 				unset( $r['metadata'] );
 				return $r;
 			},
-			$this->database->get_settlements( $this->limit( $request ) )
-		); }
+			$this->database->get_settlements( $this->fetch_limit( $request ), $this->offset( $request ) )
+		), $request ); }
 	public function estimate( $request ) {
 		$p           = $this->params( $request );
 		$hours       = isset( $p['usage_hours'] ) ? (string) $p['usage_hours'] : '';
@@ -650,18 +651,18 @@ class Arvan_Reseller_REST_API {
 		return new WP_Error( 'arvan_reseller_flavor_not_found', __( 'Selected Cloud Server flavor was not found.', 'arvan-reseller' ), array( 'status' => 404 ) );
 	}
 	public function orders( $request ) {
-		return array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array( 'customer_id' => get_current_user_id() ), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array( 'customer_id' => get_current_user_id() ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function usage( $request ) {
-		return array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array( 'customer_id' => get_current_user_id() ), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array( 'customer_id' => get_current_user_id() ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function invoices( $request ) {
-		return array_map( array( $this, 'safe_invoice' ), $this->database->get_results_by( 'invoices', array( 'customer_id' => get_current_user_id() ), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_invoice' ), $this->database->get_results_by( 'invoices', array( 'customer_id' => get_current_user_id() ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function notifications( $request ) {
-		return array_map( array( $this, 'safe_notification' ), $this->database->get_notifications_by_customer_id( get_current_user_id(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_notification' ), $this->database->get_notifications_by_customer_id( get_current_user_id(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function read_notification( $request ) {
 		$row = $this->database->mark_notification_read( absint( $request['id'] ), get_current_user_id() );
 		return null === $row ? new WP_Error( 'arvan_reseller_notification_not_found', __( 'Notification not found.', 'arvan-reseller' ), array( 'status' => 404 ) ) : $this->safe_notification( $row ); }
 	public function admin_customers( $request ) {
-		return array_map(
+		return $this->collection( array_map(
 			function ( $user ) {
 				return array(
 					'id'            => (int) $user->ID,
@@ -672,24 +673,25 @@ class Arvan_Reseller_REST_API {
 			},
 			get_users(
 				array(
-					'number' => $this->limit( $request ),
+					'number' => $this->fetch_limit( $request ),
+					'offset' => $this->offset( $request ),
 					'fields' => array( 'ID', 'display_name', 'user_email', 'user_registered' ),
 				)
 			)
-		); }
+		), $request ); }
 	public function admin_wallets( $request ) {
-		return array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_orders( $request ) {
-		return array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_resources( $request ) {
-		return array_map( array( $this, 'safe_resource' ), $this->database->get_results_by( 'resources', array(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->get_results_by( 'resources', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_usage( $request ) {
-		return array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function run_reconciliation() {
 		$this->database->create_audit_log( 'manual_reconciliation_started', 'cron', 'reconciliation' );
 		return $this->cron->run_reconciliation(); }
 	public function audit_logs( $request ) {
-		return array_map( array( $this, 'safe_audit' ), $this->database->get_results_by( 'audit_logs', array(), $this->limit( $request ) ) ); }
+		return $this->collection( array_map( array( $this, 'safe_audit' ), $this->database->get_results_by( 'audit_logs', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 
 	private function list_args() {
 		return array(
@@ -698,6 +700,13 @@ class Arvan_Reseller_REST_API {
 				'minimum'           => 1,
 				'maximum'           => 100,
 				'default'           => 50,
+				'sanitize_callback' => 'absint',
+			),
+			'page'  => array(
+				'type'              => 'integer',
+				'minimum'           => 1,
+				'maximum'           => 1000000,
+				'default'           => 1,
 				'sanitize_callback' => 'absint',
 			),
 		); }
@@ -790,6 +799,28 @@ class Arvan_Reseller_REST_API {
 	private function limit( $request ) {
 		$value = $request->get_param( 'limit' );
 		return max( 1, min( 100, absint( $value ? $value : 50 ) ) ); }
+	private function page( $request ) {
+		$value = $request->get_param( 'page' );
+		return max( 1, min( 1000000, absint( $value ? $value : 1 ) ) ); }
+	private function offset( $request ) {
+		return ( $this->page( $request ) - 1 ) * $this->limit( $request ); }
+	private function fetch_limit( $request ) {
+		return $this->limit( $request ) + 1; }
+	private function collection( array $items, $request ) {
+		$limit    = $this->limit( $request );
+		$has_more = count( $items ) > $limit;
+		if ( $has_more ) {
+			array_pop( $items );
+		}
+		if ( ! class_exists( 'WP_REST_Response' ) ) {
+			return $items;
+		}
+		$response = new WP_REST_Response( array_values( $items ), 200 );
+		$response->header( 'X-Arvan-Page', (string) $this->page( $request ) );
+		$response->header( 'X-Arvan-Per-Page', (string) $limit );
+		$response->header( 'X-Arvan-Has-More', $has_more ? 'true' : 'false' );
+		return $response;
+	}
 	private function safe_remote( $result ) {
 		if ( is_wp_error( $result ) ) {
 			return $result;

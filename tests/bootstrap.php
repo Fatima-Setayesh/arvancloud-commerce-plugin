@@ -283,10 +283,11 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 		return null;
 	}
 
-	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '' ) {
-		return array_values( array_filter( $this->transactions, static function ( $row ) use ( $customer_id, $currency ) {
+	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '', $offset = 0 ) {
+		$rows = array_values( array_filter( $this->transactions, static function ( $row ) use ( $customer_id, $currency ) {
 			return (int) $row['customer_id'] === (int) $customer_id && ( '' === (string) $currency || (string) $row['currency'] === (string) $currency );
 		} ) );
+		return array_slice( $rows, $offset, $limit );
 	}
 
 	public function get_ledger_balance_minor( $wallet_id ) {
@@ -341,7 +342,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public function get_payment_by_reference( $ref ) { foreach ( $this->payments as $row ) { if ( $row['payment_reference'] === $ref ) { return $row; } } return null; }
 	public function lock_payment_by_reference( $ref ) { return $this->active ? $this->get_payment_by_reference( $ref ) : null; }
 	public function transition_payment_status( $id, $from, $to, array $extra = array() ) { if ( ! isset( $this->payments[$id] ) || $this->payments[$id]['status'] !== $from ) { return false; } $this->payments[$id] = array_merge( $this->payments[$id], $extra, array( 'status' => $to ) ); return true; }
-	public function get_payments_by_customer_id( $id, $limit = 50 ) { return array_values( array_filter( $this->payments, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ); }
+	public function get_payments_by_customer_id( $id, $limit = 50, $offset = 0 ) { return array_slice( array_values( array_filter( $this->payments, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ), $offset, $limit ); }
 	public function create_audit_log( $event_type, $object_type = '', $object_id = '', array $metadata = array(), $customer_id = 0, $actor_user_id = null ) { $this->audits[] = array( 'event_type' => $event_type, 'metadata' => Arvan_Reseller_Security::redact( $metadata ) ); return count( $this->audits ); }
 	public function create_order( array $data ) { if ( null !== $this->get_order_by_idempotency_key( $data['idempotency_key'] ) ) { return false; } $id = count( $this->orders ) + 1; $data = wp_parse_args( $data, array( 'resource_id' => '', 'resource_record_id' => null, 'recovery_required' => 0, 'failure_code' => '', 'created_at' => current_time( 'mysql', true ), 'updated_at' => current_time( 'mysql', true ) ) ); $data['id'] = $id; $this->orders[$id] = $data; return $id; }
 	public function get_order_by_idempotency_key( $key ) { foreach ( $this->orders as $row ) { if ( $row['idempotency_key'] === $key ) { return $row; } } return null; }
@@ -349,7 +350,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public function transition_order_status( $id, $from, $to, array $extra = array() ) { if ( ! isset( $this->orders[$id] ) || $this->orders[$id]['status'] !== $from ) { return false; } $this->orders[$id] = array_merge( $this->orders[$id], $extra, array( 'status' => $to, 'updated_at' => current_time( 'mysql', true ) ) ); return true; }
 	public function save_resource( array $data ) { if ( $this->fail_resource_save ) { return false; } $id = count( $this->resources ) + 1; $data = wp_parse_args( $data, array( 'id' => $id, 'currency' => 'IRR', 'created_at' => current_time( 'mysql', true ), 'updated_at' => current_time( 'mysql', true ), 'last_billed_at' => null ) ); $data['id'] = $id; $this->resources[$id] = $data; return $id; }
 	public function get_resource_by_arvan_id( $rid, $type = '', $region = '' ) { foreach ( $this->resources as $r ) { if ( $r['resource_id'] === $rid ) { return $r; } } return null; }
-	public function get_resources_by_customer_id( $id ) { return array_values( array_filter( $this->resources, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ); }
+	public function get_resources_by_customer_id( $id, $limit = 100, $offset = 0 ) { return array_slice( array_values( array_filter( $this->resources, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ), $offset, $limit ); }
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) { return array_values( array_slice( array_filter( $this->resources, static function( $r ) use ( $after_id ) { return (int) $r['id'] > (int) $after_id && in_array( (string) $r['status'], array( 'active', 'provisioned', 'suspended' ), true ); } ), 0, $limit ) ); }
 	public function get_orders_requiring_recovery( $limit = 50 ) { return array_values( array_filter( $this->orders, static function( $r ) { return ! empty( $r['recovery_required'] ); } ) ); }
 	public function get_row_by( $table, array $where ) { $map=array('orders'=>'orders','resources'=>'resources','notifications'=>'notifications'); if(!isset($map[$table],$where['id'])){return null;} $property=$map[$table]; $row=$this->{$property}[(int)$where['id']]??null; if(null===$row){return null;} foreach($where as $key=>$value){if(!array_key_exists($key,$row)||(string)$row[$key] !== (string)$value){return null;}} return $row; }

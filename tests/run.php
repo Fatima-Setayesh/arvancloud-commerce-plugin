@@ -390,6 +390,7 @@ $tests['REST and lifecycle contracts contain required security boundaries'] = st
 	arvan_test_assert_true( false !== strpos( $live, "'redirection'         => 0" ), 'redirect blocking missing' );
 	arvan_test_assert_true( false !== strpos( $live, "OFFICIAL_HOST_SUFFIX = '.arvanapis.ir'" ), 'official host allowlist missing' );
 	arvan_test_assert_true( false === strpos( $live, 'api_base_url' ), 'live adapter permits arbitrary base URL' );
+	arvan_test_assert_true( false !== strpos( $rest, "'X-Arvan-Has-More'" ) && false !== strpos( $rest, "'page'  => array(" ), 'bounded REST pagination metadata missing' );
 };
 
 $tests['settings preserve hidden values and enforce backend policy allowlists'] = static function () {
