@@ -86,7 +86,7 @@ class Arvan_Reseller_Loader {
 		$this->services['wallet']        = new Arvan_Reseller_Wallet( $this->services['database'] );
 		$this->services['payment']       = new Arvan_Reseller_Payment( $this->services['wallet'], $this->services['database'] );
 		$this->services['billing']       = new Arvan_Reseller_Billing( $this->services['database'], $this->services['wallet'], $this->services['api'] );
-		$this->services['provisioning']  = new Arvan_Reseller_Provisioning( $this->services['database'], $this->services['api'] );
+		$this->services['provisioning']  = new Arvan_Reseller_Provisioning( $this->services['database'], $this->services['api'], $this->services['wallet'] );
 		$this->services['notifications'] = new Arvan_Reseller_Notifications( $this->services['database'] );
 		$this->services['settlement']    = new Arvan_Reseller_Settlement( $this->services['database'] );
 		$this->services['settings']      = new Arvan_Reseller_Settings();

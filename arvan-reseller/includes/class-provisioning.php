@@ -6,10 +6,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Arvan_Reseller_Provisioning {
 	private $database;
 	private $api;
+	private $wallet;
 
-	public function __construct( Arvan_Reseller_Database $database, Arvan_Reseller_API_Client $api ) {
+	public function __construct( Arvan_Reseller_Database $database, Arvan_Reseller_API_Client $api, Arvan_Reseller_Wallet $wallet = null ) {
 		$this->database = $database;
-		$this->api      = $api; }
+		$this->api      = $api;
+		$this->wallet   = null === $wallet ? new Arvan_Reseller_Wallet( $database ) : $wallet; }
 
 	/** @return array|WP_Error */
 	public function create_server_order( $customer_id, array $configuration, $client_key ) {
@@ -65,28 +67,64 @@ class Arvan_Reseller_Provisioning {
 		$order_details = array(
 			'configuration' => $payload,
 			'quote'         => $quote,
-			'billing_model' => 'hourly_prepaid',
+			'billing_model' => 'first_24_hours_prepaid_then_hourly',
 			'payment'       => array(
-				'required_at_order' => false,
-				'status'            => 'not_charged_at_order',
-				'debit_timing'      => 'completed_usage_window',
+				'required_at_order' => true,
+				'status'            => 'pending',
+				'debit_timing'      => 'at_order_for_first_24_hours',
 			),
 		);
-		if ( is_wp_error( $quote ) || false === $this->database->update(
+		if ( is_wp_error( $quote ) ) {
+			$this->fail_order( $order_id, 'provisioning', $quote );
+			return $quote;
+		}
+		$total_minor = Arvan_Reseller_Money::to_minor( (string) $quote['total_charge'] );
+		if ( is_wp_error( $total_minor ) || ! $this->database->begin_transaction() ) {
+			$error = is_wp_error( $total_minor ) ? $total_minor : new WP_Error( 'arvan_reseller_transaction_start_failed', __( 'Unable to reserve the prepaid order amount.', 'arvan-reseller' ) );
+			$this->fail_order_payment( $order_id, $reference, $customer_id, $error );
+			return $error;
+		}
+		$debit = $this->wallet->debit_minor( $customer_id, $total_minor, 'order_prepaid', $reference, __( 'First 24 hours of Cloud Server service', 'arvan-reseller' ), $this->currency() );
+		if ( is_wp_error( $debit ) ) {
+			$this->database->rollback();
+			$this->fail_order_payment( $order_id, $reference, $customer_id, $debit );
+			return $debit;
+		}
+		$prepaid_until            = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql', true ) . ' UTC' ) + DAY_IN_SECONDS );
+		$order_details['payment'] = array(
+			'required_at_order' => true,
+			'status'            => 'charged_at_order',
+			'debit_timing'      => 'at_order_for_first_24_hours',
+			'charged_amount'     => (string) $quote['total_charge'],
+			'currency'           => (string) $quote['currency'],
+			'transaction_id'     => (int) ( $debit['transaction_id'] ?? 0 ),
+			'prepaid_until'      => $prepaid_until,
+		);
+		if ( false === $this->database->update(
 			'orders',
 			array(
 				'details'    => wp_json_encode( $order_details ),
 				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => (int) $order_id )
-		) ) {
-			$error = is_wp_error( $quote ) ? $quote : new WP_Error( 'arvan_reseller_order_quote_persistence_failed', __( 'Unable to persist the authoritative order quote.', 'arvan-reseller' ) );
-			$this->fail_order( $order_id, 'provisioning', $error );
+		) || ! $this->database->commit() ) {
+			$this->database->rollback();
+			$error = new WP_Error( 'arvan_reseller_order_payment_persistence_failed', __( 'Unable to persist the prepaid order charge.', 'arvan-reseller' ) );
+			$this->fail_order_payment( $order_id, $reference, $customer_id, $error );
 			return $error;
 		}
+		$this->database->create_audit_log( 'order_prepaid_debited', 'order', (string) $order_id, array( 'transaction_id' => (int) ( $debit['transaction_id'] ?? 0 ), 'currency' => (string) $quote['currency'] ), $customer_id );
 
 		$response = $this->api->create_server( $region, $payload, $idempotency_key );
 		if ( is_wp_error( $response ) ) {
+			if ( $this->is_ambiguous_create_error( $response ) ) {
+				return $this->mark_ambiguous_create( $order_id, $reference, $customer_id, $order_details, $response );
+			}
+			$compensation = $this->compensate_order_debit( $order_id, $reference, $customer_id, $total_minor, $order_details );
+			if ( is_wp_error( $compensation ) ) {
+				$this->fail_order( $order_id, 'provisioning', $compensation );
+				return $compensation;
+			}
 			$this->fail_order( $order_id, 'provisioning', $response );
 			return $response; }
 
@@ -94,6 +132,11 @@ class Arvan_Reseller_Provisioning {
 		$resource_id = isset( $server['id'] ) && is_scalar( $server['id'] ) ? sanitize_text_field( (string) $server['id'] ) : '';
 		if ( '' === $resource_id ) {
 			$error = new WP_Error( 'arvan_reseller_missing_resource_id', __( 'Cloud Server response did not include an ID.', 'arvan-reseller' ) );
+			$compensation = $this->compensate_order_debit( $order_id, $reference, $customer_id, $total_minor, $order_details );
+			if ( is_wp_error( $compensation ) ) {
+				$this->fail_order( $order_id, 'provisioning', $compensation );
+				return $compensation;
+			}
 			$this->fail_order( $order_id, 'provisioning', $error );
 			return $error; }
 
@@ -117,6 +160,7 @@ class Arvan_Reseller_Provisioning {
 				'currency'           => $this->currency(),
 				'remote_payload'     => wp_json_encode( Arvan_Reseller_Security::redact( $server ) ),
 				'last_synced_at'     => current_time( 'mysql', true ),
+				'last_billed_at'     => $prepaid_until,
 			)
 		);
 		if ( false === $resource_record_id || ! $this->database->transition_order_status(
@@ -177,9 +221,14 @@ class Arvan_Reseller_Provisioning {
 			return $response; }
 		$server = (array) ( $response['body']['data'] ?? array() );
 		$config = is_array( $details['configuration'] ?? null ) ? $details['configuration'] : array();
-		$price  = $this->resolve_hourly_price_minor( (string) $order['region'], (string) ( $config['flavorId'] ?? '' ) );
+		$price  = Arvan_Reseller_Money::to_minor( (string) ( $details['quote']['unit_price'] ?? '' ) );
+		if ( is_wp_error( $price ) || $price <= 0 ) {
+			$price = $this->resolve_hourly_price_minor( (string) $order['region'], (string) ( $config['flavorId'] ?? '' ) );
+		}
 		if ( is_wp_error( $price ) ) {
 			return $price; }
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $details['quote']['currency'] ?? '' ) ) );
+		$currency = 3 === strlen( $currency ) ? $currency : $this->currency();
 		$resource_record_id = $this->database->save_resource(
 			array(
 				'customer_id'        => (int) $order['customer_id'],
@@ -190,8 +239,9 @@ class Arvan_Reseller_Provisioning {
 				'status'             => 'provisioned',
 				'remote_status'      => sanitize_key( (string) ( $server['status'] ?? 'unknown' ) ),
 				'hourly_price_minor' => $price,
-				'currency'           => $this->currency(),
+				'currency'           => $currency,
 				'remote_payload'     => wp_json_encode( Arvan_Reseller_Security::redact( $server ) ),
+				'last_billed_at'     => sanitize_text_field( (string) ( $details['payment']['prepaid_until'] ?? '' ) ),
 			)
 		);
 		if ( false === $resource_record_id ) {
@@ -231,7 +281,7 @@ class Arvan_Reseller_Provisioning {
 			'region'          => (string) $order['region'],
 			'configuration'   => $this->safe_configuration( $details['configuration'] ?? array() ),
 			'quote'           => $this->safe_quote( $details['quote'] ?? array() ),
-			'billing_model'   => 'hourly_prepaid',
+			'billing_model'   => 'first_24_hours_prepaid_then_hourly',
 			'payment'         => $this->safe_payment( $details['payment'] ?? array() ),
 			'recovery_required' => ! empty( $order['recovery_required'] ),
 			'failure_code'    => sanitize_key( (string) ( $order['failure_code'] ?? '' ) ),
@@ -281,11 +331,25 @@ class Arvan_Reseller_Provisioning {
 	}
 
 	private function safe_payment( $payment ) {
-		return array(
-			'required_at_order' => false,
-			'status'            => 'not_charged_at_order',
-			'debit_timing'      => 'completed_usage_window',
+		$payment = is_array( $payment ) ? $payment : array();
+		$status  = sanitize_key( (string) ( $payment['status'] ?? 'pending' ) );
+		$status  = in_array( $status, array( 'pending', 'charged_at_order', 'compensated_after_failure', 'held_for_reconciliation' ), true ) ? $status : 'pending';
+		$output  = array(
+			'required_at_order' => true,
+			'status'            => $status,
+			'debit_timing'      => 'at_order_for_first_24_hours',
 		);
+		foreach ( array( 'charged_amount', 'currency', 'prepaid_until' ) as $key ) {
+			if ( isset( $payment[ $key ] ) && is_scalar( $payment[ $key ] ) ) {
+				$output[ $key ] = sanitize_text_field( (string) $payment[ $key ] );
+			}
+		}
+		foreach ( array( 'transaction_id', 'compensation_transaction_id' ) as $key ) {
+			if ( isset( $payment[ $key ] ) ) {
+				$output[ $key ] = absint( $payment[ $key ] );
+			}
+		}
+		return $output;
 	}
 
 	private function quote_snapshot( $hourly_price_minor ) {
@@ -348,6 +412,50 @@ class Arvan_Reseller_Provisioning {
 		if ( is_array( $order ) ) {
 			$this->database->record_notification_event( (int) $order['customer_id'], 'provisioning_failed', (string) $order['order_reference'], array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );
 		} }
+	private function fail_order_payment( $id, $reference, $customer_id, WP_Error $error ) {
+		$this->database->transition_order_status( $id, 'provisioning', 'failed', array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );
+		$this->database->create_audit_log( 'order_payment_failed', 'order', (string) $id, array( 'error_code' => $error->get_error_code() ), $customer_id );
+		$this->database->record_notification_event( $customer_id, 'payment_failed', $reference, array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );
+	}
+	private function compensate_order_debit( $id, $reference, $customer_id, $amount_minor, array &$details ) {
+		$currency = (string) ( $details['quote']['currency'] ?? $this->currency() );
+		$credit   = $this->wallet->credit_minor( $customer_id, $amount_minor, 'order_compensation', $reference, __( 'Cloud Server order provisioning compensation', 'arvan-reseller' ), $currency );
+		if ( is_wp_error( $credit ) ) {
+			$details['payment']['status'] = 'held_for_reconciliation';
+			$this->database->update( 'orders', array( 'details' => wp_json_encode( $details ), 'recovery_required' => 1, 'updated_at' => current_time( 'mysql', true ) ), array( 'id' => (int) $id ) );
+			$this->database->create_audit_log( 'order_compensation_failed', 'order', (string) $id, array( 'error_code' => $credit->get_error_code() ), $customer_id );
+			return new WP_Error( 'arvan_reseller_order_compensation_failed', __( 'The order charge requires manual financial reconciliation.', 'arvan-reseller' ), array( 'recovery_required' => true ) );
+		}
+		$details['payment']['status']                      = 'compensated_after_failure';
+		$details['payment']['compensation_transaction_id'] = (int) ( $credit['transaction_id'] ?? 0 );
+		$this->database->update( 'orders', array( 'details' => wp_json_encode( $details ), 'updated_at' => current_time( 'mysql', true ) ), array( 'id' => (int) $id ) );
+		$this->database->create_audit_log( 'order_prepaid_compensated', 'order', (string) $id, array( 'transaction_id' => (int) ( $credit['transaction_id'] ?? 0 ) ), $customer_id );
+		return $credit;
+	}
+	private function is_ambiguous_create_error( WP_Error $error ) {
+		$data = $error->get_error_data();
+		return 'arvan_reseller_invalid_api_response' === $error->get_error_code() || 'arvan_reseller_api_transport_error' === $error->get_error_code() || ( is_array( $data ) && ! empty( $data['retryable'] ) );
+	}
+	private function mark_ambiguous_create( $id, $reference, $customer_id, array $details, WP_Error $error ) {
+		$details['payment']['status'] = 'held_for_reconciliation';
+		$persisted = $this->database->transition_order_status(
+			$id,
+			'provisioning',
+			'failed',
+			array(
+				'recovery_required' => 1,
+				'failure_code'      => 'ambiguous_remote_create',
+				'details'           => wp_json_encode( $details ),
+				'updated_at'        => current_time( 'mysql', true ),
+			)
+		);
+		if ( ! $persisted ) {
+			return new WP_Error( 'arvan_reseller_order_recovery_persistence_failed', __( 'The ambiguous order state could not be persisted safely.', 'arvan-reseller' ), array( 'order_id' => (int) $id, 'recovery_required' => true ) );
+		}
+		$this->database->create_audit_log( 'provisioning_create_ambiguous', 'order', (string) $id, array( 'error_code' => $error->get_error_code() ), $customer_id );
+		$this->database->record_notification_event( $customer_id, 'provisioning_failed', $reference, array( 'failure_code' => 'ambiguous_remote_create', 'recovery_required' => true ) );
+		return new WP_Error( 'arvan_reseller_provisioning_recovery_required', __( 'The remote create result is ambiguous and requires manual reconciliation.', 'arvan-reseller' ), array( 'order_id' => (int) $id, 'recovery_required' => true ) );
+	}
 	private function mark_recovery_required( $id, $resource_id, array $server, $code ) {
 		$order                  = $this->database->get_row_by( 'orders', array( 'id' => (int) $id ) );
 		$details                = is_array( $order ) ? json_decode( (string) $order['details'], true ) : array();

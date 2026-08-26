@@ -201,7 +201,7 @@ class Arvan_Reseller_Billing {
 		$payload['region'] = isset( $payload['region'] ) ? $payload['region'] : (string) ( $settings['region'] ?? '' );
 		$idempotency_key   = isset( $payload['idempotency_key'] ) ? (string) $payload['idempotency_key'] : hash( 'sha256', wp_json_encode( $payload ) );
 
-		return ( new Arvan_Reseller_Provisioning( $this->database, $this->api_client ) )->create_server_order( $customer_id, $payload, $idempotency_key );
+		return ( new Arvan_Reseller_Provisioning( $this->database, $this->api_client, $this->wallet ) )->create_server_order( $customer_id, $payload, $idempotency_key );
 	}
 
 	/**

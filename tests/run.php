@@ -317,14 +317,16 @@ $tests['live adapter blocks invalid regions before network access'] = static fun
 $tests['provisioning creates local order then maps one remote resource'] = static function () {
 	$GLOBALS['arvan_test_options']['arvan_reseller_mock_resources'] = array();
 	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'mode' => 'mock', 'currency' => 'IRR', 'reseller_share_percent' => '10' );
-	$db = new Arvan_Test_Database(); $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $service = new Arvan_Reseller_Provisioning( $db, $api );
+	$db = new Arvan_Test_Database(); $wallet = new Arvan_Reseller_Wallet( $db ); $wallet->increase_balance( 7, '30000.0000', 'payment', 'order-funds' ); $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $service = new Arvan_Reseller_Provisioning( $db, $api, $wallet );
 	$config = array( 'region' => 'ir-thr-mock', 'availabilityZone' => 'mock-zone-1', 'flavorId' => 'mock-g2-1-2', 'imageId' => '00000000-0000-4000-8000-000000000101', 'name' => 'ordered-server', 'rootVolumeSizeGigaBytes' => 25 );
 	$result = $service->create_server_order( 7, $config, 'order-key-1' );
 	arvan_test_assert_true( ! is_wp_error( $result ), 'safe provisioning failed' );
 	arvan_test_assert_same( 'provisioned', $result['status'], 'order was not provisioned' );
 	arvan_test_assert_same( 'ordered-server', $result['configuration']['name'], 'order configuration contract is incomplete' );
 	arvan_test_assert_same( '26400.0000', $result['quote']['total_charge'], 'authoritative 24-hour quote mismatch' );
-	arvan_test_assert_same( 'not_charged_at_order', $result['payment']['status'], 'order payment timing is ambiguous' );
+	arvan_test_assert_same( 'charged_at_order', $result['payment']['status'], 'order payment was not authoritatively debited' );
+	arvan_test_assert_same( 36000000, $db->wallets[7]['balance_minor'], 'order debit did not preserve the quoted first-day balance' );
+	arvan_test_assert_same( '2026-01-02 00:00:00', $db->resources[1]['last_billed_at'], 'first prepaid day was not excluded from recurring billing' );
 	arvan_test_assert_true( $result['resource_record_id'] > 0, 'local resource mapping is absent from order response' );
 	arvan_test_assert_same( 1, count( $db->orders ), 'local order count mismatch' );
 	arvan_test_assert_same( 1, count( $db->resources ), 'resource mapping count mismatch' );
@@ -342,6 +344,17 @@ $tests['failed provisioning records one safe customer event'] = static function 
 	$notification = array_values( $db->notifications )[0];
 	arvan_test_assert_same( 'provisioning_failed', $notification['notification_type'], 'wrong provisioning notification type' );
 	arvan_test_assert_true( false === strpos( (string) $notification['payload'], 'api_key' ), 'provisioning notification leaked sensitive data' );
+};
+
+$tests['server order cannot bypass authoritative prepaid wallet debit'] = static function () {
+	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'mode'=>'mock','currency'=>'IRR','reseller_share_percent'=>'0','notification_enabled'=>1 );
+	$GLOBALS['arvan_test_options']['arvan_reseller_mock_resources'] = array();
+	$db = new Arvan_Test_Database(); $wallet = new Arvan_Reseller_Wallet( $db ); $service = new Arvan_Reseller_Provisioning( $db, new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ), $wallet );
+	$result = $service->create_server_order( 7, array( 'region'=>'ir-thr-mock','availabilityZone'=>'mock-zone-1','flavorId'=>'mock-g2-1-2','imageId'=>'image','name'=>'unfunded-server','rootVolumeSizeGigaBytes'=>25 ), 'unfunded-order' );
+	arvan_test_assert_same( 'arvan_reseller_insufficient_balance', $result->get_error_code(), 'unfunded order was not rejected by backend' );
+	arvan_test_assert_same( 'failed', $db->orders[1]['status'], 'unfunded order state was not terminal' );
+	arvan_test_assert_same( 0, count( get_option( 'arvan_reseller_mock_resources', array() ) ), 'unfunded order reached cloud provisioning' );
+	arvan_test_assert_same( 0, count( $db->transactions ), 'failed order mutated immutable ledger' );
 };
 
 $tests['resource contract allowlists useful details without leaking remote payload'] = static function () {
