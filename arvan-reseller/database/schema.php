@@ -124,6 +124,7 @@ function arvan_reseller_create_tables() {
 		status varchar(30) NOT NULL DEFAULT 'pending',
 		remote_status varchar(30) NOT NULL DEFAULT 'unknown',
 		hourly_price_minor bigint(20) unsigned NOT NULL DEFAULT 0,
+		currency char(3) NOT NULL DEFAULT 'IRR',
 		remote_payload longtext NULL,
 		sync_failure_count int(10) unsigned NOT NULL DEFAULT 0,
 		next_retry_at datetime NULL,

@@ -6,7 +6,7 @@
 define( 'ABSPATH', __DIR__ . '/fixtures/wordpress/' );
 define( 'ARVAN_RESELLER_PATH', dirname( __DIR__ ) . '/arvan-reseller/' );
 define( 'ARVAN_RESELLER_VERSION', '1.1.0' );
-define( 'ARVAN_RESELLER_DB_VERSION', '1.2.0' );
+define( 'ARVAN_RESELLER_DB_VERSION', '1.3.0' );
 define( 'ARVAN_RESELLER_MONEY_SCALE', 10000 );
 define( 'ARRAY_A', 'ARRAY_A' );
 define( 'HOUR_IN_SECONDS', 3600 );
@@ -204,10 +204,12 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 
 	public function ensure_wallet( $customer_id, $currency = 'IRR' ) {
 		$customer_id = absint( $customer_id );
+		$currency    = strtoupper( (string) $currency );
+		$key         = 'IRR' === $currency ? $customer_id : $customer_id . ':' . $currency;
 
-		if ( ! isset( $this->wallets[ $customer_id ] ) ) {
-			$this->wallets[ $customer_id ] = array(
-				'id'              => $customer_id,
+		if ( ! isset( $this->wallets[ $key ] ) ) {
+			$this->wallets[ $key ] = array(
+				'id'              => 'IRR' === $currency ? $customer_id : 1000000 + $customer_id,
 				'customer_id'     => $customer_id,
 				'currency'        => $currency,
 				'balance_minor'   => 0,
@@ -218,7 +220,7 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 			);
 		}
 
-		return $this->wallets[ $customer_id ];
+		return $this->wallets[ $key ];
 	}
 
 	public function get_wallet_by_customer_id( $customer_id, $currency = 'IRR' ) {
@@ -230,12 +232,16 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	}
 
 	public function update_locked_wallet_balance( $wallet_id, $before_minor, $after_minor ) {
-		if ( $this->fail_wallet_update || ! isset( $this->wallets[ $wallet_id ] ) || $this->wallets[ $wallet_id ]['balance_minor'] !== $before_minor ) {
+		$key = null;
+		foreach ( $this->wallets as $candidate_key => $wallet ) {
+			if ( (int) $wallet['id'] === (int) $wallet_id ) { $key = $candidate_key; break; }
+		}
+		if ( $this->fail_wallet_update || null === $key || $this->wallets[ $key ]['balance_minor'] !== $before_minor ) {
 			return false;
 		}
 
-		$this->wallets[ $wallet_id ]['balance_minor'] = $after_minor;
-		if ( $after_minor > (int) $this->wallets[ $wallet_id ]['threshold_minor'] ) { $this->wallets[ $wallet_id ]['low_balance_notified'] = 0; }
+		$this->wallets[ $key ]['balance_minor'] = $after_minor;
+		if ( $after_minor > (int) $this->wallets[ $key ]['threshold_minor'] ) { $this->wallets[ $key ]['low_balance_notified'] = 0; }
 
 		return true;
 	}
@@ -261,9 +267,9 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 		return null;
 	}
 
-	public function get_transactions_by_customer_id( $customer_id, $limit = 50 ) {
-		return array_values( array_filter( $this->transactions, static function ( $row ) use ( $customer_id ) {
-			return (int) $row['customer_id'] === (int) $customer_id;
+	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '' ) {
+		return array_values( array_filter( $this->transactions, static function ( $row ) use ( $customer_id, $currency ) {
+			return (int) $row['customer_id'] === (int) $customer_id && ( '' === (string) $currency || (string) $row['currency'] === (string) $currency );
 		} ) );
 	}
 
@@ -323,13 +329,13 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public function get_order_by_idempotency_key( $key ) { foreach ( $this->orders as $row ) { if ( $row['idempotency_key'] === $key ) { return $row; } } return null; }
 	public function lock_order( $id ) { return $this->active && isset( $this->orders[$id] ) ? $this->orders[$id] : null; }
 	public function transition_order_status( $id, $from, $to, array $extra = array() ) { if ( ! isset( $this->orders[$id] ) || $this->orders[$id]['status'] !== $from ) { return false; } $this->orders[$id] = array_merge( $this->orders[$id], $extra, array( 'status' => $to, 'updated_at' => current_time( 'mysql', true ) ) ); return true; }
-	public function save_resource( array $data ) { if ( $this->fail_resource_save ) { return false; } $id = count( $this->resources ) + 1; $data = wp_parse_args( $data, array( 'id' => $id, 'created_at' => current_time( 'mysql', true ), 'updated_at' => current_time( 'mysql', true ), 'last_billed_at' => null ) ); $data['id'] = $id; $this->resources[$id] = $data; return $id; }
+	public function save_resource( array $data ) { if ( $this->fail_resource_save ) { return false; } $id = count( $this->resources ) + 1; $data = wp_parse_args( $data, array( 'id' => $id, 'currency' => 'IRR', 'created_at' => current_time( 'mysql', true ), 'updated_at' => current_time( 'mysql', true ), 'last_billed_at' => null ) ); $data['id'] = $id; $this->resources[$id] = $data; return $id; }
 	public function get_resource_by_arvan_id( $rid, $type = '', $region = '' ) { foreach ( $this->resources as $r ) { if ( $r['resource_id'] === $rid ) { return $r; } } return null; }
 	public function get_resources_by_customer_id( $id ) { return array_values( array_filter( $this->resources, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ); }
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) { return array_values( array_slice( array_filter( $this->resources, static function( $r ) use ( $after_id ) { return (int) $r['id'] > (int) $after_id && in_array( (string) $r['status'], array( 'active', 'provisioned', 'suspended' ), true ); } ), 0, $limit ) ); }
 	public function get_orders_requiring_recovery( $limit = 50 ) { return array_values( array_filter( $this->orders, static function( $r ) { return ! empty( $r['recovery_required'] ); } ) ); }
 	public function get_row_by( $table, array $where ) { if ( 'orders' === $table && isset( $where['id'] ) ) { return $this->orders[(int)$where['id']] ?? null; } if ( 'resources' === $table && isset( $where['id'], $this->resources[(int)$where['id']] ) ) { $row=$this->resources[(int)$where['id']]; foreach($where as $key=>$value){if(!isset($row[$key]) || (string)$row[$key] !== (string)$value){return null;}} return $row; } return null; }
-	public function mark_wallet_low_balance_notified( $wallet_id ) { $this->wallets[$wallet_id]['low_balance_notified'] = 1; return true; }
+	public function mark_wallet_low_balance_notified( $wallet_id ) { foreach ( $this->wallets as &$wallet ) { if ( (int) $wallet['id'] === (int) $wallet_id ) { $wallet['low_balance_notified'] = 1; return true; } } return false; }
 	public function get_notification_by_event_key( $key ) { foreach ( $this->notifications as $r ) { if ( $r['event_key'] === $key ) { return $r; } } return null; }
 	public function create_notification( array $data ) { $id=count($this->notifications)+1; $data['id']=$id; $this->notifications[$id]=$data; return $id; }
 	public function aggregate_usage_period( $start, $end, $currency = 'IRR' ) { $out=array('base_cost_minor'=>0,'customer_charge_minor'=>0,'reseller_share_minor'=>0,'usage_count'=>0); foreach($this->usage_records as $r){$out['base_cost_minor']+=(int)$r['base_cost_minor'];$out['customer_charge_minor']+=(int)$r['total_charge_minor'];$out['reseller_share_minor']+=(int)$r['reseller_share_minor'];++$out['usage_count'];} return $out; }

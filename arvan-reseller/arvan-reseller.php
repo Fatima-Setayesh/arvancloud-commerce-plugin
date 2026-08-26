@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'ARVAN_RESELLER_VERSION', '1.1.0' );
-define( 'ARVAN_RESELLER_DB_VERSION', '1.2.0' );
+define( 'ARVAN_RESELLER_DB_VERSION', '1.3.0' );
 /**
  * Monetary values are persisted as integers at four decimal places.
  *

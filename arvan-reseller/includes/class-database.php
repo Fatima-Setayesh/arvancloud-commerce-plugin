@@ -412,8 +412,12 @@ class Arvan_Reseller_Database {
 	 * @param int $limit Limit.
 	 * @return array
 	 */
-	public function get_transactions_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'wallet_transactions', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '' ) {
+		$where = array( 'customer_id' => absint( $customer_id ) );
+		if ( '' !== (string) $currency ) {
+			$where['currency'] = $this->normalize_currency( $currency );
+		}
+		return $this->get_results_by( 'wallet_transactions', $where, $limit );
 	}
 
 	/**
@@ -568,6 +572,7 @@ class Arvan_Reseller_Database {
 			'region'         => '',
 			'status'         => 'pending',
 			'remote_status'  => 'unknown',
+			'currency'       => 'IRR',
 			'remote_payload' => '',
 			'last_synced_at' => null,
 			'last_billed_at' => null,

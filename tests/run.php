@@ -129,6 +129,26 @@ $tests['billing write failure rolls wallet and ledger back'] = static function (
 	arvan_test_assert_same( $ledger_count, count( $db->transactions ), 'billing failure retained ledger debit' );
 };
 
+$tests['configured currency stays consistent across wallet billing and history'] = static function () {
+	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'currency' => 'USD' );
+	$db      = new Arvan_Test_Database();
+	$wallet  = new Arvan_Reseller_Wallet( $db );
+	$billing = new Arvan_Reseller_Billing( $db, $wallet, new Arvan_Reseller_API_Client() );
+	$wallet->increase_balance( 13, '5.0000', 'payment', 'usd-credit', '', 'USD' );
+	$wallet->increase_balance( 13, '7.0000', 'payment', 'irr-credit', '', 'IRR' );
+	$result = $billing->process_resource_usage(
+		array( 'id' => 103, 'customer_id' => 13, 'resource_id' => 'server-usd', 'currency' => 'USD' ),
+		array( 'start' => '2026-01-01 00:00:00', 'end' => '2026-01-01 01:00:00', 'usage_amount' => '1.0000', 'unit_price' => '2.0000', 'unit' => 'hour' )
+	);
+
+	arvan_test_assert_true( ! is_wp_error( $result ), 'USD billing failed' );
+	arvan_test_assert_same( 30000, $db->wallets['13:USD']['balance_minor'], 'USD wallet was not debited' );
+	arvan_test_assert_same( 70000, $db->wallets[13]['balance_minor'], 'IRR wallet was changed by USD billing' );
+	arvan_test_assert_same( 'USD', $db->usage_records[0]['currency'], 'usage currency did not follow resource snapshot' );
+	arvan_test_assert_same( 3, count( $wallet->get_balance_history( 13, 50 ) ), 'unfiltered history lost a currency' );
+	arvan_test_assert_same( 2, count( $wallet->get_balance_history( 13, 50, 'USD' ) ), 'USD history filter was not applied' );
+};
+
 $tests['schema contains all domain tables and no decimal money columns'] = static function () {
 	$schema = file_get_contents( dirname( __DIR__ ) . '/arvan-reseller/database/schema.php' );
 	foreach ( array( 'wallets', 'wallet_transactions', 'payments', 'orders', 'resources', 'usage_records', 'invoices', 'settlements', 'notifications', 'audit_logs' ) as $table ) {
@@ -226,7 +246,7 @@ $tests['versioned migration creates the complete critical schema'] = static func
 
 	$result = arvan_reseller_run_migrations();
 	arvan_test_assert_true( $result, 'migration did not verify the resulting schema' );
-	arvan_test_assert_same( '1.2.0', get_option( 'arvan_reseller_db_version' ), 'schema version was not advanced' );
+	arvan_test_assert_same( '1.3.0', get_option( 'arvan_reseller_db_version' ), 'schema version was not advanced' );
 	arvan_test_assert_same( 10, count( $GLOBALS['wpdb']->tables ), 'migration did not create all domain tables' );
 	arvan_test_assert_true( isset( $GLOBALS['wpdb']->tables['wp_arvan_reseller_wallets']['balance_minor'] ), 'wallet integer balance column missing' );
 };

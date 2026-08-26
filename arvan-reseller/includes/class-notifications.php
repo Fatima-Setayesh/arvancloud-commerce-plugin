@@ -9,7 +9,7 @@ class Arvan_Reseller_Notifications {
 		$this->database = $database; }
 
 	/** Send at most one low-balance email until the wallet is recharged above threshold. */
-	public function maybe_send_low_balance( $customer_id ) {
+	public function maybe_send_low_balance( $customer_id, $currency = '' ) {
 		$settings = get_option( 'arvan_reseller_settings', array() );
 		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
 			return array(
@@ -17,7 +17,8 @@ class Arvan_Reseller_Notifications {
 				'reason'  => 'disabled',
 			);
 		}
-		$wallet = $this->database->get_wallet_by_customer_id( absint( $customer_id ) );
+		$currency = $this->normalize_currency( $currency );
+		$wallet   = $this->database->get_wallet_by_customer_id( absint( $customer_id ), $currency );
 		if ( null === $wallet || (int) $wallet['threshold_minor'] <= 0 || (int) $wallet['balance_minor'] > (int) $wallet['threshold_minor'] || ! empty( $wallet['low_balance_notified'] ) ) {
 			return array( 'skipped' => true ); }
 		$event_key = hash( 'sha256', 'low-balance-v1|' . (int) $wallet['id'] . '|' . (string) $wallet['updated_at'] );
@@ -73,5 +74,14 @@ class Arvan_Reseller_Notifications {
 			'status'     => $sent ? 'sent' : 'failed',
 			'idempotent' => null !== $existing,
 		);
+	}
+
+	private function normalize_currency( $currency ) {
+		if ( '' === (string) $currency ) {
+			$settings = get_option( 'arvan_reseller_settings', array() );
+			$currency = (string) ( $settings['currency'] ?? 'IRR' );
+		}
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $currency ) );
+		return 3 === strlen( $currency ) ? $currency : 'IRR';
 	}
 }

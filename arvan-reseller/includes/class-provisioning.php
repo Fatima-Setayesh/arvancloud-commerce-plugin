@@ -91,6 +91,7 @@ class Arvan_Reseller_Provisioning {
 				'status'             => 'provisioned',
 				'remote_status'      => sanitize_key( (string) ( $server['status'] ?? 'unknown' ) ),
 				'hourly_price_minor' => $hourly_price_minor,
+				'currency'           => $this->currency(),
 				'remote_payload'     => wp_json_encode( Arvan_Reseller_Security::redact( $server ) ),
 				'last_synced_at'     => current_time( 'mysql', true ),
 			)
@@ -170,6 +171,7 @@ class Arvan_Reseller_Provisioning {
 				'status'             => 'provisioned',
 				'remote_status'      => sanitize_key( (string) ( $server['status'] ?? 'unknown' ) ),
 				'hourly_price_minor' => $price,
+				'currency'           => $this->currency(),
 				'remote_payload'     => wp_json_encode( Arvan_Reseller_Security::redact( $server ) ),
 			)
 		);
@@ -236,6 +238,11 @@ class Arvan_Reseller_Provisioning {
 				return is_wp_error( $minor ) || $minor <= 0 ? new WP_Error( 'arvan_reseller_invalid_flavor_price', __( 'Flavor has no valid hourly price.', 'arvan-reseller' ) ) : $minor;
 			}
 		} return new WP_Error( 'arvan_reseller_flavor_not_found', __( 'Selected Cloud Server flavor was not found.', 'arvan-reseller' ) ); }
+
+	private function currency() {
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $settings['currency'] ?? 'IRR' ) ) );
+		return 3 === strlen( $currency ) ? $currency : 'IRR'; }
 
 	private function fail_order( $id, $from, WP_Error $error ) {
 		$this->database->transition_order_status( $id, $from, 'failed', array( 'failure_code' => sanitize_key( $error->get_error_code() ) ) );

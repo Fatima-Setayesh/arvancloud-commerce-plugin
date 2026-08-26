@@ -484,10 +484,11 @@ class Arvan_Reseller_REST_API {
 		} return Arvan_Reseller_Security::can_manage_plugin() ? true : new WP_Error( 'arvan_reseller_forbidden', __( 'Administrator capability is required.', 'arvan-reseller' ), array( 'status' => 403 ) ); }
 
 	public function wallet() {
-		$row = $this->database->get_wallet_by_customer_id( get_current_user_id() );
+		$currency = $this->configured_currency();
+		$row      = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
 		if ( null === $row ) {
-			$this->wallet->create_wallet( get_current_user_id() );
-			$row = $this->database->get_wallet_by_customer_id( get_current_user_id() );
+			$this->wallet->create_wallet( get_current_user_id(), $currency );
+			$row = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
 		} return array(
 			'balance'   => Arvan_Reseller_Money::format( (int) $row['balance_minor'] ),
 			'threshold' => Arvan_Reseller_Money::format( (int) $row['threshold_minor'] ),
@@ -495,7 +496,7 @@ class Arvan_Reseller_REST_API {
 			'status'    => (string) $row['status'],
 		); }
 	public function transactions( $request ) {
-		return array_map( array( $this, 'safe_transaction' ), $this->wallet->get_balance_history( get_current_user_id(), $this->limit( $request ) ) ); }
+		return array_map( array( $this, 'safe_transaction' ), $this->wallet->get_balance_history( get_current_user_id(), $this->limit( $request ), $this->configured_currency() ) ); }
 	public function payments( $request ) {
 		return $this->payment->list_customer_payments( get_current_user_id(), $this->limit( $request ) ); }
 	public function create_payment( $request ) {
@@ -772,6 +773,9 @@ class Arvan_Reseller_REST_API {
 			'data' => (array) ( $result['body']['data'] ?? array() ),
 			'mode' => $this->api->get_mode(),
 		); }
+	private function configured_currency() {
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $this->settings->get_settings()['currency'] ?? 'IRR' ) ) );
+		return 3 === strlen( $currency ) ? $currency : 'IRR'; }
 	public function safe_transaction( array $r ) {
 		return array(
 			'id'             => (int) $r['id'],
@@ -792,6 +796,7 @@ class Arvan_Reseller_REST_API {
 			'status'         => (string) $r['status'],
 			'remote_status'  => (string) $r['remote_status'],
 			'hourly_price'   => Arvan_Reseller_Money::format( (int) ( $r['hourly_price_minor'] ?? 0 ) ),
+			'currency'       => (string) ( $r['currency'] ?? 'IRR' ),
 			'last_synced_at' => (string) $r['last_synced_at'],
 			'last_billed_at' => (string) $r['last_billed_at'],
 			'created_at'     => (string) $r['created_at'],
