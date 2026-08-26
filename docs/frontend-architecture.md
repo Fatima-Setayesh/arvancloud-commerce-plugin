@@ -29,18 +29,20 @@ The portal does not store passwords. Logged-out customers receive a password-man
 
 ## Contract boundaries
 
-The presentation integration found these real REST contract gaps and does not fake them:
+The presentation consumes only allowlisted REST fields. Admin resources include owner
+and order mapping; order responses include safe configuration, quote, prepaid payment,
+failure/recovery, and local resource fields; resource responses include validated
+name/image/flavor/disk/IP/lifecycle values; notifications expose read state and an
+owned idempotent read mutation. Raw remote payloads are still intentionally absent.
 
-- `GET /admin/resources` omits `customer_id`, so the admin resource table cannot show ownership.
-- Resource serializers omit server `name`, image, flavor/configuration, IP, `order_id`, suspension time, and termination time. Customer resource details show only exposed fields.
-- Admin order serialization omits configuration/quote, failure code, recovery flag, and local resource record ID.
-- Orders do not expose a payment reference/acceptance relationship, so the provisioning timeline does not claim an order payment state.
-- Notifications have delivery status but no read/unread field or mutation route.
-- List routes expose only a bounded `limit`; there is no offset/cursor or total for true server-side pagination/search.
-- There is no admin-only Demo reset/seed route.
-
-These are presentation blockers only for the named fields/features. Wallet, payments, catalogs, estimate, orders, resources, usage, invoices, notifications, health, reconciliation, and all other exposed workflows remain integrated. The smallest safe backend change is to extend the existing safe serializers/list arguments with allowlisted fields and add explicit capability/nonce-protected endpoints for read state and Demo reset; financial/security logic need not be rewritten.
+Collections accept bounded `page`/`offset` pagination and expose has-more metadata in
+response headers. They do not compute a potentially expensive total count, so the UI
+uses next/previous navigation instead of inventing totals. No reset/seed endpoint is
+shipped: demos use normal protected Mock workflows and test harnesses, avoiding a
+production mutation surface whose only purpose would be synthetic data.
 
 ## Polling and performance
 
-Only pending orders are polled. Polling stops on terminal states, after 15 attempts, while the page is hidden, or when navigation changes. Requests are bounded to 100 rows because that is the current backend maximum. Assets enqueue only when a shortcode or plugin admin page renders.
+Only pending or recovery-relevant orders are polled. Polling stops on terminal states,
+after 15 attempts, while the page is hidden, or when navigation changes. Requests are
+bounded to 100 rows. Assets enqueue only when a shortcode or plugin admin page renders.

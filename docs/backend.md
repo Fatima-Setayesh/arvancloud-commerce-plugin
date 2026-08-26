@@ -42,7 +42,8 @@ Customer routes:
 | GET | `/resources`, `/resources/{local-id}` | Only the current customer's resources |
 | GET | `/usage` | Current customer's immutable usage windows |
 | GET | `/invoices` | Current customer's invoice records, when present |
-| GET | `/notifications` | Current customer's notification history |
+| GET | `/notifications` | Current customer's notification history with read state |
+| POST | `/notifications/{local-id}/read` | Idempotently mark one owned notification read |
 
 The order body contains `region`, `availabilityZone`, `flavorId`, `imageId`, `name`,
 and `rootVolumeSizeGigaBytes`; documented optional booleans are accepted.
@@ -53,7 +54,9 @@ above plus optional `enableBackup`, `enableFailOver`, `enableIpv4`, and `enableI
 Payment creation and order creation require a unique `Idempotency-Key`
 header (the JSON fallback `idempotency_key` remains supported for existing clients).
 Payment confirmation is idempotent by its server-generated payment reference.
-List routes accept `limit` from 1 to 100. Customer responses contain formatted money,
+List routes accept `limit` from 1 to 100 plus either `page` or `offset`. They remain
+backward-compatible arrays and return `X-Arvan-Page`, `X-Arvan-Per-Page`, and
+`X-Arvan-Has-More` response headers. Customer responses contain formatted money,
 stable references/statuses and public lifecycle timestamps, but never encrypted values,
 raw remote payloads, SQL errors, stack traces, or filesystem paths.
 
@@ -101,6 +104,19 @@ ledger row with a unique idempotency key, updates the cached balance and commits
 unit. Payment confirmation, billing and cursor advancement are idempotent. Usage has
 both a billing-reference uniqueness rule and a resource/window uniqueness rule.
 
+Cloud Server ordering is prepaid and backend-authoritative. The server validates the
+catalog flavor and reseller share, creates an immutable 24-hour quote, and atomically
+debits that amount before calling the cloud adapter. On success the resource billing
+cursor begins at `prepaid_until`, so the same first day is not billed again. A known
+deterministic create failure is compensated by an idempotent ledger credit. An
+ambiguous transport or 5xx outcome retains the debit and records recovery state because
+automatic refund plus retry could create an unpaid duplicate remote server.
+
+Resources retain the currency snapshotted at ordering. Hourly billing, notifications,
+invoices, and balance policy use that immutable value rather than a later settings
+change. The daily UTC job discovers every currency represented in the period and emits
+independent idempotent invoices and settlement summaries per currency.
+
 ## Jobs and recovery
 
 Usage sync uses an atomic option lock, keyset pagination, persisted retry state,
@@ -109,12 +125,16 @@ idempotent outcome. Notifications are deduplicated until a recharge crosses the 
 threshold. A zero balance evaluates every resource owned by only that customer.
 
 Provisioning persists a pending local order before a remote call. If remote creation
-succeeds but local mapping fails, the order is flagged for reconciliation with the
-remote ID. The reconciliation job repairs this mapping without creating another server.
+succeeds but local mapping fails, or if the remote outcome is ambiguous, the order is
+flagged for reconciliation. A known remote ID can be mapped safely without creating
+another server; ambiguous outcomes remain an explicit manual-recovery condition.
 
 Termination policies are `disabled` (default), `immediate`, or `grace`; repeated runs
-are safe because terminated resources are excluded. Daily settlement references are
-derived from period and currency, making retries idempotent.
+are safe because terminated resources are excluded. Suspension uses the documented
+power-off operation and pauses this plugin's hourly charging, but it is not a promise
+that ArvanCloud stops external infrastructure billing. Daily settlement references are
+derived from period and currency, making retries idempotent. Settlement is internal
+accounting only and never invokes a payout API.
 
 WP-Cron is traffic-driven. Production sites should arrange a monitored system scheduler
 to request `wp-cron.php` at least every five minutes (and disable the built-in visitor

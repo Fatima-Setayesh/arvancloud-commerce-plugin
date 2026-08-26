@@ -32,7 +32,7 @@ ArvanCloud Commerce turns WordPress into a guarded backend for prepaid Cloud Ser
 | --- | --- |
 | **Top up** | Mock payment intents confirm atomically and credit the wallet once. |
 | **Estimate** | Decimal-string hours and catalog flavor prices avoid float drift. |
-| **Order** | A unique idempotency key prevents duplicate server creation. |
+| **Order** | The backend prices and atomically debits the first 24 hours before any remote create; a unique idempotency key prevents duplicates. |
 | **Provision** | Local pending state exists before the remote call; reconciliation repairs partial success. |
 | **Bill** | Immutable UTC usage windows debit an integer-money ledger exactly once. |
 | **Protect** | Low-balance alerts, zero-balance suspension, and configurable termination are retry-safe. |
@@ -45,7 +45,7 @@ ArvanCloud Commerce turns WordPress into a guarded backend for prepaid Cloud Ser
 - Deterministic, zero-network Mock Cloud adapter
 - Allowlisted Live adapter for documented IaaS v3 operations
 - Mock payments, refunds, catalog estimates, Cloud Server orders, and owned resources
-- Hourly prepaid billing with unique resource/window and billing-reference constraints
+- Authoritative first-24-hour prepayment followed by hourly billing with unique resource/window and billing-reference constraints
 - Low-balance notification deduplication and zero-balance resource policies
 - Provisioning recovery markers and safe reconciliation
 - Versioned, authenticated API-key encryption with explicit rotation and deletion
@@ -79,7 +79,7 @@ ArvanCloud Commerce turns WordPress into a guarded backend for prepaid Cloud Ser
 2. Activate **Arvan Reseller** from the WordPress Plugins screen.
 3. Open **Arvan Reseller → Settings**.
 4. Keep API Mode set to `mock` for development and demos.
-5. Complete the setup wizard and use **Create/check pages** to create the storefront and customer portal.
+5. Activation creates/checks the storefront and customer portal idempotently; the setup action can safely repair missing pages.
 6. Grant `manage_arvan_reseller` only to trusted administrators.
 
 The generated pages use `[arvan_reseller_store]` and `[arvan_reseller_portal]`. The administrator console covers customers, payments and refunds, orders, resources, settlements, health, audit, and protected API-key controls. The responsive customer surface includes authentication, wallet and Mock top-up, configuration estimates, orders, resources, usage, invoices, transactions, and notifications.
@@ -108,7 +108,7 @@ State-changing requests require an authenticated WordPress cookie, `X-WP-Nonce`,
 | Catalog | `GET /catalog/regions`, `/images`, `/flavors`; `POST /catalog/estimate` |
 | Orders | `GET/POST /orders` |
 | Resources | `GET /resources`, `GET /resources/{local-id}` |
-| Records | `GET /usage`, `GET /invoices`, `GET /notifications` |
+| Records | `GET /usage`, `GET /invoices`, `GET /notifications`; `POST /notifications/{id}/read` |
 
 ### Administrator routes
 
@@ -137,7 +137,7 @@ Financial mutation <- transaction lock + immutable ledger + idempotency
 - Redirects and custom API hosts are not permitted in Live Mode.
 - Raw remote payloads, SQL errors, stack traces, paths, and encrypted material never appear in safe REST responses.
 - Blank API-key updates preserve the current secret; deletion requires an explicit action.
-- Deactivation retains financial data. Uninstall also retains it unless irreversible deletion was explicitly enabled.
+- Deactivation retains all data. Uninstall always removes the encrypted API key and transient security state; financial/domain tables remain unless irreversible data deletion was explicitly enabled.
 
 ## Quality and testing
 

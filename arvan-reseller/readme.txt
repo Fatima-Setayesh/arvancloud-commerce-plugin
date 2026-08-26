@@ -78,17 +78,18 @@ explicit deletion is available through the admin REST settings contract.
 
 == Data lifecycle ==
 
-Activation performs non-destructive versioned migrations and schedules usage,
-reconciliation and settlement jobs. Deactivation removes schedules and locks but
-retains customer and financial data. Uninstall also retains data by default. Set
-`delete_data_on_uninstall` explicitly before uninstalling to delete plugin tables and
-options. This action is irreversible.
+Activation performs non-destructive versioned migrations, creates/checks the Store and
+Portal pages idempotently, and schedules usage, reconciliation and settlement jobs.
+Deactivation removes schedules and locks but retains customer and financial data.
+Uninstall always removes the encrypted API key and transient security state. Domain
+tables remain by default; set `delete_data_on_uninstall` explicitly before uninstalling
+to delete them and the remaining plugin options. Full data deletion is irreversible.
 
 == REST API ==
 
 Namespace: `arvan-reseller/v1`. Customer routes cover wallet, ledger history, mock
 payments, catalogs and estimates, Cloud Server orders, owned resources, usage windows,
-invoices and notifications. Admin routes cover safe settings, connection testing,
+invoices and read-state-aware notifications. Admin routes cover safe settings, connection testing,
 customers, wallets, payments/refunds, orders, resources, usage, settlements, audit
 logs, cron health and manual billing/reconciliation.
 See `docs/backend.md` for the exact contract.
@@ -115,6 +116,12 @@ Settlement is explicitly internal accounting with a Mock settlement adapter; thi
 release does not claim or attempt an external payout. Suspension uses the documented
 power-off operation, so it is operational shutdown rather than an undocumented billing
 freeze.
+
+Order placement is prepaid: the backend validates the catalog price and atomically
+debits the first 24 hours before calling the cloud adapter. Successful resources begin
+recurring hourly billing only after that prepaid cursor. A deterministic create failure
+is compensated; an ambiguous transport/server response keeps the debit and marks the
+order for reconciliation to avoid duplicate paid creation.
 
 == Changelog ==
 
