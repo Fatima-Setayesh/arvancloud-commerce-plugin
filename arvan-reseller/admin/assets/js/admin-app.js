@@ -106,15 +106,16 @@
 	async function renderCustomers() {
 		setContent(ui.loading());
 		try {
-			const [customers, wallets] = await Promise.all([api.get('admin/customers', { query: { limit: 100 } }), api.get('admin/wallets', { query: { limit: 100 } })]);
-			state.data.customers = { customers, wallets };
+			const [customers, wallets, resources] = await Promise.all([api.get('admin/customers', { query: { limit: 100 } }), api.get('admin/wallets', { query: { limit: 100 } }), api.get('admin/resources', { query: { limit: 100 } })]);
+			state.data.customers = { customers, wallets, resources };
 			const filtered = filterRows(customers, ['display_name', 'email', 'id']);
 			const rows = filtered.map((customer) => {
 				const wallet = wallets.find((item) => Number(item.customer_id) === Number(customer.id));
+				const serviceCount = resources.filter((item) => Number(item.customer_id) === Number(customer.id)).length;
 				const low = wallet && numeric(wallet.balance) <= numeric(wallet.threshold);
-				return ['<strong>' + ui.escape(customer.display_name) + '</strong><br><small>' + ui.escape(customer.email) + '</small>', '<code dir="ltr">#' + ui.escape(customer.id) + '</code>', wallet ? ui.money(wallet.balance, wallet.currency) : '—', '—', low ? ui.status('suspended').replace('تعلیق‌شده', 'موجودی کم') : ui.status(wallet ? wallet.status : 'pending'), ui.date(customer.registered_at)];
+				return ['<strong>' + ui.escape(customer.display_name) + '</strong><br><small>' + ui.escape(customer.email) + '</small>', '<code dir="ltr">#' + ui.escape(customer.id) + '</code>', wallet ? ui.money(wallet.balance, wallet.currency) : '—', ui.persianDigits(serviceCount), low ? ui.status('suspended').replace('تعلیق‌شده', 'موجودی کم') : ui.status(wallet ? wallet.status : 'pending'), ui.date(customer.registered_at)];
 			});
-			setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + '<div class="ar-alert ar-alert--warning">' + ui.icon('info') + '<div><strong>تعداد سرویس هر مشتری در قرارداد فعلی قابل اتصال نیست</strong><p>پاسخ امن منابع، customer_id را برنمی‌گرداند؛ مقدار ساختگی نمایش داده نمی‌شود.</p></div></div><article class="ar-card" style="margin-top:16px">' + toolbar({ placeholder: 'نام، ایمیل یا شناسه مشتری' }) + table(['مشتری', 'شناسه', 'کیف پول', 'سرویس‌ها', 'وضعیت', 'عضویت'], rows, 'مشتری‌ای یافت نشد') + '</article>');
+			setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'نام، ایمیل یا شناسه مشتری' }) + table(['مشتری', 'شناسه', 'کیف پول', 'سرویس‌ها', 'وضعیت', 'عضویت'], rows, 'مشتری‌ای یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + ui.error(error, 'refresh-page')); }
 	}
 
@@ -135,8 +136,12 @@
 		try {
 			const orders = await api.get('admin/orders', { query: { limit: 100 } });
 			const filtered = filterRows(orders, ['order_reference', 'customer_id', 'resource_id', 'status']);
-			const rows = filtered.map((order) => ['<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', '<code dir="ltr">#' + ui.escape(order.customer_id) + '</code>', 'سرور ابری', ui.status(order.status), '<code dir="ltr">' + ui.escape(order.resource_id || '—') + '</code>', ui.escape(order.region), ui.date(order.created_at)]);
-			setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع، مشتری یا شناسه منبع' }) + table(['سفارش', 'مشتری', 'محصول', 'وضعیت', 'شناسه منبع', 'منطقه', 'ثبت'], rows, 'سفارشی یافت نشد') + '</article>');
+			const rows = filtered.map((order) => {
+				const config = order.configuration || {};
+				const recovery = order.recovery_required ? ui.status('failed').replace('ناموفق', 'نیازمند بازیابی') : (order.failure_code ? '<code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : '—');
+				return ['<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', '<code dir="ltr">#' + ui.escape(order.customer_id) + '</code>', '<strong>' + ui.escape(config.name || 'سرور ابری') + '</strong><br><small><code dir="ltr">' + ui.escape(config.flavorId || '—') + '</code></small>', ui.status(order.status), '<code dir="ltr">' + ui.escape(order.resource_id || '—') + '</code>', ui.escape(order.payment && order.payment.status || '—'), recovery, ui.date(order.created_at)];
+			});
+			setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع، مشتری یا شناسه منبع' }) + table(['سفارش', 'مشتری', 'پیکربندی', 'وضعیت', 'شناسه منبع', 'پرداخت سفارش', 'بازیابی/خطا', 'ثبت'], rows, 'سفارشی یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + ui.error(error, 'refresh-page')); }
 	}
 
@@ -145,8 +150,8 @@
 		try {
 			const resources = await api.get('admin/resources', { query: { limit: 100 } });
 			const filtered = filterRows(resources, ['resource_id', 'customer_id', 'region', 'status', 'remote_status']);
-			const rows = filtered.map((resource) => ['<code dir="ltr">' + ui.escape(resource.resource_id) + '</code>', ui.escape(resource.region), ui.status(resource.status), ui.status(resource.remote_status), ui.money(resource.hourly_price, runtime.settings.currency), ui.date(resource.last_synced_at)]);
-			setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1], '<button class="ar-button" type="button" data-ar-action="run-reconciliation">' + ui.icon('refresh') + 'بازیابی نگاشت‌ها</button>') + '<div class="ar-alert ar-alert--warning">' + ui.icon('info') + '<div><strong>مالکیت مشتری در این پاسخ سرویس ارائه نمی‌شود</strong><p>رابط فقط فیلدهای امن موجود را نمایش می‌دهد؛ نمایش مالکیت به تکمیل قرارداد سمت سرور نیاز دارد.</p></div></div><article class="ar-card" style="margin-top:16px">' + toolbar({ placeholder: 'شناسه منبع، منطقه یا وضعیت' }) + table(['شناسه منبع', 'منطقه', 'وضعیت محلی', 'وضعیت راه‌دور', 'نرخ ساعتی', 'آخرین همگام‌سازی'], rows, 'سروری یافت نشد') + '</article>');
+			const rows = filtered.map((resource) => ['<strong>' + ui.escape(resource.name || 'سرور ابری') + '</strong><br><code dir="ltr">' + ui.escape(resource.resource_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.customer_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.order_id || '—') + '</code>', ui.escape(resource.region), ui.status(resource.status), ui.status(resource.remote_status), ui.money(resource.hourly_price, resource.currency), ui.date(resource.last_synced_at)]);
+			setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1], '<button class="ar-button" type="button" data-ar-action="run-reconciliation">' + ui.icon('refresh') + 'بازیابی نگاشت‌ها</button>') + '<article class="ar-card">' + toolbar({ placeholder: 'شناسه منبع، مشتری، منطقه یا وضعیت' }) + table(['سرویس', 'مشتری', 'سفارش', 'منطقه', 'وضعیت محلی', 'وضعیت راه‌دور', 'نرخ ساعتی', 'آخرین همگام‌سازی'], rows, 'سروری یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1]) + ui.error(error, 'refresh-page')); }
 	}
 

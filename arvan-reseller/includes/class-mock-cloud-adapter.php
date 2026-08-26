@@ -75,11 +75,16 @@ class Arvan_Reseller_Mock_Cloud_Adapter implements Arvan_Reseller_Cloud_Adapter_
 				'status'           => 'ACTIVE',
 				'availabilityZone' => sanitize_text_field( $payload['availabilityZone'] ),
 				'flavor'           => array(
-					'id'           => sanitize_text_field( $payload['flavorId'] ),
-					'pricePerHour' => '1000.0000',
+					'id'              => sanitize_text_field( $payload['flavorId'] ),
+					'name'            => 'Mock G2',
+					'cpuCount'        => 1,
+					'memoryMegaBytes' => 2048,
+					'diskGigaBytes'   => 25,
+					'pricePerHour'    => '1000.0000',
 				),
-				'image'            => array( 'id' => sanitize_text_field( $payload['imageId'] ) ),
-				'createDate'       => current_time( 'mysql', true ),
+				'image'                    => array( 'id' => sanitize_text_field( $payload['imageId'] ), 'name' => 'Ubuntu 24.04 LTS', 'os' => 'linux' ),
+				'rootVolumeSizeGigaBytes' => absint( $payload['rootVolumeSizeGigaBytes'] ),
+				'createDate'               => current_time( 'mysql', true ),
 			);
 			update_option( $this->option, $resources, false );
 		}
