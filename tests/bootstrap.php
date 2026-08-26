@@ -6,7 +6,7 @@
 define( 'ABSPATH', __DIR__ . '/fixtures/wordpress/' );
 define( 'ARVAN_RESELLER_PATH', dirname( __DIR__ ) . '/arvan-reseller/' );
 define( 'ARVAN_RESELLER_VERSION', '1.1.0' );
-define( 'ARVAN_RESELLER_DB_VERSION', '1.3.0' );
+define( 'ARVAN_RESELLER_DB_VERSION', '1.4.0' );
 define( 'ARVAN_RESELLER_MONEY_SCALE', 10000 );
 define( 'ARRAY_A', 'ARRAY_A' );
 define( 'HOUR_IN_SECONDS', 3600 );
@@ -52,6 +52,8 @@ class WP_Error {
 	public function get_error_data() { return $this->data; }
 	public function add_data( $data ) { $this->data = $data; }
 }
+
+class Arvan_Test_Skip extends RuntimeException {}
 
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
@@ -315,7 +317,9 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 		$map = array( 'resources' => 'resources', 'orders' => 'orders', 'notifications' => 'notifications', 'settlements' => 'settlements' );
 		if ( ! isset( $map[ $table ] ) ) { return false; }
 		$property = $map[ $table ]; $id = (int) $where['id'];
-		$this->{$property}[ $id ] = array_merge( $this->{$property}[ $id ] ?? array(), $data ); return 1;
+		if ( ! isset( $this->{$property}[ $id ] ) ) { return 0; }
+		foreach ( $where as $key => $value ) { if ( ! array_key_exists( $key, $this->{$property}[ $id ] ) || (string) $this->{$property}[ $id ][ $key ] !== (string) $value ) { return 0; } }
+		$this->{$property}[ $id ] = array_merge( $this->{$property}[ $id ], $data ); return 1;
 	}
 
 	public function create_payment( array $data ) { $id = count( $this->payments ) + 1; $data['id'] = $id; $data['created_at'] = current_time( 'mysql', true ); $data['updated_at'] = current_time( 'mysql', true ); $data['completed_at'] = null; $this->payments[ $id ] = $data; return $id; }
@@ -334,10 +338,10 @@ class Arvan_Test_Database extends Arvan_Reseller_Database {
 	public function get_resources_by_customer_id( $id ) { return array_values( array_filter( $this->resources, static function( $r ) use ( $id ) { return (int) $r['customer_id'] === (int) $id; } ) ); }
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) { return array_values( array_slice( array_filter( $this->resources, static function( $r ) use ( $after_id ) { return (int) $r['id'] > (int) $after_id && in_array( (string) $r['status'], array( 'active', 'provisioned', 'suspended' ), true ); } ), 0, $limit ) ); }
 	public function get_orders_requiring_recovery( $limit = 50 ) { return array_values( array_filter( $this->orders, static function( $r ) { return ! empty( $r['recovery_required'] ); } ) ); }
-	public function get_row_by( $table, array $where ) { if ( 'orders' === $table && isset( $where['id'] ) ) { return $this->orders[(int)$where['id']] ?? null; } if ( 'resources' === $table && isset( $where['id'], $this->resources[(int)$where['id']] ) ) { $row=$this->resources[(int)$where['id']]; foreach($where as $key=>$value){if(!isset($row[$key]) || (string)$row[$key] !== (string)$value){return null;}} return $row; } return null; }
+	public function get_row_by( $table, array $where ) { $map=array('orders'=>'orders','resources'=>'resources','notifications'=>'notifications'); if(!isset($map[$table],$where['id'])){return null;} $property=$map[$table]; $row=$this->{$property}[(int)$where['id']]??null; if(null===$row){return null;} foreach($where as $key=>$value){if(!array_key_exists($key,$row)||(string)$row[$key] !== (string)$value){return null;}} return $row; }
 	public function mark_wallet_low_balance_notified( $wallet_id ) { foreach ( $this->wallets as &$wallet ) { if ( (int) $wallet['id'] === (int) $wallet_id ) { $wallet['low_balance_notified'] = 1; return true; } } return false; }
 	public function get_notification_by_event_key( $key ) { foreach ( $this->notifications as $r ) { if ( $r['event_key'] === $key ) { return $r; } } return null; }
-	public function create_notification( array $data ) { $id=count($this->notifications)+1; $data['id']=$id; $this->notifications[$id]=$data; return $id; }
+	public function create_notification( array $data ) { $id=count($this->notifications)+1; $data=wp_parse_args($data,array('status'=>'pending','channel'=>'email','payload'=>'','error_code'=>'','read_at'=>null,'created_at'=>current_time('mysql',true),'sent_at'=>null)); $data['id']=$id; $this->notifications[$id]=$data; return $id; }
 	public function aggregate_usage_period( $start, $end, $currency = 'IRR' ) { $out=array('base_cost_minor'=>0,'customer_charge_minor'=>0,'reseller_share_minor'=>0,'usage_count'=>0); foreach($this->usage_records as $r){$out['base_cost_minor']+=(int)$r['base_cost_minor'];$out['customer_charge_minor']+=(int)$r['total_charge_minor'];$out['reseller_share_minor']+=(int)$r['reseller_share_minor'];++$out['usage_count'];} return $out; }
 	public function get_settlement_by_reference( $ref ) { foreach($this->settlements as $r){if($r['settlement_reference']===$ref){return $r;}}return null; }
 	public function create_settlement( array $data ) { $id=count($this->settlements)+1;$data['id']=$id;$this->settlements[$id]=$data;return $id; }

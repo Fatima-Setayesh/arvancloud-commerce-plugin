@@ -158,6 +158,7 @@ $tests['schema contains all domain tables and no decimal money columns'] = stati
 	arvan_test_assert_true( false === stripos( $schema, 'decimal(' ), 'schema still contains DECIMAL money columns' );
 	arvan_test_assert_true( false !== strpos( $schema, 'UNIQUE KEY idempotency_key' ), 'idempotency unique key missing' );
 	arvan_test_assert_true( false !== strpos( $schema, 'UNIQUE KEY resource_window' ), 'billing window unique key missing' );
+	arvan_test_assert_true( false !== strpos( $schema, 'read_at datetime NULL' ), 'notification read state column missing' );
 };
 
 $tests['versioned migration creates the complete critical schema'] = static function () {
@@ -246,7 +247,7 @@ $tests['versioned migration creates the complete critical schema'] = static func
 
 	$result = arvan_reseller_run_migrations();
 	arvan_test_assert_true( $result, 'migration did not verify the resulting schema' );
-	arvan_test_assert_same( '1.3.0', get_option( 'arvan_reseller_db_version' ), 'schema version was not advanced' );
+	arvan_test_assert_same( '1.4.0', get_option( 'arvan_reseller_db_version' ), 'schema version was not advanced' );
 	arvan_test_assert_same( 10, count( $GLOBALS['wpdb']->tables ), 'migration did not create all domain tables' );
 	arvan_test_assert_true( isset( $GLOBALS['wpdb']->tables['wp_arvan_reseller_wallets']['balance_minor'] ), 'wallet integer balance column missing' );
 };
@@ -259,6 +260,9 @@ $tests['persisted domain statuses are allowlisted'] = static function () {
 };
 
 $tests['authenticated secret encryption uses random nonces and rejects tampering'] = static function () {
+	if ( ! function_exists( 'sodium_crypto_secretbox' ) && ( ! function_exists( 'openssl_encrypt' ) || ! in_array( 'aes-256-gcm', array_map( 'strtolower', openssl_get_cipher_methods() ), true ) ) ) {
+		throw new Arvan_Test_Skip( 'No authenticated-encryption backend is enabled in this PHP runtime.' );
+	}
 	$one = Arvan_Reseller_Security::encrypt( 'machine-user-key-123456' );
 	$two = Arvan_Reseller_Security::encrypt( 'machine-user-key-123456' );
 	arvan_test_assert_true( ! is_wp_error( $one ) && ! is_wp_error( $two ), 'secret encryption failed' );
@@ -311,16 +315,40 @@ $tests['live adapter blocks invalid regions before network access'] = static fun
 
 $tests['provisioning creates local order then maps one remote resource'] = static function () {
 	$GLOBALS['arvan_test_options']['arvan_reseller_mock_resources'] = array();
+	$GLOBALS['arvan_test_options']['arvan_reseller_settings'] = array( 'mode' => 'mock', 'currency' => 'IRR', 'reseller_share_percent' => '10' );
 	$db = new Arvan_Test_Database(); $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $service = new Arvan_Reseller_Provisioning( $db, $api );
 	$config = array( 'region' => 'ir-thr-mock', 'availabilityZone' => 'mock-zone-1', 'flavorId' => 'mock-g2-1-2', 'imageId' => '00000000-0000-4000-8000-000000000101', 'name' => 'ordered-server', 'rootVolumeSizeGigaBytes' => 25 );
 	$result = $service->create_server_order( 7, $config, 'order-key-1' );
 	arvan_test_assert_true( ! is_wp_error( $result ), 'safe provisioning failed' );
 	arvan_test_assert_same( 'provisioned', $result['status'], 'order was not provisioned' );
+	arvan_test_assert_same( 'ordered-server', $result['configuration']['name'], 'order configuration contract is incomplete' );
+	arvan_test_assert_same( '26400.0000', $result['quote']['total_charge'], 'authoritative 24-hour quote mismatch' );
+	arvan_test_assert_same( 'not_charged_at_order', $result['payment']['status'], 'order payment timing is ambiguous' );
+	arvan_test_assert_true( $result['resource_record_id'] > 0, 'local resource mapping is absent from order response' );
 	arvan_test_assert_same( 1, count( $db->orders ), 'local order count mismatch' );
 	arvan_test_assert_same( 1, count( $db->resources ), 'resource mapping count mismatch' );
 	$duplicate = $service->create_server_order( 7, $config, 'order-key-1' );
 	arvan_test_assert_true( $duplicate['idempotent'], 'duplicate order was not idempotent' );
 	arvan_test_assert_same( 1, count( get_option( 'arvan_reseller_mock_resources', array() ) ), 'duplicate order created another server' );
+};
+
+$tests['resource contract allowlists useful details without leaking remote payload'] = static function () {
+	$db = new Arvan_Test_Database(); $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $wallet = new Arvan_Reseller_Wallet( $db );
+	$provisioning = new Arvan_Reseller_Provisioning( $db, $api ); $billing = new Arvan_Reseller_Billing( $db, $wallet, $api ); $settlement = new Arvan_Reseller_Settlement( $db );
+	$rest = new Arvan_Reseller_REST_API( $db, $wallet, new Arvan_Reseller_Payment( $wallet, $db ), $provisioning, $billing, $api, new Arvan_Reseller_Cron( $billing, $db, $api, new Arvan_Reseller_Notifications( $db ), $provisioning, $settlement ), new Arvan_Reseller_Settings() );
+	$safe = $rest->safe_resource( array( 'id'=>4,'customer_id'=>7,'order_id'=>3,'resource_id'=>'srv-safe','product_type'=>'cloud_server','region'=>'ir-thr','status'=>'active','remote_status'=>'ACTIVE','hourly_price_minor'=>10000,'currency'=>'USD','remote_payload'=>wp_json_encode(array('name'=>'prod-1','availabilityZone'=>'az-1','publicIpAddress'=>'192.0.2.10','api_key'=>'must-not-leak','image'=>array('id'=>'ubuntu','name'=>'Ubuntu 22.04'),'flavor'=>array('id'=>'g2','cpuCount'=>2,'secret'=>'no'))),'last_synced_at'=>'','last_billed_at'=>'','created_at'=>'','updated_at'=>'' ) );
+	arvan_test_assert_same( 7, $safe['customer_id'], 'admin resource ownership field missing' );
+	arvan_test_assert_same( 'prod-1', $safe['name'], 'resource name missing' );
+	arvan_test_assert_same( array( '192.0.2.10' ), $safe['ip_addresses'], 'validated resource IP missing' );
+	arvan_test_assert_true( ! isset( $safe['remote_payload'], $safe['api_key'] ) && ! isset( $safe['flavor']['secret'] ), 'remote secrets leaked through resource contract' );
+};
+
+$tests['notification read transition is idempotent and customer isolated'] = static function () {
+	$db = new Arvan_Test_Database(); $id = $db->create_notification( array( 'customer_id'=>7,'event_key'=>'evt-read','type'=>'billing','subject'=>'Notice','message'=>'Message' ) );
+	arvan_test_assert_same( null, $db->mark_notification_read( $id, 8 ), 'foreign customer changed notification read state' );
+	$read = $db->mark_notification_read( $id, 7 ); $again = $db->mark_notification_read( $id, 7 );
+	arvan_test_assert_same( '2026-01-01 00:00:00', $read['read_at'], 'owned notification was not marked read' );
+	arvan_test_assert_same( $read['read_at'], $again['read_at'], 'repeat notification read was not idempotent' );
 };
 
 $tests['settlement period is aggregated and idempotent'] = static function () {
@@ -379,17 +407,21 @@ $tests['settings preserve hidden values and enforce backend policy allowlists'] 
 
 $passed = 0;
 $failed = 0;
+$skipped = 0;
 
 foreach ( $tests as $name => $test ) {
 	try {
 		$test();
 		++$passed;
 		echo "PASS: {$name}\n";
+	} catch ( Arvan_Test_Skip $skip ) {
+		++$skipped;
+		echo "SKIP: {$name}\n{$skip->getMessage()}\n";
 	} catch ( Throwable $error ) {
 		++$failed;
 		echo "FAIL: {$name}\n{$error->getMessage()}\n";
 	}
 }
 
-echo "\n{$passed} passed, {$failed} failed\n";
+echo "\n{$passed} passed, {$failed} failed, {$skipped} skipped\n";
 exit( $failed > 0 ? 1 : 0 );

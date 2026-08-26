@@ -767,6 +767,7 @@ class Arvan_Reseller_Database {
 			'channel'           => 'email',
 			'payload'           => '',
 			'error_code'        => '',
+			'read_at'           => null,
 			'created_at'        => current_time( 'mysql', true ),
 			'sent_at'           => null,
 		);
@@ -782,6 +783,22 @@ class Arvan_Reseller_Database {
 	/** @return array */
 	public function get_notifications_by_customer_id( $customer_id, $limit = 50 ) {
 		return $this->get_results_by( 'notifications', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	}
+
+	/** Mark an owned notification read and return the updated safe source row. */
+	public function mark_notification_read( $notification_id, $customer_id ) {
+		$where = array(
+			'id'          => absint( $notification_id ),
+			'customer_id' => absint( $customer_id ),
+		);
+		$row = $this->get_row_by( 'notifications', $where );
+		if ( null === $row ) {
+			return null;
+		}
+		if ( empty( $row['read_at'] ) && false === $this->update( 'notifications', array( 'read_at' => current_time( 'mysql', true ) ), $where, array( '%s' ), array( '%d', '%d' ) ) ) {
+			return null;
+		}
+		return $this->get_row_by( 'notifications', $where );
 	}
 
 	/** @return int|false */

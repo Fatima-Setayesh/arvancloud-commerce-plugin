@@ -61,6 +61,29 @@ class Arvan_Reseller_Provisioning {
 		if ( is_wp_error( $hourly_price_minor ) ) {
 			$this->fail_order( $order_id, 'provisioning', $hourly_price_minor );
 			return $hourly_price_minor; }
+		$quote = $this->quote_snapshot( $hourly_price_minor );
+		$order_details = array(
+			'configuration' => $payload,
+			'quote'         => $quote,
+			'billing_model' => 'hourly_prepaid',
+			'payment'       => array(
+				'required_at_order' => false,
+				'status'            => 'not_charged_at_order',
+				'debit_timing'      => 'completed_usage_window',
+			),
+		);
+		if ( is_wp_error( $quote ) || false === $this->database->update(
+			'orders',
+			array(
+				'details'    => wp_json_encode( $order_details ),
+				'updated_at' => current_time( 'mysql', true ),
+			),
+			array( 'id' => (int) $order_id )
+		) ) {
+			$error = is_wp_error( $quote ) ? $quote : new WP_Error( 'arvan_reseller_order_quote_persistence_failed', __( 'Unable to persist the authoritative order quote.', 'arvan-reseller' ) );
+			$this->fail_order( $order_id, 'provisioning', $error );
+			return $error;
+		}
 
 		$response = $this->api->create_server( $region, $payload, $idempotency_key );
 		if ( is_wp_error( $response ) ) {
@@ -103,12 +126,7 @@ class Arvan_Reseller_Provisioning {
 			array(
 				'resource_record_id' => $resource_record_id,
 				'resource_id'        => $resource_id,
-				'details'            => wp_json_encode(
-					array(
-						'configuration' => $payload,
-						'resource_id'   => $resource_id,
-					)
-				),
+				'details'            => wp_json_encode( array_merge( $order_details, array( 'resource_id' => $resource_id ) ) ),
 				'recovery_required'  => 0,
 			)
 		) ) {
@@ -129,7 +147,8 @@ class Arvan_Reseller_Provisioning {
 		if ( ! $this->database->commit() ) {
 			return $this->mark_recovery_required( $order_id, $resource_id, $server, 'commit_failed' ); }
 
-		return array(
+		$completed = $this->database->get_row_by( 'orders', array( 'id' => (int) $order_id ) );
+		return null !== $completed ? $this->serialize_order( $completed ) : array(
 			'id'                 => (int) $order_id,
 			'order_reference'    => $reference,
 			'status'             => 'provisioned',
@@ -199,6 +218,8 @@ class Arvan_Reseller_Provisioning {
 
 	/** @return array */
 	public function serialize_order( array $order, $idempotent = false ) {
+		$details = json_decode( (string) ( $order['details'] ?? '' ), true );
+		$details = is_array( $details ) ? $details : array();
 		return array(
 			'id'              => (int) $order['id'],
 			'customer_id'     => (int) $order['customer_id'],
@@ -206,11 +227,87 @@ class Arvan_Reseller_Provisioning {
 			'product_type'    => (string) $order['product_type'],
 			'status'          => (string) $order['status'],
 			'resource_id'     => (string) $order['resource_id'],
+			'resource_record_id' => isset( $order['resource_record_id'] ) ? (int) $order['resource_record_id'] : 0,
 			'region'          => (string) $order['region'],
+			'configuration'   => $this->safe_configuration( $details['configuration'] ?? array() ),
+			'quote'           => $this->safe_quote( $details['quote'] ?? array() ),
+			'billing_model'   => 'hourly_prepaid',
+			'payment'         => $this->safe_payment( $details['payment'] ?? array() ),
+			'recovery_required' => ! empty( $order['recovery_required'] ),
+			'failure_code'    => sanitize_key( (string) ( $order['failure_code'] ?? '' ) ),
 			'created_at'      => (string) $order['created_at'],
 			'updated_at'      => (string) $order['updated_at'],
 			'idempotent'      => (bool) $idempotent,
 		); }
+
+	private function safe_configuration( $configuration ) {
+		if ( ! is_array( $configuration ) ) {
+			return array();
+		}
+		$output = array();
+		foreach ( array( 'availabilityZone', 'flavorId', 'imageId', 'name' ) as $key ) {
+			if ( isset( $configuration[ $key ] ) && is_scalar( $configuration[ $key ] ) ) {
+				$output[ $key ] = sanitize_text_field( (string) $configuration[ $key ] );
+			}
+		}
+		if ( isset( $configuration['rootVolumeSizeGigaBytes'] ) ) {
+			$output['rootVolumeSizeGigaBytes'] = absint( $configuration['rootVolumeSizeGigaBytes'] );
+		}
+		foreach ( array( 'enableBackup', 'enableFailOver', 'enableIpv4', 'enableIpv6' ) as $key ) {
+			if ( array_key_exists( $key, $configuration ) ) {
+				$output[ $key ] = (bool) $configuration[ $key ];
+			}
+		}
+		return $output;
+	}
+
+	private function safe_quote( $quote ) {
+		if ( ! is_array( $quote ) ) {
+			return array();
+		}
+		$output = array();
+		foreach ( array( 'usage_hours', 'unit_price', 'base_cost', 'reseller_share', 'total_charge' ) as $key ) {
+			if ( isset( $quote[ $key ] ) && preg_match( '/^\d+\.\d{4}$/', (string) $quote[ $key ] ) ) {
+				$output[ $key ] = (string) $quote[ $key ];
+			}
+		}
+		if ( isset( $quote['currency'] ) && preg_match( '/^[A-Z]{3}$/', (string) $quote['currency'] ) ) {
+			$output['currency'] = (string) $quote['currency'];
+		}
+		if ( isset( $quote['generated_at'] ) && is_scalar( $quote['generated_at'] ) ) {
+			$output['generated_at'] = sanitize_text_field( (string) $quote['generated_at'] );
+		}
+		return $output;
+	}
+
+	private function safe_payment( $payment ) {
+		return array(
+			'required_at_order' => false,
+			'status'            => 'not_charged_at_order',
+			'debit_timing'      => 'completed_usage_window',
+		);
+	}
+
+	private function quote_snapshot( $hourly_price_minor ) {
+		$hours_scaled   = 24 * Arvan_Reseller_Money::scale();
+		$base_minor     = Arvan_Reseller_Money::multiply_scaled( $hours_scaled, (int) $hourly_price_minor );
+		$settings       = get_option( 'arvan_reseller_settings', array() );
+		$share_scaled   = Arvan_Reseller_Money::to_minor( (string) ( $settings['reseller_share_percent'] ?? '0' ) );
+		$basis_points   = is_wp_error( $share_scaled ) || $share_scaled <= 0 ? 0 : min( 2000, intdiv( $share_scaled + 50, 100 ) );
+		$share_minor    = is_wp_error( $base_minor ) ? $base_minor : Arvan_Reseller_Money::percentage( $base_minor, $basis_points );
+		if ( is_wp_error( $base_minor ) || is_wp_error( $share_minor ) || $share_minor > PHP_INT_MAX - $base_minor ) {
+			return new WP_Error( 'arvan_reseller_invalid_order_quote', __( 'The order quote exceeded the supported range.', 'arvan-reseller' ) );
+		}
+		return array(
+			'usage_hours'    => '24.0000',
+			'unit_price'     => Arvan_Reseller_Money::format( (int) $hourly_price_minor ),
+			'base_cost'      => Arvan_Reseller_Money::format( $base_minor ),
+			'reseller_share' => Arvan_Reseller_Money::format( $share_minor ),
+			'total_charge'   => Arvan_Reseller_Money::format( $base_minor + $share_minor ),
+			'currency'       => $this->currency(),
+			'generated_at'   => current_time( 'mysql', true ),
+		);
+	}
 
 	private function normalize_configuration( array $c ) {
 		$required = array( 'availabilityZone', 'flavorId', 'imageId', 'name', 'rootVolumeSizeGigaBytes' );

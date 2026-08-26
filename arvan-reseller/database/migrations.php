@@ -196,7 +196,7 @@ function arvan_reseller_schema_is_current() {
 		'usage_records'       => array( 'total_charge_minor', 'charged_minor', 'uncovered_minor' ),
 		'invoices'            => array( 'total_minor', 'customer_id' ),
 		'settlements'         => array( 'settlement_reference', 'base_cost_minor', 'adapter' ),
-		'notifications'       => array( 'event_key', 'customer_id' ),
+		'notifications'       => array( 'event_key', 'customer_id', 'read_at' ),
 		'audit_logs'          => array( 'event_type', 'created_at' ),
 	);
 

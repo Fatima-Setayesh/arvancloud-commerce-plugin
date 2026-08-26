@@ -382,6 +382,17 @@ class Arvan_Reseller_REST_API {
 		);
 		register_rest_route(
 			$n,
+			'/notifications/(?P<id>\d+)/read',
+			array_merge(
+				$customer,
+				array(
+					'methods'  => WP_REST_Server::CREATABLE,
+					'callback' => array( $this, 'read_notification' ),
+				)
+			)
+		);
+		register_rest_route(
+			$n,
 			'/admin/customers',
 			array_merge(
 				$admin,
@@ -637,6 +648,9 @@ class Arvan_Reseller_REST_API {
 		return array_map( array( $this, 'safe_invoice' ), $this->database->get_results_by( 'invoices', array( 'customer_id' => get_current_user_id() ), $this->limit( $request ) ) ); }
 	public function notifications( $request ) {
 		return array_map( array( $this, 'safe_notification' ), $this->database->get_notifications_by_customer_id( get_current_user_id(), $this->limit( $request ) ) ); }
+	public function read_notification( $request ) {
+		$row = $this->database->mark_notification_read( absint( $request['id'] ), get_current_user_id() );
+		return null === $row ? new WP_Error( 'arvan_reseller_notification_not_found', __( 'Notification not found.', 'arvan-reseller' ), array( 'status' => 404 ) ) : $this->safe_notification( $row ); }
 	public function admin_customers( $request ) {
 		return array_map(
 			function ( $user ) {
@@ -788,8 +802,13 @@ class Arvan_Reseller_REST_API {
 			'created_at'     => (string) $r['created_at'],
 		); }
 	public function safe_resource( array $r ) {
+		$remote = json_decode( (string) ( $r['remote_payload'] ?? '' ), true );
+		$remote = is_array( $remote ) ? $remote : array();
+		$detail = $this->safe_resource_detail( $remote );
 		return array(
 			'id'             => (int) $r['id'],
+			'customer_id'    => (int) $r['customer_id'],
+			'order_id'       => isset( $r['order_id'] ) ? (int) $r['order_id'] : 0,
 			'resource_id'    => (string) $r['resource_id'],
 			'product_type'   => (string) $r['product_type'],
 			'region'         => (string) $r['region'],
@@ -797,10 +816,64 @@ class Arvan_Reseller_REST_API {
 			'remote_status'  => (string) $r['remote_status'],
 			'hourly_price'   => Arvan_Reseller_Money::format( (int) ( $r['hourly_price_minor'] ?? 0 ) ),
 			'currency'       => (string) ( $r['currency'] ?? 'IRR' ),
+			'name'           => $detail['name'],
+			'availability_zone' => $detail['availability_zone'],
+			'image'          => $detail['image'],
+			'flavor'         => $detail['flavor'],
+			'ip_addresses'   => $detail['ip_addresses'],
+			'root_volume_size_gb' => $detail['root_volume_size_gb'],
 			'last_synced_at' => (string) $r['last_synced_at'],
 			'last_billed_at' => (string) $r['last_billed_at'],
+			'suspended_at'   => (string) ( $r['suspended_at'] ?? '' ),
+			'terminated_at'  => (string) ( $r['terminated_at'] ?? '' ),
 			'created_at'     => (string) $r['created_at'],
+			'updated_at'     => (string) ( $r['updated_at'] ?? '' ),
 		); }
+	private function safe_resource_detail( array $remote ) {
+		$image  = $this->safe_named_object( $remote['image'] ?? array(), array( 'id', 'name', 'os', 'distribution' ) );
+		$flavor = $this->safe_named_object( $remote['flavor'] ?? array(), array( 'id', 'name', 'cpuCount', 'memoryMegaBytes', 'diskGigaBytes' ) );
+		$ips    = array();
+		foreach ( array( 'ip', 'ipv4', 'ipv6', 'ipAddress', 'ipAddresses', 'publicIpAddress', 'privateIpAddress', 'addresses' ) as $key ) {
+			if ( array_key_exists( $key, $remote ) ) {
+				$this->collect_ip_addresses( $remote[ $key ], $ips );
+			}
+		}
+		$root_volume = absint( $remote['rootVolumeSizeGigaBytes'] ?? $remote['rootVolumeSize'] ?? 0 );
+		return array(
+			'name'                => sanitize_text_field( (string) ( $remote['name'] ?? '' ) ),
+			'availability_zone'   => sanitize_text_field( (string) ( $remote['availabilityZone'] ?? '' ) ),
+			'image'               => $image,
+			'flavor'              => $flavor,
+			'ip_addresses'        => array_values( array_unique( $ips ) ),
+			'root_volume_size_gb' => $root_volume,
+		);
+	}
+	private function safe_named_object( $value, array $allowed ) {
+		if ( is_scalar( $value ) ) {
+			return array( 'id' => sanitize_text_field( (string) $value ) );
+		}
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		$output = array();
+		foreach ( $allowed as $key ) {
+			if ( isset( $value[ $key ] ) && is_scalar( $value[ $key ] ) ) {
+				$output[ $key ] = sanitize_text_field( (string) $value[ $key ] );
+			}
+		}
+		return $output;
+	}
+	private function collect_ip_addresses( $value, array &$ips ) {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $item ) {
+				$this->collect_ip_addresses( $item, $ips );
+			}
+			return;
+		}
+		if ( is_scalar( $value ) && false !== filter_var( (string) $value, FILTER_VALIDATE_IP ) ) {
+			$ips[] = (string) $value;
+		}
+	}
 	public function safe_wallet( array $r ) {
 		return array(
 			'id'          => (int) $r['id'],
@@ -846,6 +919,8 @@ class Arvan_Reseller_REST_API {
 			'status'     => (string) $r['status'],
 			'channel'    => (string) $r['channel'],
 			'error_code' => (string) $r['error_code'],
+			'is_read'    => ! empty( $r['read_at'] ),
+			'read_at'    => (string) ( $r['read_at'] ?? '' ),
 			'created_at' => (string) $r['created_at'],
 			'sent_at'    => (string) $r['sent_at'],
 		); }

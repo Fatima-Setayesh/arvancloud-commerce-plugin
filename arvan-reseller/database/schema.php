@@ -221,6 +221,7 @@ function arvan_reseller_create_tables() {
 		channel varchar(20) NOT NULL DEFAULT 'email',
 		payload longtext NULL,
 		error_code varchar(100) NOT NULL DEFAULT '',
+		read_at datetime NULL,
 		created_at datetime NOT NULL,
 		sent_at datetime NULL,
 		PRIMARY KEY  (id),

@@ -15,7 +15,7 @@ class Arvan_Test_Activation_Wpdb {
 $GLOBALS['wpdb'] = new Arvan_Test_Activation_Wpdb(); $GLOBALS['arvan_test_options'] = array(); $GLOBALS['arvan_test_schedules'] = array();
 require_once dirname( __DIR__ ) . '/arvan-reseller/includes/class-activator.php';
 Arvan_Reseller_Activator::activate();
-arvan_test_assert_same( '1.3.0', get_option( 'arvan_reseller_db_version' ), 'clean activation migration version mismatch' );
+arvan_test_assert_same( '1.4.0', get_option( 'arvan_reseller_db_version' ), 'clean activation migration version mismatch' );
 arvan_test_assert_same( 10, count( $GLOBALS['wpdb']->tables ), 'clean activation did not install ten domain tables' );
 foreach ( array( 'arvan_reseller_usage_sync', 'arvan_reseller_reconciliation', 'arvan_reseller_settlement' ) as $hook ) { arvan_test_assert_true( isset( $GLOBALS['arvan_test_schedules'][$hook] ), 'activation schedule missing: ' . $hook ); }
 arvan_test_assert_same( 'mock', get_option( 'arvan_reseller_settings' )['mode'], 'safe default mode is not Mock' );
