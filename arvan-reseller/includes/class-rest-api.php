@@ -485,6 +485,8 @@ class Arvan_Reseller_REST_API {
 	public function validate_positive_money( $value ) {
 		$minor = Arvan_Reseller_Money::to_minor( is_string( $value ) || is_int( $value ) ? $value : '' );
 		return ! is_wp_error( $minor ) && $minor > 0; }
+	public function validate_api_key( $value ) {
+		return '' === trim( (string) $value ) || '' !== Arvan_Reseller_Security::sanitize_api_key( $value ); }
 	public function validate_region( $value ) {
 		return is_string( $value ) && (bool) preg_match( '/^[a-z0-9][a-z0-9-]{1,39}$/', $value ) && false === strpos( $value, '--' ); }
 	public function admin_permission( $request ) {
@@ -554,10 +556,17 @@ class Arvan_Reseller_REST_API {
 		if ( ! empty( $p['delete_api_key'] ) && ! empty( $p['api_key'] ) ) {
 			return new WP_Error( 'arvan_reseller_conflicting_key_action', __( 'API key rotation and deletion cannot be requested together.', 'arvan-reseller' ), array( 'status' => 400 ) );
 		}
-		$merged = array_merge( $this->settings->get_settings(), $p );
-		if ( ! empty( $p['delete_api_key'] ) ) {
+		$key_rotated = ! empty( $p['api_key'] );
+		$key_deleted = ! empty( $p['delete_api_key'] );
+		if ( $key_rotated && ! Arvan_Reseller_Security::store_encrypted_option( 'arvan_reseller_api_key', $p['api_key'] ) ) {
+			return new WP_Error( 'arvan_reseller_api_key_storage_failed', __( 'The Machine User API key could not be encrypted and was not stored.', 'arvan-reseller' ), array( 'status' => 503 ) );
+		}
+		if ( $key_deleted ) {
 			Arvan_Reseller_Security::delete_encrypted_option( 'arvan_reseller_api_key' );
-		} $sanitized = $this->settings->sanitize_settings( $merged );
+		}
+		unset( $p['api_key'], $p['delete_api_key'] );
+		$merged    = array_merge( $this->settings->get_settings(), $p );
+		$sanitized = $this->settings->sanitize_settings( $merged );
 		update_option( 'arvan_reseller_settings', $sanitized, false );
 		$this->database->create_audit_log(
 			'settings_updated',
@@ -565,8 +574,8 @@ class Arvan_Reseller_REST_API {
 			'global',
 			array(
 				'mode'            => $sanitized['mode'],
-				'api_key_rotated' => ! empty( $p['api_key'] ),
-				'api_key_deleted' => ! empty( $p['delete_api_key'] ),
+				'api_key_rotated' => $key_rotated,
+				'api_key_deleted' => $key_deleted,
 			)
 		);
 		return $this->admin_settings(); }
@@ -739,6 +748,7 @@ class Arvan_Reseller_REST_API {
 				'type'              => 'string',
 				'minLength'         => 0,
 				'maxLength'         => 4096,
+				'validate_callback' => array( $this, 'validate_api_key' ),
 				'sanitize_callback' => array( 'Arvan_Reseller_Security', 'sanitize_api_key' ),
 			),
 			'delete_api_key'           => array( 'type' => 'boolean' ),

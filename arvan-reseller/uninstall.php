@@ -12,13 +12,21 @@ foreach ( array( 'arvan_reseller_usage_sync_lock', 'arvan_reseller_reconciliatio
 	delete_option( $lock );
 }
 
-$settings = get_option( 'arvan_reseller_settings', array() );
-if ( empty( $settings['delete_data_on_uninstall'] ) ) {
-	return; }
-
 $rate_pattern = $wpdb->esc_like( '_transient_arvan_reseller_rate_' ) . '%';
 $rate_timeout = $wpdb->esc_like( '_transient_timeout_arvan_reseller_rate_' ) . '%';
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $rate_pattern, $rate_timeout ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+// Credentials, transient health state, and capabilities are never retained after uninstall.
+delete_option( 'arvan_reseller_api_key' );
+delete_option( 'arvan_reseller_cron_health' );
+$administrator_role = get_role( 'administrator' );
+if ( $administrator_role ) {
+	$administrator_role->remove_cap( 'manage_arvan_reseller' );
+}
+
+$settings = get_option( 'arvan_reseller_settings', array() );
+if ( empty( $settings['delete_data_on_uninstall'] ) ) {
+	return; }
 
 $tables = array( 'audit_logs', 'notifications', 'settlements', 'invoices', 'usage_records', 'resources', 'orders', 'payments', 'wallet_transactions', 'wallets' );
 foreach ( $tables as $suffix ) {
@@ -27,10 +35,5 @@ foreach ( $tables as $suffix ) {
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 }
 delete_option( 'arvan_reseller_settings' );
-delete_option( 'arvan_reseller_api_key' );
 delete_option( 'arvan_reseller_db_version' );
 delete_option( 'arvan_reseller_mock_resources' );
-delete_option( 'arvan_reseller_cron_health' );
-$administrator_role = get_role( 'administrator' );
-if ( $administrator_role ) {
-	$administrator_role->remove_cap( 'manage_arvan_reseller' ); }

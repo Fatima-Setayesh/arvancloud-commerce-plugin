@@ -24,6 +24,10 @@ class Arvan_Reseller_Activator {
 		}
 		self::add_capabilities();
 		self::create_default_options();
+		$pages = self::create_customer_pages();
+		if ( is_wp_error( $pages ) ) {
+			wp_die( esc_html__( 'Arvan Reseller could not create its customer pages safely.', 'arvan-reseller' ) );
+		}
 		self::schedule_events();
 
 		flush_rewrite_rules();
@@ -56,6 +60,59 @@ class Arvan_Reseller_Activator {
 		);
 
 		update_option( 'arvan_reseller_settings', wp_parse_args( $settings, $defaults ), false );
+	}
+
+	/**
+	 * Create the theme-independent storefront and portal pages idempotently.
+	 *
+	 * @return array|WP_Error Page IDs or a safe creation error.
+	 */
+	public static function create_customer_pages() {
+		$stored      = get_option( 'arvan_reseller_pages', array() );
+		$definitions = array(
+			'store'  => array(
+				'title'   => __( 'Cloud Server', 'arvan-reseller' ),
+				'slug'    => 'cloud-server',
+				'content' => '[arvan_reseller_store]',
+			),
+			'portal' => array(
+				'title'   => __( 'Cloud Portal', 'arvan-reseller' ),
+				'slug'    => 'arvan-portal',
+				'content' => '[arvan_reseller_portal]',
+			),
+		);
+
+		foreach ( $definitions as $key => $definition ) {
+			$current_id = isset( $stored[ $key ] ) ? absint( $stored[ $key ] ) : 0;
+			if ( $current_id && 'trash' !== get_post_status( $current_id ) && null !== get_post( $current_id ) ) {
+				continue;
+			}
+
+			$existing  = get_page_by_path( $definition['slug'] );
+			$shortcode = trim( $definition['content'], '[]' );
+			if ( $existing instanceof WP_Post && has_shortcode( $existing->post_content, $shortcode ) ) {
+				$stored[ $key ] = (int) $existing->ID;
+				continue;
+			}
+
+			$page_id = wp_insert_post(
+				array(
+					'post_title'   => $definition['title'],
+					'post_name'    => $definition['slug'],
+					'post_content' => $definition['content'],
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+				),
+				true
+			);
+			if ( is_wp_error( $page_id ) ) {
+				return new WP_Error( 'arvan_reseller_page_creation_failed', __( 'The customer pages could not be created safely.', 'arvan-reseller' ) );
+			}
+			$stored[ $key ] = (int) $page_id;
+		}
+
+		update_option( 'arvan_reseller_pages', $stored, false );
+		return $stored;
 	}
 
 	/**

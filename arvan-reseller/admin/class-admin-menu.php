@@ -101,50 +101,10 @@ class Arvan_Reseller_Admin_Menu {
 		Arvan_Reseller_Security::assert_capability( $this->settings->get_capability() );
 		check_admin_referer( 'arvan_reseller_create_pages' );
 
-		$stored      = get_option( 'arvan_reseller_pages', array() );
-		$definitions = array(
-			'store'  => array(
-				'title'   => __( 'Cloud Server', 'arvan-reseller' ),
-				'slug'    => 'cloud-server',
-				'content' => '[arvan_reseller_store]',
-			),
-			'portal' => array(
-				'title'   => __( 'Cloud Portal', 'arvan-reseller' ),
-				'slug'    => 'arvan-portal',
-				'content' => '[arvan_reseller_portal]',
-			),
-		);
-
-		foreach ( $definitions as $key => $definition ) {
-			$current_id = isset( $stored[ $key ] ) ? absint( $stored[ $key ] ) : 0;
-			if ( $current_id && 'trash' !== get_post_status( $current_id ) && null !== get_post( $current_id ) ) {
-				continue;
-			}
-
-			$existing  = get_page_by_path( $definition['slug'] );
-			$shortcode = trim( $definition['content'], '[]' );
-			if ( $existing instanceof WP_Post && has_shortcode( $existing->post_content, $shortcode ) ) {
-				$stored[ $key ] = (int) $existing->ID;
-				continue;
-			}
-
-			$page_id = wp_insert_post(
-				array(
-					'post_title'   => $definition['title'],
-					'post_name'    => $definition['slug'],
-					'post_content' => $definition['content'],
-					'post_status'  => 'publish',
-					'post_type'    => 'page',
-				),
-				true
-			);
-			if ( is_wp_error( $page_id ) ) {
+		$pages = Arvan_Reseller_Activator::create_customer_pages();
+		if ( is_wp_error( $pages ) ) {
 				wp_die( esc_html__( 'The customer pages could not be created safely.', 'arvan-reseller' ) );
-			}
-			$stored[ $key ] = (int) $page_id;
 		}
-
-		update_option( 'arvan_reseller_pages', $stored, false );
 		wp_safe_redirect( add_query_arg( array( 'page' => 'arvan-reseller-setup', 'pages-created' => '1' ), admin_url( 'admin.php' ) ) );
 		exit;
 	}

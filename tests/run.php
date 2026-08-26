@@ -405,6 +405,16 @@ $tests['settings preserve hidden values and enforce backend policy allowlists'] 
 	arvan_test_assert_same( 'cloud_server', $result['product_type'], 'product selection was not locked' );
 };
 
+$tests['credential validation fails closed and uninstall never retains secrets'] = static function () {
+	$GLOBALS['arvan_test_can_manage'] = true; $GLOBALS['arvan_test_settings_errors'] = array();
+	$settings = new Arvan_Reseller_Settings(); $settings->sanitize_settings( array( 'api_key'=>'short-secret' ) );
+	$GLOBALS['arvan_test_can_manage'] = false;
+	arvan_test_assert_same( 'arvan_reseller_invalid_api_key', $GLOBALS['arvan_test_settings_errors'][0]['code'], 'invalid credential storage failed silently' );
+	$uninstall = file_get_contents( dirname( __DIR__ ) . '/arvan-reseller/uninstall.php' );
+	$secret_delete = strpos( $uninstall, "delete_option( 'arvan_reseller_api_key' )" ); $retention_return = strpos( $uninstall, "if ( empty( \$settings['delete_data_on_uninstall'] ) )" );
+	arvan_test_assert_true( false !== $secret_delete && false !== $retention_return && $secret_delete < $retention_return, 'uninstall retention path can retain the encrypted credential' );
+};
+
 $passed = 0;
 $failed = 0;
 $skipped = 0;

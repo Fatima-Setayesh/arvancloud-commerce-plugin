@@ -20,6 +20,8 @@ $GLOBALS['arvan_test_mail_count'] = 0;
 $GLOBALS['arvan_test_mail_success'] = true;
 $GLOBALS['arvan_test_http_count'] = 0;
 $GLOBALS['arvan_test_schedules'] = array();
+$GLOBALS['arvan_test_pages'] = array();
+$GLOBALS['arvan_test_settings_errors'] = array();
 class Arvan_Test_Option_Wpdb {
 	public $options = 'wp_options';
 	public function delete( $table, array $where ) {
@@ -54,6 +56,12 @@ class WP_Error {
 }
 
 class Arvan_Test_Skip extends RuntimeException {}
+class WP_Post {
+	public $ID;
+	public $post_content;
+	public $post_name;
+	public function __construct( $id, $content ) { $this->ID = $id; $this->post_content = $content; }
+}
 
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
@@ -112,6 +120,12 @@ function wp_next_scheduled( $hook = '' ) { return $GLOBALS['arvan_test_schedules
 function wp_schedule_event( $time, $recurrence, $hook ) { $GLOBALS['arvan_test_schedules'][ $hook ] = $time; return true; }
 function flush_rewrite_rules() { return true; }
 function get_role() { return new class() { public function add_cap() {} public function remove_cap() {} }; }
+function get_post( $id ) { return $GLOBALS['arvan_test_pages'][(int) $id] ?? null; }
+function get_post_status( $id ) { return isset( $GLOBALS['arvan_test_pages'][(int) $id] ) ? 'publish' : null; }
+function get_page_by_path( $slug ) { foreach ( $GLOBALS['arvan_test_pages'] as $page ) { if ( $page->post_name === $slug ) { return $page; } } return null; }
+function has_shortcode( $content, $shortcode ) { return false !== strpos( (string) $content, '[' . $shortcode . ']' ); }
+function wp_insert_post( array $data, $return_error = false ) { unset( $return_error ); $id=count($GLOBALS['arvan_test_pages'])+1; $page=new WP_Post($id,$data['post_content']); $page->post_name=$data['post_name']; $GLOBALS['arvan_test_pages'][$id]=$page; return $id; }
+function add_settings_error( $setting, $code, $message, $type = 'error' ) { $GLOBALS['arvan_test_settings_errors'][]=compact('setting','code','message','type'); }
 
 function current_user_can() {
 	return (bool) $GLOBALS['arvan_test_can_manage'];
