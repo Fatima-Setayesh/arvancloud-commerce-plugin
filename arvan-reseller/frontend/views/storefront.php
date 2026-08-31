@@ -87,6 +87,12 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 			</article>
 		</section>
 
+		<section class="ar-trust-strip" aria-label="<?php esc_attr_e( 'اصول تجربه سرویس', 'arvan-reseller' ); ?>">
+			<div><span class="ar-icon" data-icon="chart" aria-hidden="true"></span><span><strong><?php esc_html_e( 'برآورد معتبر', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'قیمت از سرویس سمت سرور', 'arvan-reseller' ); ?></small></span></div>
+			<div><span class="ar-icon" data-icon="shield" aria-hidden="true"></span><span><strong><?php esc_html_e( 'مالکیت امن', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'هر منبع در حساب مشتری', 'arvan-reseller' ); ?></small></span></div>
+			<div><span class="ar-icon" data-icon="wallet" aria-hidden="true"></span><span><strong><?php esc_html_e( 'مالی شفاف', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'کیف پول، مصرف و صورتحساب', 'arvan-reseller' ); ?></small></span></div>
+		</section>
+
 		<section class="ar-store-features" id="ar-billing" aria-labelledby="ar-features-title">
 			<div class="ar-section-heading ar-section-heading--center"><span><?php esc_html_e( 'تجربه یکپارچه سرویس', 'arvan-reseller' ); ?></span><h2 id="ar-features-title"><?php esc_html_e( 'هرآنچه برای خرید و مدیریت سرور نیاز دارید', 'arvan-reseller' ); ?></h2><p><?php esc_html_e( 'از برآورد تا صورتحساب، همه مراحل با داده معتبر سامانه و در یک رابط روشن انجام می‌شود.', 'arvan-reseller' ); ?></p></div>
 			<div class="ar-store-facts">

@@ -26,7 +26,7 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-storefront { background: var(--ar-color-background); min-height: 100svh; }
 
 /* Compact storefront application chrome. */
-.ar-store-header { background: rgb(255 255 255 / 97%); border-block-end: 1px solid var(--ar-color-border); min-height: 68px; position: sticky; top: 0; z-index: 24; }
+.ar-store-header { backdrop-filter: blur(14px); background: color-mix(in srgb, var(--ar-color-surface) 96%, transparent); border-block-end: 1px solid var(--ar-color-border); min-height: 68px; position: sticky; top: 0; z-index: 24; }
 .ar-store-header__inner { align-items: center; display: flex; gap: var(--ar-space-6); justify-content: space-between; margin-inline: auto; max-width: var(--ar-container); min-height: 68px; padding-inline: var(--ar-space-6); width: 100%; }
 .ar-brand__logo { border-radius: var(--ar-radius-md); display: block; height: 42px; object-fit: contain; width: 42px; }
 .ar-store-header .ar-brand { flex: 1 1 auto; min-width: 0; overflow: hidden; }
@@ -39,23 +39,23 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-store-login { min-height: 40px; padding-block: 7px; }
 
 /* Product-first hero, sized for a WordPress content context. */
-.ar-store-hero { align-items: center; display: grid; gap: clamp(36px, 5vw, 72px); grid-template-columns: minmax(0, 1.06fr) minmax(390px, .94fr); isolation: isolate; margin-inline: auto; max-width: var(--ar-container); overflow: clip; padding: clamp(56px, 7vw, 92px) var(--ar-space-6) 68px; position: relative; width: 100%; }
-.ar-store-hero::before { background: radial-gradient(circle at 25% 48%, rgb(16 182 183 / 20%), transparent 30%), linear-gradient(120deg, transparent 20%, rgb(230 250 248 / 80%) 100%); border-radius: 42% 58% 55% 45%; content: ""; filter: blur(2px); height: 92%; inset-block-start: 4%; inset-inline-start: -8%; position: absolute; width: 54%; z-index: -1; }
+.ar-store-hero { align-items: center; display: grid; gap: clamp(36px, 5vw, 72px); grid-template-columns: minmax(0, 1.04fr) minmax(390px, .96fr); isolation: isolate; margin-inline: auto; max-width: var(--ar-container); overflow: clip; padding: clamp(54px, 6vw, 80px) var(--ar-space-6) 64px; position: relative; width: 100%; }
+.ar-store-hero::before { background: radial-gradient(circle at 28% 52%, color-mix(in srgb, var(--ar-teal-500) 23%, transparent), transparent 34%), linear-gradient(120deg, transparent 24%, color-mix(in srgb, var(--ar-color-teal-soft) 82%, transparent) 100%); border-radius: 42% 58% 55% 45%; content: ""; filter: blur(2px); height: 92%; inset-block-start: 4%; inset-inline-start: -8%; position: absolute; width: 54%; z-index: -1; }
 .ar-store-hero__copy { min-width: 0; position: relative; z-index: 1; }
 .ar-store-hero__copy .ar-eyebrow { margin-block-end: var(--ar-space-4); }
-.ar-store-hero h1 { color: var(--ar-color-secondary); font-size: clamp(38px, 4vw, 52px); font-weight: 900; letter-spacing: -.035em; line-height: 1.28; margin-block-end: var(--ar-space-4); max-width: 720px; overflow-wrap: anywhere; }
+.ar-store-hero h1 { color: var(--ar-color-text-strong); font-size: clamp(34px, 3.6vw, 48px); font-weight: 900; letter-spacing: -.035em; line-height: 1.32; margin-block-end: var(--ar-space-4); max-width: 700px; overflow-wrap: anywhere; }
 .ar-store-hero__copy > p { color: var(--ar-color-text-muted); font-size: clamp(15px, 1.4vw, 17px); line-height: 1.9; margin-block-end: 0; max-width: 670px; }
 .ar-hero__actions { display: flex; flex-wrap: wrap; gap: var(--ar-space-3); margin-block: var(--ar-space-6) var(--ar-space-5); }
 .ar-hero-points { display: grid; gap: var(--ar-space-2); margin: 0; padding: 0; }
 .ar-hero-points li { align-items: center; color: var(--ar-color-text-muted); display: flex; gap: var(--ar-space-2); list-style: none; }
 .ar-hero-points .ar-icon { color: var(--ar-color-success); height: 17px; width: 17px; }
 
-.ar-cloud-product-card { background: rgb(255 255 255 / 97%); border: 1px solid #cfe0e8; border-radius: var(--ar-radius-xl); box-shadow: 0 28px 70px rgb(5 44 70 / 15%); min-width: 0; padding: var(--ar-space-6); position: relative; }
+.ar-cloud-product-card { background: color-mix(in srgb, var(--ar-color-surface-raised) 97%, transparent); border: 1px solid var(--ar-color-border-strong); border-radius: var(--ar-radius-xl); box-shadow: var(--ar-shadow-3); min-width: 0; padding: var(--ar-space-6); position: relative; }
 .ar-cloud-product-card::before { background: linear-gradient(90deg, var(--ar-teal-500), var(--ar-blue-500)); border-radius: var(--ar-radius-xl) var(--ar-radius-xl) 0 0; content: ""; height: 4px; inset-block-start: -1px; inset-inline: -1px; position: absolute; }
 .ar-cloud-product-card__top { align-items: center; display: grid; gap: var(--ar-space-3); grid-template-columns: 52px minmax(0, 1fr) auto; margin-block-end: var(--ar-space-5); }
 .ar-cloud-product-card__top h2 { font-size: 18px; line-height: 1.5; margin: 2px 0 0; }
 .ar-cloud-product-card__top small { color: var(--ar-color-text-muted); font-size: 10px; letter-spacing: .08em; }
-.ar-product-symbol { align-items: center; background: linear-gradient(145deg, var(--ar-teal-100), var(--ar-blue-100)); border: 1px solid #bce8e5; border-radius: 13px; color: var(--ar-teal-700); display: flex; height: 52px; justify-content: center; width: 52px; }
+.ar-product-symbol { align-items: center; background: linear-gradient(145deg, var(--ar-color-teal-soft), var(--ar-color-primary-soft)); border: 1px solid color-mix(in srgb, var(--ar-color-primary) 28%, var(--ar-color-border)); border-radius: 13px; color: var(--ar-color-primary); display: flex; height: 52px; justify-content: center; width: 52px; }
 .ar-product-symbol .ar-icon { height: 27px; width: 27px; }
 .ar-product-specs { border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-md); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; overflow: hidden; }
 .ar-product-specs > div { min-width: 0; padding: 13px 15px; }
@@ -63,11 +63,20 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-product-specs > div:nth-child(n+3) { border-block-start: 1px solid var(--ar-color-border); }
 .ar-product-specs dt { color: var(--ar-color-text-muted); font-size: 10px; }
 .ar-product-specs dd { font-size: 13px; font-weight: 800; margin: 3px 0 0; overflow-wrap: anywhere; }
-.ar-product-estimate { align-items: flex-start; background: var(--ar-color-teal-soft); border: 1px solid #c9ece9; border-radius: var(--ar-radius-md); display: flex; gap: var(--ar-space-3); margin-block: var(--ar-space-4); padding: var(--ar-space-4); }
+.ar-product-estimate { align-items: flex-start; background: var(--ar-color-teal-soft); border: 1px solid color-mix(in srgb, var(--ar-color-primary) 28%, var(--ar-color-border)); border-radius: var(--ar-radius-md); display: flex; gap: var(--ar-space-3); margin-block: var(--ar-space-4); padding: var(--ar-space-4); }
 .ar-product-estimate > .ar-icon { color: var(--ar-teal-700); margin-block-start: 2px; }
 .ar-product-estimate strong,
 .ar-product-estimate small { display: block; }
 .ar-product-estimate small { color: var(--ar-color-text-muted); font-size: 11px; line-height: 1.7; margin-block-start: 3px; }
+
+.ar-trust-strip { background: var(--ar-color-surface); border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-lg); display: grid; gap: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto 52px; max-width: min(calc(100% - 48px), var(--ar-container)); padding: var(--ar-space-4); }
+.ar-trust-strip > div { align-items: center; display: flex; gap: var(--ar-space-3); justify-content: center; min-width: 0; padding: var(--ar-space-2) var(--ar-space-5); }
+.ar-trust-strip > div + div { border-inline-start: 1px solid var(--ar-color-border); }
+.ar-trust-strip > div > .ar-icon { background: var(--ar-color-teal-soft); border-radius: 10px; color: var(--ar-color-primary); height: 40px; padding: 9px; width: 40px; }
+.ar-trust-strip strong,
+.ar-trust-strip small { display: block; }
+.ar-trust-strip strong { color: var(--ar-color-text-strong); font-size: 13px; }
+.ar-trust-strip small { color: var(--ar-color-text-muted); font-size: 11px; }
 
 .ar-store-features { background: var(--ar-color-surface); border-block: 1px solid var(--ar-color-border); padding: 72px var(--ar-space-6); }
 .ar-section-heading--center { margin: 0 auto var(--ar-space-8); max-width: 760px; text-align: center; }
@@ -83,17 +92,18 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-store-facts h3 { font-size: 15px; margin-block-end: 5px; }
 .ar-store-facts p { color: var(--ar-color-text-muted); font-size: 12px; line-height: 1.8; margin: 0; }
 
-.ar-infrastructure { align-items: center; background: linear-gradient(118deg, #edfafa 0%, #c8f1ee 30%, #32bfc0 68%, #007e83 100%); display: grid; gap: clamp(36px, 7vw, 90px); grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr); min-height: 500px; overflow: clip; padding: 74px max(var(--ar-space-6), calc((100% - var(--ar-container)) / 2)); position: relative; }
+.ar-infrastructure { align-items: center; background: #053c40; display: grid; gap: clamp(36px, 7vw, 90px); grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr); min-height: 500px; overflow: clip; padding: 74px max(var(--ar-space-6), calc((100% - var(--ar-container)) / 2)); position: relative; }
+.ar-infrastructure::before { background-image: radial-gradient(circle, rgb(98 218 211 / 30%) 1.5px, transparent 1.5px); background-size: 18px 18px; content: ""; inset: 0 48% 0 0; mask-image: linear-gradient(90deg, #000, transparent); opacity: .7; position: absolute; }
 .ar-infrastructure__content { max-width: 590px; position: relative; z-index: 2; }
-.ar-infrastructure__content .ar-eyebrow { color: var(--ar-teal-700); }
-.ar-infrastructure__content h2 { color: var(--ar-navy-950); font-size: clamp(28px, 3.2vw, 42px); line-height: 1.35; margin-block-end: var(--ar-space-4); }
-.ar-infrastructure__content p { color: #264b59; font-size: 15px; line-height: 2; }
+.ar-infrastructure__content .ar-eyebrow { color: #78e1db; }
+.ar-infrastructure__content h2 { color: #fff; font-size: clamp(28px, 3.2vw, 42px); line-height: 1.35; margin-block-end: var(--ar-space-4); }
+.ar-infrastructure__content p { color: #c0d9d9; font-size: 15px; line-height: 2; }
 .ar-infrastructure__content ul { display: grid; gap: var(--ar-space-2); margin: var(--ar-space-5) 0 0; padding: 0; }
-.ar-infrastructure__content li { align-items: center; color: #16414b; display: flex; font-weight: 700; gap: var(--ar-space-2); list-style: none; }
-.ar-infrastructure__content li .ar-icon { color: var(--ar-teal-700); height: 17px; width: 17px; }
+.ar-infrastructure__content li { align-items: center; color: #e1f2f1; display: flex; font-weight: 700; gap: var(--ar-space-2); list-style: none; }
+.ar-infrastructure__content li .ar-icon { color: #76ded8; height: 17px; width: 17px; }
 .ar-infrastructure__visual { aspect-ratio: 1.2; min-height: 350px; position: relative; }
 .ar-network-orbit { border: 1px dashed rgb(255 255 255 / 60%); border-radius: 50%; inset: 12% 10%; position: absolute; transform: rotate(-12deg); }
-.ar-network-orbit--two { border-color: rgb(6 61 67 / 28%); inset: 24% 22%; transform: rotate(18deg); }
+.ar-network-orbit--two { border-color: rgb(104 215 210 / 36%); inset: 24% 22%; transform: rotate(18deg); }
 .ar-network-core { align-items: center; background: rgb(255 255 255 / 92%); border: 1px solid rgb(255 255 255 / 78%); border-radius: 18px; box-shadow: 0 24px 60px rgb(3 66 73 / 20%); display: flex; flex-direction: column; inset: 31% 33%; justify-content: center; padding: var(--ar-space-5); position: absolute; text-align: center; }
 .ar-network-core .ar-icon { color: var(--ar-teal-700); height: 38px; margin-block-end: var(--ar-space-2); width: 38px; }
 .ar-network-core strong,
@@ -108,7 +118,7 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-store-flow { align-items: center; background: linear-gradient(135deg, var(--ar-navy-900), var(--ar-navy-950)); color: #fff; display: grid; gap: clamp(36px, 6vw, 80px); grid-template-columns: minmax(0, .9fr) minmax(520px, 1.1fr); padding: 72px max(var(--ar-space-6), calc((100% - var(--ar-container)) / 2)); }
 .ar-store-flow .ar-section-heading { margin: 0; max-width: 560px; }
 .ar-store-flow .ar-section-heading > span { color: #73b5ff; }
-.ar-store-flow h2 { font-size: clamp(25px, 2.7vw, 36px); letter-spacing: -.02em; margin-block-end: var(--ar-space-3); }
+.ar-store-flow h2 { color: #fff; font-size: clamp(25px, 2.7vw, 36px); letter-spacing: -.02em; margin-block-end: var(--ar-space-3); }
 .ar-store-flow p { color: #b7c9dc; margin: 0; }
 .ar-store-flow ol { display: grid; gap: var(--ar-space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; }
 .ar-store-flow li { align-items: center; background: rgb(255 255 255 / 7%); border: 1px solid rgb(255 255 255 / 11%); border-radius: var(--ar-radius-md); display: flex; gap: var(--ar-space-3); list-style: none; min-width: 0; padding: var(--ar-space-4); }
@@ -126,7 +136,7 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-auth-aside__top { align-items: center; display: flex; justify-content: space-between; }
 .ar-auth-aside__top .ar-env { background: rgb(255 255 255 / 10%); border-color: rgb(255 255 255 / 18%); color: #d9fffb; }
 .ar-auth-aside__content { max-width: 620px; }
-.ar-auth-aside h1 { font-size: clamp(32px, 3.5vw, 48px); line-height: 1.35; margin-block-end: var(--ar-space-4); }
+.ar-auth-aside h1 { color: #fff; font-size: clamp(32px, 3.5vw, 48px); line-height: 1.35; margin-block-end: var(--ar-space-4); }
 .ar-auth-aside p,
 .ar-auth-aside > small { color: #b2c4d7; }
 .ar-auth-aside p { font-size: 15px; line-height: 2; max-width: 590px; }
@@ -151,11 +161,14 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-customer-portal .ar-app-frame { min-height: 100svh; min-width: 0; }
 .ar-customer-portal .ar-sidebar { min-height: 100svh; }
 .ar-customer-portal .ar-topbar { box-shadow: 0 4px 16px rgb(10 39 72 / 4%); }
-.ar-customer-portal .ar-topbar strong { color: var(--ar-color-secondary); font-size: 17px; }
+.ar-customer-portal .ar-topbar strong { color: var(--ar-color-text-strong); font-size: 17px; }
 .ar-customer-portal .ar-main { padding: clamp(16px, 2.2vw, 28px); }
 .ar-customer-portal .ar-page-head { margin-block-end: var(--ar-space-5); }
 .ar-customer-portal .ar-page-head h1 { font-size: clamp(21px, 2vw, 27px); }
 .ar-customer-portal .ar-card { box-shadow: 0 2px 10px rgb(10 39 72 / 4%); }
+.ar-customer-portal .ar-card > .ar-resource-card { border: 0; box-shadow: none; padding: 0; }
+.ar-customer-metrics > .ar-metric { border-block-start: 3px solid color-mix(in srgb, var(--ar-color-primary) 70%, transparent); }
+.ar-customer-metrics > .ar-metric:nth-child(3) { border-block-start-color: var(--ar-orange-500); }
 .ar-customer-metrics .ar-metric:nth-child(2) .ar-metric__icon { background: var(--ar-color-teal-soft); color: var(--ar-teal-700); }
 .ar-customer-metrics .ar-metric:nth-child(3) .ar-metric__icon { background: var(--ar-color-orange-soft); color: var(--ar-orange-600); }
 .ar-wallet-hero { background: linear-gradient(135deg, var(--ar-navy-950), var(--ar-navy-850) 62%, #087883); border: 0; color: #fff; min-height: 185px; overflow: clip; position: relative; }
@@ -169,7 +182,7 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-resource-card__meta > div { min-width: 0; }
 .ar-resource-card__meta span { color: var(--ar-color-text-muted); font-size: 10px; }
 .ar-resource-card__meta strong { display: block; font-size: 12px; overflow-wrap: anywhere; }
-.ar-resource-hero { align-items: center; background: linear-gradient(110deg, #fff 0%, #f5fbff 58%, var(--ar-color-teal-soft) 100%); display: flex; justify-content: space-between; margin-block-end: var(--ar-space-4); padding: var(--ar-space-6); }
+.ar-resource-hero { align-items: center; background: linear-gradient(110deg, var(--ar-color-surface) 0%, var(--ar-color-surface-soft) 58%, var(--ar-color-teal-soft) 100%); display: flex; justify-content: space-between; margin-block-end: var(--ar-space-4); padding: var(--ar-space-6); }
 .ar-resource-hero__identity { align-items: center; display: flex; gap: var(--ar-space-4); min-width: 0; }
 .ar-resource-hero__icon { align-items: center; background: linear-gradient(145deg, var(--ar-teal-600), var(--ar-blue-600)); border-radius: 15px; box-shadow: 0 12px 28px rgb(0 126 131 / 20%); color: #fff; display: flex; flex: 0 0 66px; height: 66px; justify-content: center; }
 .ar-resource-hero__icon .ar-icon { height: 32px; width: 32px; }
@@ -192,21 +205,21 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-configurator { align-items: start; display: grid; gap: var(--ar-space-5); grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); }
 .ar-config-main { min-width: 0; }
 .ar-config-summary { align-self: start; min-width: 0; position: sticky; top: calc(var(--ar-topbar-height) + var(--ar-space-5)); }
-.ar-stepper { direction: rtl; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-block-end: var(--ar-space-6); max-width: 100%; }
-.ar-stepper__item { align-items: center; color: var(--ar-color-text-muted); display: flex; flex-direction: column; font-size: 11px; font-weight: 800; gap: var(--ar-space-2); min-width: 0; padding-inline: 4px; position: relative; text-align: center; }
-.ar-stepper__item:not(:last-child)::after { background: var(--ar-color-border); content: ""; height: 2px; inset-block-start: 14px; inset-inline: 50% -50%; position: absolute; z-index: 0; }
+.ar-stepper { direction: rtl; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 0 0 var(--ar-space-6); max-width: 100%; padding: 0; }
+.ar-stepper__item { align-items: center; color: var(--ar-color-text-muted); display: flex; flex-direction: column; font-size: 12px; font-weight: 800; gap: var(--ar-space-2); min-width: 0; padding-inline: 5px; position: relative; text-align: center; }
+.ar-stepper__item:not(:last-child)::after { background: var(--ar-color-border); content: ""; height: 2px; inset-block-start: 14px; inset-inline-end: -50%; inset-inline-start: 50%; position: absolute; z-index: 0; }
 .ar-stepper__item.is-complete::after { background: var(--ar-color-primary); }
-.ar-stepper__number { align-items: center; background: #edf2f7; border-radius: 50%; display: flex; flex: 0 0 30px; height: 30px; justify-content: center; position: relative; z-index: 1; }
+.ar-stepper__number { align-items: center; background: var(--ar-color-surface-muted); border-radius: 50%; display: flex; flex: 0 0 30px; height: 30px; justify-content: center; position: relative; z-index: 1; }
 .ar-stepper__label { line-height: 1.45; min-height: 2.9em; overflow-wrap: normal; position: relative; z-index: 1; }
 .ar-stepper__item.is-current { color: var(--ar-color-primary); }
 .ar-stepper__item.is-current .ar-stepper__number,
-.ar-stepper__item.is-complete .ar-stepper__number { background: var(--ar-color-primary); color: #fff; }
+.ar-stepper__item.is-complete .ar-stepper__number { background: var(--ar-color-primary); color: var(--ar-color-on-primary); }
 .ar-option-grid { display: grid; gap: var(--ar-space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ar-option-card { align-items: flex-start; background: var(--ar-color-surface); border: 2px solid var(--ar-color-border); border-radius: var(--ar-radius-md); cursor: pointer; display: flex; gap: var(--ar-space-3); min-height: 118px; min-width: 0; padding: var(--ar-space-4); position: relative; text-align: start; transition: border-color var(--ar-motion-fast), background var(--ar-motion-fast), box-shadow var(--ar-motion-fast); width: 100%; }
-.ar-option-card:hover { border-color: #9ec7f3; box-shadow: var(--ar-shadow-1); }
+.ar-option-card:hover { border-color: var(--ar-color-primary); box-shadow: var(--ar-shadow-1); }
 .ar-option-card.is-selected { background: var(--ar-color-primary-soft); border-color: var(--ar-color-primary); box-shadow: 0 0 0 1px var(--ar-color-primary); }
 .ar-option-card.is-selected::before { background: var(--ar-color-primary); border-radius: 50%; content: ""; height: 22px; inset-block-start: 10px; inset-inline-end: 10px; position: absolute; width: 22px; }
-.ar-option-card.is-selected::after { border-block-end: 2px solid #fff; border-inline-end: 2px solid #fff; content: ""; height: 8px; inset-block-start: 15px; inset-inline-end: 17px; position: absolute; transform: rotate(45deg); width: 4px; }
+.ar-option-card.is-selected::after { border-block-end: 2px solid var(--ar-color-on-primary); border-inline-end: 2px solid var(--ar-color-on-primary); content: ""; height: 8px; inset-block-start: 15px; inset-inline-end: 17px; position: absolute; transform: rotate(45deg); width: 4px; }
 .ar-option-card__icon { align-items: center; background: var(--ar-color-surface-soft); border: 1px solid var(--ar-color-border); border-radius: 10px; color: var(--ar-color-primary); display: flex; flex: 0 0 42px; height: 42px; justify-content: center; }
 .ar-option-card__body { min-width: 0; padding-inline-end: 22px; }
 .ar-option-card strong { display: block; margin-block-end: 5px; }
@@ -216,7 +229,7 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-summary-list dt { color: var(--ar-color-text-muted); flex: 0 0 auto; }
 .ar-summary-list dd { font-weight: 700; margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: end; }
 .ar-summary-list code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
-.ar-price-box { background: var(--ar-color-primary-soft); border: 1px solid #cae1fa; border-radius: var(--ar-radius-md); margin-block: var(--ar-space-4); padding: var(--ar-space-4); }
+.ar-price-box { background: var(--ar-color-primary-soft); border: 1px solid color-mix(in srgb, var(--ar-color-primary) 30%, var(--ar-color-border)); border-radius: var(--ar-radius-md); margin-block: var(--ar-space-4); padding: var(--ar-space-4); }
 .ar-price-box strong { display: block; font-size: 21px; font-variant-numeric: tabular-nums; }
 .ar-summary-wallet { align-items: center; background: linear-gradient(135deg, var(--ar-navy-900), var(--ar-navy-850)); border-radius: var(--ar-radius-md); color: #fff; display: flex; gap: var(--ar-space-3); margin-block-start: var(--ar-space-4); padding: var(--ar-space-4); }
 .ar-summary-wallet > .ar-icon { color: var(--ar-teal-300); height: 28px; width: 28px; }
@@ -233,9 +246,20 @@ body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 .ar-topup-preview > span,
 .ar-topup-preview > small { color: var(--ar-color-text-muted); }
 .ar-topup-preview > strong { font-size: 20px; }
-.ar-provision-banner { background: var(--ar-color-primary-soft); border: 1px solid #bddafb; border-radius: var(--ar-radius-lg); display: flex; gap: var(--ar-space-4); min-width: 0; padding: var(--ar-space-5); }
+.ar-provision-banner { background: var(--ar-color-primary-soft); border: 1px solid color-mix(in srgb, var(--ar-color-primary) 30%, var(--ar-color-border)); border-radius: var(--ar-radius-lg); display: flex; gap: var(--ar-space-4); min-width: 0; padding: var(--ar-space-5); }
 .ar-provision-banner code { overflow-wrap: anywhere; }
 .ar-provision-timeline li.is-failed .ar-timeline__marker { background: var(--ar-color-danger-soft); border-color: var(--ar-color-danger); color: var(--ar-color-danger); }
+
+html[data-ar-theme="dark"] .ar-store-flow,
+html[data-ar-theme="dark"] .ar-store-footer { background: #031724; }
+html[data-ar-theme="dark"] .ar-network-core { background: rgb(16 40 60 / 94%); border-color: rgb(125 224 220 / 22%); color: var(--ar-color-text); }
+html[data-ar-theme="dark"] .ar-network-core small { color: var(--ar-color-text-muted); }
+html[data-ar-theme="dark"] .ar-auth-card { box-shadow: var(--ar-shadow-3); }
+html[data-ar-theme="dark"] .ar-wallet-hero,
+html[data-ar-theme="dark"] .ar-resource-wallet,
+html[data-ar-theme="dark"] .ar-summary-wallet { background: linear-gradient(145deg, #061b2e, #0b3d50); }
+html[data-ar-theme="dark"] .ar-customer-portal .ar-bottom-nav,
+html[data-ar-theme="dark"] .ar-config-actions { background: color-mix(in srgb, var(--ar-color-surface) 96%, transparent); }
 
 body.admin-bar.arvan-reseller-product-page .ar-store-header,
 body.admin-bar.arvan-reseller-product-page .ar-customer-portal .ar-topbar { top: 32px; }
@@ -255,15 +279,21 @@ body.admin-bar.arvan-reseller-product-page .ar-config-summary { top: calc(32px +
 	.ar-store-hero { grid-template-columns: 1fr; padding-block-start: 46px; }
 	.ar-store-hero__copy { max-width: 760px; }
 	.ar-cloud-product-card { margin-inline: auto; max-width: 680px; width: 100%; }
+	.ar-resource-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
 	.ar-configurator { grid-template-columns: 1fr; }
 	.ar-config-summary { position: static; }
-	.ar-resource-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 768px) {
 	.ar-store-header__inner { padding-inline: var(--ar-space-4); }
 	.ar-store-features { padding: 54px var(--ar-space-4); }
 	.ar-store-facts { grid-template-columns: 1fr; }
+	.ar-trust-strip { grid-template-columns: 1fr; margin-block-end: 40px; }
+	.ar-trust-strip > div { justify-content: flex-start; }
+	.ar-trust-strip > div + div { border-block-start: 1px solid var(--ar-color-border); border-inline-start: 0; }
 	.ar-infrastructure { grid-template-columns: 1fr; padding: 56px var(--ar-space-4); }
 	.ar-infrastructure__visual { margin-inline: auto; max-width: 560px; width: 100%; }
 	.ar-store-flow { padding: 50px var(--ar-space-4); }
@@ -272,7 +302,7 @@ body.admin-bar.arvan-reseller-product-page .ar-config-summary { top: calc(32px +
 	.ar-auth-motif { display: none; }
 	.ar-auth-aside > small { display: none; }
 	.ar-customer-portal { padding-block-end: 68px; }
-	.ar-customer-portal .ar-bottom-nav { align-items: center; background: rgb(255 255 255 / 98%); border-block-start: 1px solid var(--ar-color-border); bottom: 0; box-shadow: 0 -8px 24px rgb(10 39 72 / 7%); display: grid; grid-template-columns: repeat(4, 1fr); inset-inline: 0; min-height: 64px; position: fixed; z-index: 25; }
+	.ar-customer-portal .ar-bottom-nav { align-items: center; background: color-mix(in srgb, var(--ar-color-surface) 98%, transparent); border-block-start: 1px solid var(--ar-color-border); bottom: 0; box-shadow: 0 -8px 24px rgb(10 39 72 / 7%); display: grid; grid-template-columns: repeat(4, 1fr); inset-inline: 0; min-height: 64px; position: fixed; z-index: 25; }
 	.ar-bottom-nav button { align-items: center; background: transparent; border: 0; color: var(--ar-color-text-muted); display: flex; flex-direction: column; font-size: 10px; gap: 3px; justify-content: center; min-height: 56px; min-width: 0; }
 	.ar-bottom-nav button.is-active { color: var(--ar-color-primary); }
 	.ar-customer-portal .ar-grid--metrics { grid-template-columns: 1fr 1fr; }
@@ -295,6 +325,7 @@ body.admin-bar.arvan-reseller-product-page .ar-config-summary { top: calc(32px +
 	.ar-store-hero { gap: var(--ar-space-8); padding: 38px var(--ar-space-4) 38px; }
 	.ar-store-hero h1 { font-size: clamp(28px, 8vw, 34px); letter-spacing: -.025em; }
 	.ar-store-hero__copy > p { font-size: 14px; line-height: 1.85; }
+	.ar-trust-strip { margin-inline: var(--ar-space-4); max-width: none; }
 	.ar-hero__actions { align-items: stretch; flex-direction: column; }
 	.ar-hero__actions .ar-button { width: 100%; }
 	.ar-cloud-product-card { border-radius: var(--ar-radius-lg); padding: var(--ar-space-4); }
@@ -313,13 +344,14 @@ body.admin-bar.arvan-reseller-product-page .ar-config-summary { top: calc(32px +
 	.ar-auth-main { padding: var(--ar-space-4); }
 	.ar-auth-card { border-radius: var(--ar-radius-lg); padding: var(--ar-space-5); }
 	.ar-customer-portal .ar-main { padding: var(--ar-space-3); }
+	.ar-customer-portal .ar-topbar__actions { gap: var(--ar-space-2); }
 	.ar-customer-portal .ar-page-head { align-items: stretch; }
 	.ar-customer-portal .ar-page-actions { display: grid; grid-template-columns: 1fr 1fr; }
 	.ar-customer-portal .ar-grid--metrics { grid-template-columns: 1fr; }
 	.ar-wallet-hero { min-height: 170px; }
 	.ar-option-grid { grid-template-columns: 1fr; }
 	.ar-config-main { padding-block-end: 0; }
-	.ar-config-actions { background: rgb(255 255 255 / 96%); border-block-start: 1px solid var(--ar-color-border); bottom: 64px; margin: var(--ar-space-5) calc(var(--ar-space-4) * -1) 0; padding: var(--ar-space-3) var(--ar-space-4); position: sticky; z-index: 12; }
+	.ar-config-actions { background: color-mix(in srgb, var(--ar-color-surface) 96%, transparent); border-block-start: 1px solid var(--ar-color-border); bottom: 64px; margin: var(--ar-space-5) calc(var(--ar-space-4) * -1) 0; padding: var(--ar-space-3) var(--ar-space-4); position: sticky; z-index: 12; }
 	.ar-config-actions .ar-button { flex: 1; }
 	.ar-resource-card__meta { grid-template-columns: 1fr 1fr; }
 	.ar-resource-hero { align-items: flex-start; }
@@ -329,11 +361,16 @@ body.admin-bar.arvan-reseller-product-page .ar-config-summary { top: calc(32px +
 	.ar-stepper__item { display: grid; gap: var(--ar-space-3); grid-template-columns: 30px minmax(0, 1fr); min-height: 48px; padding-inline: 0; text-align: start; }
 	.ar-stepper__item:not(:last-child)::after { height: auto; inset-block: 30px -15px; inset-inline-end: auto; inset-inline-start: 14px; width: 2px; }
 	.ar-stepper__label { min-height: 0; }
+	.ar-alert { flex-wrap: wrap; }
+	.ar-alert > .ar-button { margin-inline-start: 0; width: 100%; }
 }
 
 @media (max-width: 390px) {
 	.ar-store-header .ar-brand strong { font-size: 13px; }
 	.ar-store-header__actions .ar-env { font-size: 10px; padding-inline: 8px; }
 	.ar-customer-portal .ar-page-actions { grid-template-columns: 1fr; }
+	.ar-theme-picker { padding-inline: 7px 2px; }
+	.ar-theme-picker .ar-icon { display: none; }
+	.ar-theme-picker select { max-width: 64px; }
 	.ar-resource-card__meta { grid-template-columns: 1fr; }
 }
