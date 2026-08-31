@@ -6,13 +6,9 @@
 .arvan-reseller-admin .ar-page-head { margin-block-end: var(--ar-space-5); }
 .arvan-reseller-admin .ar-page-head h1 { font-size: clamp(24px, 2.4vw, 31px); }
 .arvan-reseller-admin .ar-card-head h2 { color: var(--ar-color-text-strong); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric { border-block-start: 3px solid transparent; }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(1) { border-block-start-color: var(--ar-blue-500); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(2) { border-block-start-color: var(--ar-teal-500); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(3) { border-block-start-color: var(--ar-orange-500); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(4) { border-block-start-color: #8b6fd8; }
+.arvan-reseller-admin .ar-grid--metrics .ar-metric { border-block-start: 1px solid var(--ar-color-border); }
 .arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(2) .ar-metric__icon { background: var(--ar-color-teal-soft); color: var(--ar-teal-700); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(3) .ar-metric__icon { background: var(--ar-color-orange-soft); color: var(--ar-orange-600); }
+.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(3) .ar-metric__icon { background: var(--ar-color-accent-soft); color: var(--ar-color-accent); }
 .arvan-reseller-admin .ar-ops-strip { display: grid; gap: var(--ar-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); margin-block-start: var(--ar-space-4); }
 .arvan-reseller-admin .ar-ops-item { align-items: center; background: var(--ar-color-surface-soft); border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-md); display: flex; gap: var(--ar-space-3); padding: var(--ar-space-3); }
 .arvan-reseller-admin .ar-ops-item > .ar-icon { background: var(--ar-color-primary-soft); border-radius: 9px; color: var(--ar-color-primary); height: 36px; padding: 8px; width: 36px; }
@@ -64,4 +60,6 @@
 	.arvan-reseller-admin .ar-mode-cards { grid-template-columns: 1fr; }
 	.arvan-reseller-admin .ar-donut-wrap { align-items: flex-start; flex-direction: column; }
 	.arvan-reseller-admin .ar-grid--metrics { grid-template-columns: 1fr; }
+	.arvan-reseller-admin .ar-topbar > div:first-of-type,
+	.arvan-reseller-admin .ar-topbar .ar-avatar { display: none; }
 }

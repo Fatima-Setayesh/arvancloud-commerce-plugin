@@ -32,9 +32,9 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 				<?php if ( '' !== (string) $settings['company_logo_url'] ) : ?>
 					<img class="ar-brand__logo" src="<?php echo esc_url( $settings['company_logo_url'] ); ?>" alt="" />
 				<?php else : ?>
-					<span class="ar-brand__mark" aria-hidden="true">A</span>
+					<span class="ar-brand__mark" aria-hidden="true"><span class="ar-icon"><svg viewBox="0 0 24 24"><path d="M17.5 19H7a5 5 0 0 1-.8-9.94A7 7 0 0 1 19.5 11a4 4 0 0 1-2 8z"/></svg></span></span>
 				<?php endif; ?>
-				<span><strong><?php echo esc_html( $company ); ?></strong><small><?php esc_html_e( 'فروشگاه سرور ابری', 'arvan-reseller' ); ?></small></span>
+				<span><strong><?php echo esc_html( $company ); ?></strong><small><?php esc_html_e( 'مبتنی بر زیرساخت آروان‌کلاد', 'arvan-reseller' ); ?></small></span>
 			</a>
 			<nav class="ar-store-nav" aria-label="<?php esc_attr_e( 'ناوبری فروشگاه', 'arvan-reseller' ); ?>">
 				<a href="#ar-product"><?php esc_html_e( 'سرور ابری', 'arvan-reseller' ); ?></a>

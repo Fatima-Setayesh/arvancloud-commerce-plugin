@@ -18,26 +18,37 @@
 		estimateAt: null,
 		pollTimer: null,
 		pollAttempts: 0,
-		orderOperation: 'cloud-server-order-' + Date.now()
+		orderOperation: 'cloud-server-order-' + Date.now(),
+		accountOpen: false
 	};
 
 	const routeMeta = {
-		dashboard: ['داشبورد', 'نمای کوتاه از کیف پول و سرویس‌ها'], services: ['سرویس‌ها', 'سرورهای ابری متعلق به حساب شما'],
-		'create-server': ['ساخت سرور ابری', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور'], wallet: ['کیف پول', 'شارژ آزمایشی و دفترکل تغییرناپذیر'],
-		billing: ['مصرف و صورتحساب', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها'], orders: ['سفارش‌ها', 'رهگیری ساخت و شناسه منبع'],
-		notifications: ['اعلان‌ها', 'هشدارهای موجودی و رویدادهای سرویس'], resource: ['جزئیات سرویس', 'وضعیت واقعی ثبت‌شده در سامانه']
+		dashboard: ['nav.dashboard', 'داشبورد', 'Dashboard', 'نمای کوتاه از کیف پول و سرویس‌ها', 'Wallet and service overview'], services: ['nav.services', 'سرویس‌ها', 'Services', 'سرورهای ابری متعلق به حساب شما', 'Cloud servers owned by your account'],
+		'create-server': ['nav.createServer', 'ساخت سرور ابری', 'Create cloud server', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور', 'Step-by-step configuration with a server-side estimate'], wallet: ['nav.wallet', 'کیف پول', 'Wallet', 'شارژ آزمایشی و دفترکل تغییرناپذیر', 'Mock top-up and immutable ledger'],
+		billing: ['nav.billing', 'مصرف و صورتحساب', 'Usage & billing', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها', 'Usage windows and invoices'], orders: ['nav.orders', 'سفارش‌ها', 'Orders', 'رهگیری ساخت و شناسه منبع', 'Provisioning and resource tracking'],
+		notifications: ['nav.notifications', 'اعلان‌ها', 'Notifications', 'هشدارهای موجودی و رویدادهای سرویس', 'Wallet and service events'], resource: ['nav.services', 'جزئیات سرویس', 'Service details', 'وضعیت واقعی ثبت‌شده در سامانه', 'Recorded service status']
 	};
 
-	function setContent(html) { content.innerHTML = html; ui.mountIcons(content); }
+	function currentMeta() { const meta = routeMeta[state.route] || routeMeta.dashboard; const english = document.documentElement.dataset.arLanguage === 'en'; return [english ? meta[2] : meta[1], english ? meta[4] : meta[3]]; }
+	function setContent(html) { content.innerHTML = html; ui.mountIcons(content); ui.translateDom(content); }
 	function numeric(value) { const number = Number(String(value || '0').replace(/,/g, '')); return Number.isFinite(number) ? number : 0; }
 	function modeLabel(mode) { return mode === 'live' ? 'زنده' : 'آزمایشی'; }
-	function title() { const meta = routeMeta[state.route] || routeMeta.dashboard; app.querySelector('#ar-customer-page-title').textContent = meta[0]; document.title = meta[0] + ' — فروش ابری آروان'; }
-	function pageHead(actions) { const meta = routeMeta[state.route] || routeMeta.dashboard; return ui.pageHead(meta[0], meta[1], actions); }
+	function title() {
+		const meta = currentMeta();
+		const titleNode = app.querySelector('#ar-customer-page-title');
+		if (titleNode) {
+			titleNode.dataset.arI18n = (routeMeta[state.route] || routeMeta.dashboard)[0];
+			titleNode.textContent = meta[0];
+		}
+		document.title = meta[0] + ' — فروش ابری آروان';
+	}
+	function pageHead(actions) { const meta = currentMeta(); return ui.pageHead(meta[0], meta[1], actions); }
 
-	function metric(label, value, icon, meta) {
+	function metric(label, value, icon, meta, route) {
 		const missing = value === null || typeof value === 'undefined' || value === '' || (typeof value === 'number' && !Number.isFinite(value)) || /^(?:undefined|null|nan)$/i.test(String(value).trim());
 		const displayValue = missing ? '—' : value;
-		return '<article class="ar-card ar-metric"><span class="ar-metric__icon">' + ui.icon(icon) + '</span><span class="ar-metric__label">' + ui.escape(label) + '</span><strong class="ar-metric__value">' + displayValue + '</strong><span class="ar-metric__meta">' + ui.escape(meta || '') + '</span></article>';
+		const opening = route ? '<button type="button" class="ar-card ar-metric ar-dashboard-link" data-ar-route="' + ui.escape(route) + '" aria-label="' + ui.escape(label) + '">' : '<article class="ar-card ar-metric">';
+		return opening + '<span class="ar-metric__icon">' + ui.icon(icon) + '</span><span class="ar-metric__label">' + ui.escape(label) + '</span><strong class="ar-metric__value">' + displayValue + '</strong><span class="ar-metric__meta">' + ui.escape(meta || '') + '</span>' + (route ? '</button>' : '</article>');
 	}
 
 	function table(headers, rows, emptyText) {
@@ -47,6 +58,40 @@
 
 	function resourceCard(resource) {
 		return '<article class="ar-card ar-resource-card"><div class="ar-resource-card__head"><div style="display:flex;gap:12px"><span class="ar-resource-card__icon">' + ui.icon('server') + '</span><div><span class="ar-eyebrow">سرور ابری · ' + ui.escape(resource.region || '—') + '</span><h2 style="margin:0;font-size:17px">' + ui.escape(resource.name || 'سرور ابری') + '</h2></div></div>' + ui.status(resource.status) + '</div><div class="ar-resource-card__meta"><div><span>شناسه منبع</span><strong><code dir="ltr">' + ui.escape(resource.resource_id) + '</code></strong></div><div><span>وضعیت راه‌دور</span><strong>' + ui.status(resource.remote_status) + '</strong></div><div><span>نرخ ساعتی</span><strong>' + ui.money(resource.hourly_price, resource.currency) + '</strong></div><div><span>آخرین صورتحساب</span><strong>' + ui.date(resource.last_billed_at) + '</strong></div></div><button class="ar-button ar-button--secondary" type="button" data-resource-id="' + ui.escape(resource.id) + '">مشاهده جزئیات</button></article>';
+	}
+
+	function closeAccount(restoreFocus = true) {
+		const drawer = app.querySelector('[data-ar-account-drawer]');
+		const scrim = app.querySelector('.ar-account-scrim');
+		const trigger = app.querySelector('[data-ar-action="toggle-account"]');
+		if (!drawer || !state.accountOpen) return;
+		state.accountOpen = false; drawer.hidden = true; scrim.hidden = true;
+		trigger.setAttribute('aria-expanded', 'false');
+		if (restoreFocus) trigger.focus();
+	}
+
+	async function openAccount() {
+		const drawer = app.querySelector('[data-ar-account-drawer]');
+		const scrim = app.querySelector('.ar-account-scrim');
+		const trigger = app.querySelector('[data-ar-action="toggle-account"]');
+		const accountContent = app.querySelector('[data-ar-account-content]');
+		if (!drawer || state.accountOpen) return;
+		state.accountOpen = true; drawer.hidden = false; scrim.hidden = false;
+		trigger.setAttribute('aria-expanded', 'true'); drawer.focus();
+		accountContent.innerHTML = ui.loading('در حال دریافت خلاصه حساب…');
+		try {
+			const results = await Promise.allSettled([api.get('wallet'), api.get('resources'), api.get('orders', { query: { limit: 3 } })]);
+			const walletData = results[0].status === 'fulfilled' ? results[0].value : null;
+			const resources = results[1].status === 'fulfilled' ? results[1].value : [];
+			const ordersData = results[2].status === 'fulfilled' ? results[2].value : [];
+			const active = resources.filter((resource) => ['active', 'provisioned'].includes(resource.status));
+			const recent = resources.slice(0, 3);
+			accountContent.innerHTML = '<section class="ar-account-summary"><div><small>موجودی کیف پول</small><strong>' + ui.money(walletData && walletData.balance, walletData && walletData.currency) + '</strong></div><div><small>سرویس فعال</small><strong>' + ui.persianDigits(active.length) + '</strong></div><div><small>سفارش اخیر</small><strong>' + ui.persianDigits(ordersData.length) + '</strong></div></section><section class="ar-account-recent"><div class="ar-card-head"><h3>سرویس‌های اخیر</h3><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="services">مشاهده همه</button></div>' + (recent.length ? recent.map((resource) => '<button type="button" data-resource-id="' + ui.escape(resource.id) + '"><span class="ar-icon" data-icon="server" aria-hidden="true"></span><span><strong>' + ui.escape(resource.name || 'سرور ابری') + '</strong><small><code dir="ltr">' + ui.escape(resource.resource_id || '—') + '</code></small></span>' + ui.status(resource.status) + '</button>').join('') : '<p class="ar-account-recent__empty">هنوز سرویسی ثبت نشده است.</p>') + '</section>';
+			ui.mountIcons(accountContent); ui.translateDom(accountContent);
+		} catch (error) {
+			accountContent.innerHTML = ui.error(error);
+			ui.mountIcons(accountContent);
+		}
 	}
 
 	async function dashboard() {
@@ -62,9 +107,9 @@
 		const unread = notifications.filter((item) => !item.is_read).length;
 		const usageTotal = available[4] ? usage.reduce((sum, row) => sum + numeric(row.total_charge), 0).toFixed(4) : null;
 		const transactionRows = transactions.map((row) => [ui.status(row.type === 'credit' || String(row.amount || '').charAt(0) !== '-' ? 'completed' : 'issued').replace(/تکمیل‌شده|صادرشده/, ui.escape(ui.statusLabel(row.type))), ui.money(row.amount, row.currency), ui.escape(row.description || row.reference_type), ui.date(row.created_at)]);
-		setContent(pageHead('<button class="ar-button ar-button--secondary" type="button" data-ar-route="wallet">' + ui.icon('wallet') + 'شارژ کیف پول</button><button class="ar-button ar-button--accent" type="button" data-ar-route="create-server">' + ui.icon('plus') + 'ساخت سرور</button>') +
+		setContent(pageHead('<button class="ar-button ar-button--secondary" type="button" data-ar-route="wallet">' + ui.icon('wallet') + '<span data-ar-i18n="action.topupWallet">شارژ کیف پول</span></button><button class="ar-button ar-button--accent" type="button" data-ar-route="create-server">' + ui.icon('plus') + '<span data-ar-i18n="action.createServer">ساخت سرور</span></button>') +
 			(low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>موجودی کیف پول پایین است</strong><p>برای جلوگیری از اعمال سیاست تعلیق، موجودی را بررسی و در حالت آزمایشی شارژ کنید.</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="wallet">شارژ کیف پول</button></div>' : '') +
-			'<section class="ar-grid ar-grid--metrics ar-customer-metrics" style="margin-top:16px"><article class="ar-card ar-wallet-hero"><small>موجودی کیف پول</small><strong class="ar-wallet-balance">' + ui.money(wallet && wallet.balance, wallet && wallet.currency) + '</strong><button class="ar-button ar-button--accent" type="button" data-ar-action="open-topup">' + ui.icon('plus') + 'شارژ کیف پول</button></article>' + metric('سرویس‌های فعال', available[1] ? ui.persianDigits(active.length) : '—', 'server', available[1] ? ui.persianDigits(resources.length) + ' سرویس ثبت‌شده' : 'داده در دسترس نیست') + metric('مصرف دوره', ui.money(usageTotal, runtime.settings.currency), 'chart', available[4] ? ui.persianDigits(usage.length) + ' پنجره مصرف' : 'داده در دسترس نیست') + metric('اعلان‌های خوانده‌نشده', available[2] ? ui.persianDigits(unread) : '—', 'bell', available[2] ? ui.persianDigits(notifications.length) + ' اعلان اخیر' : 'داده در دسترس نیست') + '</section>' +
+			'<section class="ar-grid ar-grid--metrics ar-customer-metrics" style="margin-top:16px"><article class="ar-card ar-wallet-hero ar-wallet-hero--dashboard"><button class="ar-wallet-hero__link" type="button" data-ar-route="wallet" aria-label="کیف پول"><small>موجودی کیف پول</small><strong class="ar-wallet-balance">' + ui.money(wallet && wallet.balance, wallet && wallet.currency) + '</strong></button><button class="ar-button ar-button--accent" type="button" data-ar-action="open-topup">' + ui.icon('plus') + '<span data-ar-i18n="action.topupWallet">شارژ کیف پول</span></button></article>' + metric('سرویس‌های فعال', available[1] ? ui.persianDigits(active.length) : '—', 'server', available[1] ? ui.persianDigits(resources.length) + ' سرویس ثبت‌شده' : 'داده در دسترس نیست', 'services') + metric('مصرف دوره', ui.money(usageTotal, runtime.settings.currency), 'chart', available[4] ? ui.persianDigits(usage.length) + ' پنجره مصرف' : 'داده در دسترس نیست', 'billing') + metric('اعلان‌های خوانده‌نشده', available[2] ? ui.persianDigits(unread) : '—', 'bell', available[2] ? ui.persianDigits(notifications.length) + ' اعلان اخیر' : 'داده در دسترس نیست', 'notifications') + '</section>' +
 			'<section class="ar-layout-main"><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><div><h2>مصرف اخیر</h2><p>هزینه‌های قطعی ثبت‌شده در سامانه</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="billing">جزئیات</button></div>' + ui.lineChart(costs.length ? costs : [0]) + '</article><article class="ar-card ar-card--flush"><div class="ar-card-head" style="padding:20px 20px 0"><h2>تراکنش‌های اخیر</h2></div>' + table(['نوع', 'مبلغ', 'شرح', 'زمان'], transactionRows, 'هنوز تراکنشی ندارید') + '</article></div><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><h2>سرور فعال</h2><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="services">همه سرویس‌ها</button></div>' + (active[0] ? resourceCard(active[0]) : ui.empty('سرور فعالی ندارید', 'از پیکربندی مرحله‌ای برای ساخت سرور ابری استفاده کنید.', '<button class="ar-button" type="button" data-ar-route="create-server">ساخت سرور</button>')) + '</article><article class="ar-card"><div class="ar-card-head"><h2>آخرین اعلان‌ها</h2></div>' + (notifications.length ? '<ol class="ar-timeline">' + notifications.map((item) => '<li class="' + (item.status === 'sent' ? 'is-complete' : 'is-current') + '"><span class="ar-timeline__marker">' + ui.icon(item.status === 'sent' ? 'check' : 'bell') + '</span><div><strong>' + notificationLabel(item.type) + '</strong><small>' + ui.date(item.created_at) + '</small></div></li>').join('') + '</ol>' : ui.empty('اعلانی ندارید', 'هشدارهای موجودی و سرویس اینجا نمایش داده می‌شوند.')) + '</article></div></section>');
 	}
 
@@ -110,13 +155,17 @@
 	}
 
 	function openTopup() {
+		if (runtime.settings.mode !== 'mock') {
+			ui.modal({ title: 'شارژ کیف پول', description: 'پرداخت آنلاین در حالت فعلی در دسترس نیست.', body: '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>درگاه پرداخت پیکربندی نشده است</strong><p>برای جلوگیری از نمایش یک درگاه غیرواقعی، عملیات شارژ در حالت زنده غیرفعال است.</p></div></div>' });
+			return;
+		}
 		const operation = 'customer-payment-create-' + Date.now();
 		const key = api.operationKey(operation);
 		const minimum = numeric(runtime.settings.minimumTopup); const maximum = numeric(runtime.settings.maximumTopup);
 		const presets = [500000, 1000000, 2000000, 5000000].filter((amount) => amount >= minimum && amount <= maximum);
 		const presetMarkup = presets.length ? '<div class="ar-topup-presets" aria-label="مبلغ‌های پیشنهادی">' + presets.map((amount) => '<button type="button" data-topup-preset="' + amount + '">' + ui.decimal(amount) + '</button>').join('') + '</div>' : '';
 		const initialAmount = runtime.settings.minimumTopup || '1.0000';
-		const modal = ui.modal({ title: 'شارژ کیف پول', description: runtime.settings.mode === 'mock' ? 'پرداخت کاملاً آزمایشی و بدون تراکنش واقعی است.' : 'درگاه واقعی در قرارداد فعلی پیاده‌سازی نشده است.', body: '<form id="ar-topup-form" class="ar-form"><div class="ar-alert ' + (runtime.settings.mode === 'mock' ? 'ar-alert--success' : 'ar-alert--warning') + '">' + ui.icon('info') + '<div><strong>' + (runtime.settings.mode === 'mock' ? 'پرداخت آزمایشی' : 'حالت زنده') + '</strong><p>' + (runtime.settings.mode === 'mock' ? 'پس از ساخت پرداخت، تأیید آزمایشی موجودی را به‌صورت اتمیک شارژ می‌کند.' : 'برای جلوگیری از ادعای پرداخت واقعی، فقط قرارداد موجود اجرا می‌شود.') + '</p></div></div><div class="ar-field"><label for="ar-topup-amount">مبلغ شارژ</label>' + presetMarkup + '<input id="ar-topup-amount" name="amount" type="text" inputmode="decimal" dir="ltr" required value="' + ui.escape(initialAmount) + '"><small>بازه مجاز: ' + ui.escape(runtime.settings.minimumTopup) + ' تا ' + ui.escape(runtime.settings.maximumTopup) + ' ' + ui.escape(runtime.settings.currency) + '</small></div><div class="ar-topup-preview"><span>مبلغ پرداخت</span><strong data-topup-preview>' + ui.money(initialAmount, runtime.settings.currency) + '</strong><small>روش: ' + (runtime.settings.mode === 'mock' ? 'درگاه آزمایشی' : 'قرارداد پرداخت موجود') + '</small></div><div class="ar-modal__actions"><button class="ar-button ar-button--accent ar-button--block" type="submit">ادامه و ایجاد پرداخت</button></div></form>' });
+		const modal = ui.modal({ title: 'شارژ آزمایشی کیف پول', description: 'این عملیات کاملاً آزمایشی و بدون تراکنش بانکی واقعی است.', body: '<form id="ar-topup-form" class="ar-form"><div class="ar-alert ar-alert--success">' + ui.icon('info') + '<div><span class="ar-env ar-env--mock"><span></span>آزمایشی</span><strong>پرداخت و تأیید آزمایشی</strong><p>پرداخت از endpoint موجود ساخته و سپس از مسیر تأیید Mock به‌صورت اتمیک به کیف پول افزوده می‌شود.</p></div></div><div class="ar-field"><label for="ar-topup-amount">مبلغ شارژ</label>' + presetMarkup + '<input id="ar-topup-amount" name="amount" type="text" inputmode="decimal" dir="ltr" required value="' + ui.escape(initialAmount) + '"><small>بازه مجاز: ' + ui.escape(runtime.settings.minimumTopup) + ' تا ' + ui.escape(runtime.settings.maximumTopup) + ' ' + ui.escape(runtime.settings.currency) + '</small></div><div class="ar-topup-preview"><span>مبلغ پرداخت</span><strong data-topup-preview>' + ui.money(initialAmount, runtime.settings.currency) + '</strong><small>روش: پرداخت آزمایشی</small></div><div class="ar-modal__actions"><button class="ar-button ar-button--accent ar-button--block" type="submit">تکمیل شارژ آزمایشی</button></div></form>' });
 		const amountInput = modal.dialog.querySelector('#ar-topup-amount'); const preview = modal.dialog.querySelector('[data-topup-preview]');
 		modal.dialog.addEventListener('click', (event) => { const preset = event.target.closest('[data-topup-preset]'); if (!preset) return; amountInput.value = preset.dataset.topupPreset; preview.innerHTML = ui.money(amountInput.value, runtime.settings.currency); amountInput.focus(); });
 		amountInput.addEventListener('input', () => { preview.innerHTML = ui.money(amountInput.value || '0', runtime.settings.currency); });
@@ -124,8 +173,9 @@
 			event.preventDefault(); const button = event.target.querySelector('button[type="submit"]'); button.disabled = true; button.textContent = 'در حال ثبت…';
 			try {
 				const payment = await api.post('payments', { amount: event.target.amount.value }, { idempotencyKey: key, safeRetry: true });
-				api.completeOperation(operation); modal.close(); ui.toast('پرداخت آزمایشی ساخته شد؛ برای شارژ، آن را تأیید کنید.', 'success'); await wallet();
-			} catch (error) { ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; button.textContent = 'ساخت پرداخت آزمایشی'; }
+				await api.post('payments/' + encodeURIComponent(payment.payment_reference) + '/confirm', {});
+				api.completeOperation(operation); modal.close(); ui.toast('شارژ آزمایشی با موفقیت تکمیل شد.', 'success'); await wallet();
+			} catch (error) { ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; button.textContent = 'تکمیل شارژ آزمایشی'; }
 		});
 	}
 
@@ -152,10 +202,10 @@
 		try {
 			const catalog = await loadCatalog();
 			const steps = ['منطقه', 'سیستم‌عامل', 'پلن', 'تنظیمات', 'بررسی و سفارش'];
-			const stepper = '<ol class="ar-stepper" aria-label="مراحل ساخت سرور">' + steps.map((label, index) => '<li class="ar-stepper__item ' + (index < state.configStep ? 'is-complete' : (index === state.configStep ? 'is-current' : '')) + '"' + (index === state.configStep ? ' aria-current="step"' : '') + '><span class="ar-stepper__number">' + ui.persianDigits(index + 1) + '</span><span class="ar-stepper__label">' + label + '</span></li>').join('') + '</ol>';
+			const stepper = '<ol class="ar-stepper" aria-label="مراحل ساخت سرور">' + steps.map((label, index) => '<li class="ar-stepper__item ' + (index < state.configStep ? 'is-complete' : (index === state.configStep ? 'is-current' : '')) + '"' + (index === state.configStep ? ' aria-current="step"' : '') + '><span class="ar-stepper__number" aria-label="مرحله ' + ui.persianDigits(index + 1) + '">' + (index < state.configStep ? ui.icon('check') : ui.persianDigits(index + 1)) + '</span><span class="ar-stepper__label">' + label + '</span></li>').join('') + '</ol>';
 			const panels = [regionPanel(catalog), imagePanel(catalog), flavorPanel(catalog), optionsPanel(), reviewPanel(catalog)];
 			const canNext = validateConfigStep(state.configStep);
-			const actions = '<div class="ar-wizard-actions ar-config-actions"><button class="ar-button ar-button--secondary" type="button" data-ar-action="config-prev"' + (state.configStep === 0 ? ' disabled' : '') + '>مرحله قبل</button>' + (state.configStep < 4 ? '<button class="ar-button" type="button" data-ar-action="config-next"' + (canNext ? '' : ' disabled') + '>ادامه پیکربندی</button>' : '<button class="ar-button ar-button--accent" type="button" data-ar-action="create-order"' + (state.estimate ? '' : ' disabled') + '>' + ui.icon('server') + 'ثبت سفارش و ساخت سرور</button>') + '</div>';
+			const actions = '<div class="ar-wizard-actions ar-config-actions"><button class="ar-button ar-button--secondary" type="button" data-ar-action="config-prev"' + (state.configStep === 0 ? ' disabled' : '') + '><span data-ar-i18n="action.previousStep">مرحله قبل</span></button>' + (state.configStep < 4 ? '<button class="ar-button" type="button" data-ar-action="config-next"' + (canNext ? '' : ' disabled') + '><span data-ar-i18n="action.continueConfig">ادامه پیکربندی</span></button>' : '<button class="ar-button ar-button--accent" type="button" data-ar-action="create-order"' + (state.estimate ? '' : ' disabled') + '>' + ui.icon('server') + 'ثبت سفارش و ساخت سرور</button>') + '</div>';
 			setContent(pageHead('<span class="ar-env ar-env--' + ui.escape(catalog.mode) + '"><span></span>' + modeLabel(catalog.mode) + '</span>') + '<div class="ar-configurator"><section class="ar-card ar-config-main">' + stepper + '<div class="ar-config-panel">' + panels[state.configStep] + '</div>' + actions + '</section>' + summaryPanel(catalog) + '</div>');
 			if (state.configStep === 4 && state.config.flavor && !state.estimate) fetchEstimate();
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
@@ -163,7 +213,7 @@
 
 	function optionCard(type, key, titleText, details, selected) {
 		const icons = { region: 'region', image: 'image', flavor: 'cpu' };
-		return '<button class="ar-option-card' + (selected ? ' is-selected' : '') + '" type="button" data-config-type="' + type + '" data-config-key="' + ui.escape(key) + '" aria-pressed="' + String(selected) + '"><span class="ar-option-card__icon">' + ui.icon(icons[type] || 'server') + '</span><span class="ar-option-card__body"><strong>' + ui.escape(titleText) + '</strong>' + details.filter(Boolean).map((detail) => '<small dir="auto">' + ui.escape(detail) + '</small>').join('') + '</span></button>';
+		return '<button class="ar-option-card' + (selected ? ' is-selected' : '') + '" type="button" data-config-type="' + type + '" data-config-key="' + ui.escape(key) + '" aria-pressed="' + String(selected) + '"><span class="ar-option-card__icon">' + ui.icon(icons[type] || 'server') + '</span><span class="ar-option-card__body"><strong>' + ui.escape(titleText) + '</strong>' + details.filter(Boolean).map((detail) => '<small dir="auto">' + ui.escape(detail) + '</small>').join('') + '</span>' + (selected ? '<span class="ar-option-card__selected">' + ui.icon('check') + '<span>انتخاب‌شده</span></span>' : '') + '</button>';
 	}
 
 	function regionPanel(catalog) { return '<div class="ar-card-head"><div><h2>منطقه سرویس</h2><p>منطقه از کاتالوگ سامانه دریافت شده است.</p></div></div><div class="ar-option-grid">' + catalog.regions.map((region) => { const key = region.name || region.id; return optionCard('region', key, key, [region.status ? ui.statusLabel(region.status) : ''], state.config.region === key); }).join('') + '</div>'; }
@@ -245,6 +295,7 @@
 	}
 
 	async function go(route, resourceId) {
+		closeAccount(false);
 		window.clearTimeout(state.pollTimer); state.route = route; state.resourceId = resourceId || state.resourceId; app.dataset.arRoute = route; title();
 		app.querySelectorAll('[data-ar-route]').forEach((node) => { const active = node.dataset.arRoute === route; node.classList.toggle('is-active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); });
 		app.classList.remove('is-sidebar-open'); const scrim = app.querySelector('.ar-sidebar-scrim'); if (scrim) scrim.hidden = true;
@@ -259,12 +310,31 @@
 		if (event.target.matches('[data-config-option]')) { state.config[event.target.dataset.configOption] = event.target.checked; state.estimate = null; state.orderOperation = 'cloud-server-order-' + Date.now(); }
 	});
 	app.addEventListener('click', async (event) => {
+		const accountAction = event.target.closest('[data-ar-action="toggle-account"], [data-ar-action="close-account"]');
+		if (accountAction) {
+			event.preventDefault();
+			if (accountAction.dataset.arAction === 'toggle-account' && !state.accountOpen) await openAccount();
+			else closeAccount();
+			return;
+		}
 		const routeButton = event.target.closest('[data-ar-route]'); if (routeButton) { event.preventDefault(); await go(routeButton.dataset.arRoute); return; }
 		const resource = event.target.closest('[data-resource-id]'); if (resource) { await go('resource', resource.dataset.resourceId); return; }
 		const copy = event.target.closest('[data-copy]'); if (copy) { try { await navigator.clipboard.writeText(copy.dataset.copy); ui.toast('شناسه کپی شد.', 'success'); } catch (error) { ui.toast('کپی خودکار ممکن نشد.', 'danger'); } return; }
 		const payment = event.target.closest('[data-confirm-payment]'); if (payment) { await confirmPayment(payment.dataset.confirmPayment, payment); return; }
 		const notification = event.target.closest('[data-notification-read]');
 		if (notification) { notification.disabled = true; try { await api.post('notifications/' + encodeURIComponent(notification.dataset.notificationRead) + '/read', {}); await notifications(); } catch (error) { notification.disabled = false; ui.toast(ui.errorMessage(error), 'danger'); } return; }
+		const action = event.target.closest('[data-ar-action]');
+		if (action) {
+			event.preventDefault();
+			if (action.dataset.arAction === 'retry-route') { await go(state.route, state.resourceId); return; }
+			if (action.dataset.arAction === 'open-topup') { openTopup(); return; }
+			if (action.dataset.arAction === 'config-next') {
+				if (!validateConfigStep(state.configStep)) { ui.toast('برای ادامه، گزینه‌های لازم این مرحله را کامل کنید.', 'danger'); return; }
+				state.configStep = Math.min(4, state.configStep + 1); await configurator(); return;
+			}
+			if (action.dataset.arAction === 'config-prev') { state.configStep = Math.max(0, state.configStep - 1); await configurator(); return; }
+			if (action.dataset.arAction === 'create-order') { await createOrder(action); return; }
+		}
 		const selection = event.target.closest('[data-config-type]');
 		if (selection) {
 			const catalog = state.catalog; const type = selection.dataset.configType; const key = selection.dataset.configKey;
@@ -273,15 +343,30 @@
 			if (type === 'flavor') state.config.flavor = catalog.flavors.find((item) => String(item.id) === key) || null;
 			state.estimate = null; state.orderOperation = 'cloud-server-order-' + Date.now(); await configurator(); return;
 		}
-		const action = event.target.closest('[data-ar-action]'); if (!action) return;
-		if (action.dataset.arAction === 'retry-route') go(state.route, state.resourceId);
-		if (action.dataset.arAction === 'open-topup') openTopup();
-		if (action.dataset.arAction === 'config-next') { if (validateConfigStep(state.configStep)) { state.configStep = Math.min(4, state.configStep + 1); await configurator(); } }
-		if (action.dataset.arAction === 'config-prev') { state.configStep = Math.max(0, state.configStep - 1); await configurator(); }
-		if (action.dataset.arAction === 'create-order') await createOrder(action);
 	});
 
 	document.addEventListener('visibilitychange', () => { if (document.hidden) window.clearTimeout(state.pollTimer); else if (state.route === 'orders') schedulePoll(); });
+	document.addEventListener('arvan:language-change', () => {
+		title();
+		const meta = currentMeta();
+		const head = content.querySelector('.ar-page-head');
+		if (head) {
+			const heading = head.querySelector('h1'); const description = head.querySelector('p');
+			if (heading) heading.textContent = meta[0];
+			if (description) description.textContent = meta[1];
+		}
+	});
+	document.addEventListener('keydown', (event) => {
+		if (!state.accountOpen) return;
+		if (event.key === 'Escape') { closeAccount(); return; }
+		if (event.key !== 'Tab') return;
+		const drawer = app.querySelector('[data-ar-account-drawer]');
+		const focusable = Array.from(drawer.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
+		if (!focusable.length) { event.preventDefault(); drawer.focus(); return; }
+		const first = focusable[0]; const last = focusable[focusable.length - 1];
+		if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+		else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+	});
 	const requestedRoute = new URLSearchParams(window.location.search).get('ar-route');
 	const publicRoutes = ['dashboard', 'services', 'create-server', 'wallet', 'billing', 'orders', 'notifications'];
 	go(publicRoutes.includes(requestedRoute) ? requestedRoute : 'dashboard');

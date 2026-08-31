@@ -2,7 +2,40 @@
 	'use strict';
 
 	const themeStorageKey = 'arvan-reseller-theme';
+	const languageStorageKey = 'arvan-reseller-language';
 	const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+	const translations = {
+		'preference.theme': { fa: 'پوسته نمایش', en: 'Theme' },
+		'preference.light': { fa: 'روشن', en: 'Light' },
+		'preference.dark': { fa: 'تیره', en: 'Dark' },
+		'preference.language': { fa: 'زبان نمایش', en: 'Language' },
+		'nav.dashboard': { fa: 'داشبورد', en: 'Dashboard' },
+		'nav.services': { fa: 'سرویس‌ها', en: 'Services' },
+		'nav.createServer': { fa: 'ساخت سرور', en: 'Create server' },
+		'nav.wallet': { fa: 'کیف پول', en: 'Wallet' },
+		'nav.billing': { fa: 'مصرف و صورتحساب‌ها', en: 'Usage & billing' },
+		'nav.orders': { fa: 'سفارش‌ها', en: 'Orders' },
+		'nav.notifications': { fa: 'اعلان‌ها', en: 'Notifications' },
+		'nav.setup': { fa: 'راه‌اندازی', en: 'Setup' },
+		'nav.customers': { fa: 'مشتریان', en: 'Customers' },
+		'nav.payments': { fa: 'پرداخت‌ها', en: 'Payments' },
+		'nav.resources': { fa: 'سرورهای ابری', en: 'Cloud servers' },
+		'nav.settlements': { fa: 'تسویه داخلی', en: 'Internal settlement' },
+		'nav.health': { fa: 'سلامت سامانه', en: 'System health' },
+		'nav.audit': { fa: 'گزارش ممیزی', en: 'Audit log' },
+		'nav.settings': { fa: 'تنظیمات', en: 'Settings' },
+		'shell.cloudPanel': { fa: 'پنل ابری', en: 'Cloud panel' },
+		'shell.operations': { fa: 'عملیات زیرساخت ابری', en: 'Cloud operations' },
+		'shell.logout': { fa: 'خروج از حساب', en: 'Sign out' },
+		'action.newService': { fa: 'سرویس جدید', en: 'New service' },
+		'action.createServer': { fa: 'ساخت سرور', en: 'Create server' },
+		'action.topupWallet': { fa: 'شارژ کیف پول', en: 'Top up wallet' },
+		'action.continueConfig': { fa: 'ادامه پیکربندی', en: 'Continue' },
+		'action.previousStep': { fa: 'مرحله قبل', en: 'Previous' },
+		'action.logout': { fa: 'خروج از حساب', en: 'Sign out' },
+		'account.title': { fa: 'حساب مشتری', en: 'Customer account' },
+		'account.open': { fa: 'بازکردن حساب مشتری', en: 'Open customer account' }
+	};
 
 	function storedTheme() {
 		try {
@@ -19,24 +52,99 @@
 
 	function applyTheme(preference, persist) {
 		const mode = ['light', 'dark', 'system'].includes(preference) ? preference : 'system';
-		document.documentElement.dataset.arTheme = resolvedTheme(mode);
+		const theme = resolvedTheme(mode);
+		document.documentElement.dataset.arTheme = theme;
 		document.documentElement.dataset.arThemeMode = mode;
 		if (persist) {
 			try { window.localStorage.setItem(themeStorageKey, mode); } catch (error) { /* Preference remains active for this page. */ }
 		}
-		document.querySelectorAll('[data-ar-theme-select]').forEach((select) => { select.value = mode; });
-		document.dispatchEvent(new CustomEvent('arvan:theme-change', { detail: { mode: mode, theme: resolvedTheme(mode) } }));
+		document.querySelectorAll('[data-ar-theme-value]').forEach((button) => {
+			const selected = button.dataset.arThemeValue === theme;
+			button.classList.toggle('is-selected', selected);
+			button.setAttribute('aria-pressed', String(selected));
+		});
+		document.dispatchEvent(new CustomEvent('arvan:theme-change', { detail: { mode: mode, theme: theme } }));
 	}
 
 	function wireThemeControls(root) {
-		(root || document).querySelectorAll('[data-ar-theme-select]:not([data-ar-theme-mounted])').forEach((select) => {
-			select.dataset.arThemeMounted = '1';
-			select.value = storedTheme();
-			select.addEventListener('change', () => applyTheme(select.value, true));
+		(root || document).querySelectorAll('[data-ar-theme-value]:not([data-ar-theme-mounted])').forEach((button) => {
+			button.dataset.arThemeMounted = '1';
+			button.addEventListener('click', () => applyTheme(button.dataset.arThemeValue, true));
+		});
+		applyTheme(storedTheme(), false);
+		wireSegmentedKeyboard(root, '[data-ar-theme-toggle]', '[data-ar-theme-value]');
+	}
+
+	function storedLanguage() {
+		try {
+			return window.localStorage.getItem(languageStorageKey) === 'en' ? 'en' : 'fa';
+		} catch (error) {
+			return 'fa';
+		}
+	}
+
+	function t(key, fallback) {
+		const entry = translations[key];
+		return entry && entry[storedLanguage()] ? entry[storedLanguage()] : (fallback || key);
+	}
+
+	function translateDom(root) {
+		const scope = root || document;
+		const nodes = [];
+		if (scope.matches && scope.matches('[data-ar-i18n]')) nodes.push(scope);
+		scope.querySelectorAll('[data-ar-i18n]').forEach((node) => nodes.push(node));
+		nodes.forEach((node) => { node.textContent = t(node.dataset.arI18n, node.textContent); });
+		scope.querySelectorAll('[data-ar-i18n-label]').forEach((node) => {
+			node.setAttribute('aria-label', t(node.dataset.arI18nLabel, node.getAttribute('aria-label')));
 		});
 	}
 
+	function applyLanguage(language, persist) {
+		const value = language === 'en' ? 'en' : 'fa';
+		if (persist) {
+			try { window.localStorage.setItem(languageStorageKey, value); } catch (error) { /* Preference remains active for this page. */ }
+		}
+		document.documentElement.dataset.arLanguage = value;
+		document.querySelectorAll('.arvan-reseller-app').forEach((app) => {
+			app.lang = value;
+			app.dir = value === 'en' ? 'ltr' : 'rtl';
+		});
+		document.querySelectorAll('[data-ar-language-value]').forEach((button) => {
+			const selected = button.dataset.arLanguageValue === value;
+			button.classList.toggle('is-selected', selected);
+			button.setAttribute('aria-pressed', String(selected));
+		});
+		translateDom(document);
+		document.dispatchEvent(new CustomEvent('arvan:language-change', { detail: { language: value, direction: value === 'en' ? 'ltr' : 'rtl' } }));
+	}
+
+	function wireSegmentedKeyboard(root, groupSelector, buttonSelector) {
+		(root || document).querySelectorAll(groupSelector + ':not([data-ar-keyboard-mounted])').forEach((group) => {
+			group.dataset.arKeyboardMounted = '1';
+			group.addEventListener('keydown', (event) => {
+				if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+				const buttons = Array.from(group.querySelectorAll(buttonSelector));
+				const current = buttons.indexOf(document.activeElement);
+				if (current < 0) return;
+				event.preventDefault();
+				const offset = event.key === 'ArrowRight' ? 1 : -1;
+				const next = buttons[(current + offset + buttons.length) % buttons.length];
+				next.focus(); next.click();
+			});
+		});
+	}
+
+	function wireLanguageControls(root) {
+		(root || document).querySelectorAll('[data-ar-language-value]:not([data-ar-language-mounted])').forEach((button) => {
+			button.dataset.arLanguageMounted = '1';
+			button.addEventListener('click', () => applyLanguage(button.dataset.arLanguageValue, true));
+		});
+		applyLanguage(storedLanguage(), false);
+		wireSegmentedKeyboard(root, '[data-ar-language-toggle]', '[data-ar-language-value]');
+	}
+
 	applyTheme(storedTheme(), false);
+	applyLanguage(storedLanguage(), false);
 	const syncSystemTheme = () => {
 		if (storedTheme() === 'system') applyTheme('system', false);
 	};
@@ -73,6 +181,7 @@
 
 	const icons = {
 		grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+		cloud: '<path d="M17.5 19H7a5 5 0 0 1-.8-9.94A7 7 0 0 1 19.5 11a4 4 0 0 1-2 8z"/>',
 		users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
 		server: '<rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M17 7h1M17 17h1"/>',
 		region: '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/>',
@@ -103,7 +212,8 @@
 		search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
 		close: '<path d="m6 6 12 12M18 6 6 18"/>',
 		download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
-		theme: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>'
+		theme: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>',
+		moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>'
 	};
 
 	function escape(value) {
@@ -270,6 +380,7 @@
 		if (!app) return;
 		mountIcons(app);
 		wireThemeControls(app);
+		wireLanguageControls(app);
 		app.addEventListener('click', (event) => {
 			const action = event.target.closest('[data-ar-action]');
 			if (!action) return;
@@ -294,7 +405,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, applyTheme, wireThemeControls, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateDom, applyLanguage, applyTheme, wireLanguageControls, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});
