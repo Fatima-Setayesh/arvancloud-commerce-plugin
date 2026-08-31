@@ -55,9 +55,9 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 			<div class="ar-store-hero__copy">
 				<span class="ar-eyebrow"><span class="ar-icon" data-icon="server" aria-hidden="true"></span><?php esc_html_e( 'زیرساخت ابری بدون پیچیدگی', 'arvan-reseller' ); ?></span>
 				<h1><?php esc_html_e( 'سرور ابری، سریع، شفاف و قابل مدیریت', 'arvan-reseller' ); ?></h1>
-				<p><?php echo esc_html( $description ); ?> <?php esc_html_e( 'برآورد قیمت، ثبت سفارش و مدیریت چرخه سرویس در یک تجربه یکپارچه انجام می‌شود.', 'arvan-reseller' ); ?></p>
+				<p><span><?php echo esc_html( $description ); ?></span> <span><?php esc_html_e( 'برآورد قیمت، ثبت سفارش و مدیریت چرخه سرویس در یک تجربه یکپارچه انجام می‌شود.', 'arvan-reseller' ); ?></span></p>
 				<div class="ar-hero__actions">
-					<a class="ar-button ar-button--accent ar-button--large" href="<?php echo esc_url( $create_url ); ?>"><span class="ar-icon" data-icon="plus" aria-hidden="true"></span><?php esc_html_e( 'ساخت سرور ابری', 'arvan-reseller' ); ?></a>
+					<a class="ar-button ar-button--large" href="<?php echo esc_url( $create_url ); ?>"><span class="ar-icon" data-icon="plus" aria-hidden="true"></span><?php esc_html_e( 'ساخت سرور ابری', 'arvan-reseller' ); ?></a>
 					<a class="ar-button ar-button--secondary ar-button--large" href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'ورود به پنل مشتری', 'arvan-reseller' ); ?></a>
 				</div>
 				<ul class="ar-hero-points">
@@ -83,7 +83,7 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 					<span class="ar-icon" data-icon="chart" aria-hidden="true"></span>
 					<div><strong><?php esc_html_e( 'قیمت‌گذاری سمت سرور', 'arvan-reseller' ); ?></strong><small><?php esc_html_e( 'مبلغ نهایی پس از انتخاب پلن از سامانه دریافت می‌شود؛ مرورگر قیمت را حدس نمی‌زند.', 'arvan-reseller' ); ?></small></div>
 				</div>
-				<a class="ar-button ar-button--accent ar-button--block" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'شروع پیکربندی سرور', 'arvan-reseller' ); ?><span class="ar-icon" data-icon="arrow" aria-hidden="true"></span></a>
+				<a class="ar-button ar-button--block" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'شروع پیکربندی سرور', 'arvan-reseller' ); ?><span class="ar-icon" data-icon="arrow" aria-hidden="true"></span></a>
 			</article>
 		</section>
 
@@ -130,5 +130,5 @@ $description = (string) $settings['company_about'] ?: __( 'خرید و مدیر�
 		</section>
 	</main>
 
-	<footer class="ar-store-footer"><span><?php echo esc_html( $company ); ?> — <?php esc_html_e( 'فروش مستقل سرور ابری', 'arvan-reseller' ); ?></span><a href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'ورود به پنل مشتری', 'arvan-reseller' ); ?></a></footer>
+		<footer class="ar-store-footer"><span><span><?php echo esc_html( $company ); ?></span> — <span><?php esc_html_e( 'فروش مستقل سرور ابری', 'arvan-reseller' ); ?></span></span><a href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'ورود به پنل مشتری', 'arvan-reseller' ); ?></a></footer>
 </section>

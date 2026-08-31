@@ -21,18 +21,13 @@
 	--ar-orange-600: #f36b21;
 	--ar-orange-500: #ff7a22;
 	--ar-orange-100: #fff1e8;
-	--ar-accent-700: #b8175b;
-	--ar-accent-600: #d21f6b;
-	--ar-accent-500: #e82f7b;
-	--ar-accent-100: #fff0f6;
-	--ar-color-primary: var(--ar-teal-700);
-	--ar-color-primary-hover: #00666b;
+	--ar-action-primary: #008f91;
+	--ar-action-primary-hover: #006f72;
+	--ar-action-primary-active: #005b5e;
+	--ar-color-primary: var(--ar-action-primary);
+	--ar-color-primary-hover: var(--ar-action-primary-hover);
 	--ar-color-on-primary: #ffffff;
 	--ar-color-secondary: var(--ar-navy-900);
-	--ar-color-accent: var(--ar-accent-600);
-	--ar-color-accent-hover: var(--ar-accent-700);
-	--ar-color-on-accent: #ffffff;
-	--ar-color-accent-soft: var(--ar-accent-100);
 	--ar-color-surface: #ffffff;
 	--ar-color-surface-raised: #ffffff;
 	--ar-color-surface-soft: #f9fbfd;
@@ -54,7 +49,7 @@
 	--ar-color-warning: #c98212;
 	--ar-color-danger: #d14343;
 	--ar-color-info: #1473e6;
-	--ar-color-focus: #ff9c4a;
+	--ar-color-focus: #32bebb;
 	--ar-color-primary-soft: #e8f8f8;
 	--ar-color-teal-soft: var(--ar-teal-100);
 	--ar-color-orange-soft: var(--ar-orange-100);
@@ -119,18 +114,13 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 	--ar-orange-600: #ff8745;
 	--ar-orange-500: #ff995d;
 	--ar-orange-100: #442719;
-	--ar-accent-700: #ff5a9d;
-	--ar-accent-600: #f0448b;
-	--ar-accent-500: #ff72ad;
-	--ar-accent-100: #451a31;
-	--ar-color-primary: #39c6c3;
-	--ar-color-primary-hover: #75dedb;
+	--ar-action-primary: #27b9b7;
+	--ar-action-primary-hover: #159a99;
+	--ar-action-primary-active: #0e7c7d;
+	--ar-color-primary: var(--ar-action-primary);
+	--ar-color-primary-hover: var(--ar-action-primary-hover);
 	--ar-color-on-primary: #03272b;
 	--ar-color-secondary: #081f35;
-	--ar-color-accent: var(--ar-accent-600);
-	--ar-color-accent-hover: var(--ar-accent-500);
-	--ar-color-on-accent: #ffffff;
-	--ar-color-accent-soft: var(--ar-accent-100);
 	--ar-color-surface: #10283c;
 	--ar-color-surface-raised: #153148;
 	--ar-color-surface-soft: #0c2235;
@@ -152,7 +142,7 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 	--ar-color-warning: #f5bf56;
 	--ar-color-danger: #ff7f85;
 	--ar-color-info: #77b7ff;
-	--ar-color-focus: #ffae70;
+	--ar-color-focus: #52d5d1;
 	--ar-color-primary-soft: #123a43;
 	--ar-color-teal-soft: #10383d;
 	--ar-color-orange-soft: #402719;
@@ -212,14 +202,16 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .ar-button:hover { background: var(--ar-color-primary-hover); border-color: var(--ar-color-primary-hover); box-shadow: 0 7px 18px color-mix(in srgb, var(--ar-color-primary) 18%, transparent); transform: translateY(-1px); }
 .ar-button:hover::before { opacity: 1; transform: translateX(38%); }
 .ar-button:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ar-color-focus) 72%, transparent), 0 7px 18px color-mix(in srgb, var(--ar-color-primary) 16%, transparent); outline: 0; }
-.ar-button:active { box-shadow: 0 2px 8px color-mix(in srgb, var(--ar-color-primary) 14%, transparent); transform: translateY(1px); }
+.ar-button:active { background: var(--ar-action-primary-active); border-color: var(--ar-action-primary-active); box-shadow: 0 2px 8px color-mix(in srgb, var(--ar-color-primary) 14%, transparent); transform: translateY(1px); }
 .ar-button--secondary { background: var(--ar-color-surface); border-color: var(--ar-color-border); color: var(--ar-color-text) !important; }
 .ar-button--secondary:hover,
 .ar-button--ghost:hover { background: var(--ar-color-primary-soft); border-color: var(--ar-color-primary); color: var(--ar-color-primary-hover) !important; }
+.ar-button--secondary:active,
+.ar-button--ghost:active { background: var(--ar-color-hover); border-color: var(--ar-color-border-strong); color: var(--ar-color-text) !important; }
 .ar-button--ghost { background: transparent; border-color: var(--ar-color-border-strong); color: var(--ar-color-primary) !important; }
-.ar-button--accent { background: var(--ar-color-accent); border-color: var(--ar-color-accent); box-shadow: 0 5px 14px color-mix(in srgb, var(--ar-color-accent) 20%, transparent); color: var(--ar-color-on-accent) !important; }
-.ar-button--accent:hover { background: var(--ar-color-accent-hover); border-color: var(--ar-color-accent-hover); box-shadow: 0 6px 16px color-mix(in srgb, var(--ar-color-accent) 24%, transparent); color: var(--ar-color-on-accent) !important; }
 .ar-button--danger { background: var(--ar-color-danger); border-color: var(--ar-color-danger); }
+.ar-button--danger:hover { background: color-mix(in srgb, var(--ar-color-danger) 82%, #000); border-color: color-mix(in srgb, var(--ar-color-danger) 82%, #000); }
+.ar-button--danger:active { background: color-mix(in srgb, var(--ar-color-danger) 70%, #000); border-color: color-mix(in srgb, var(--ar-color-danger) 70%, #000); }
 .ar-button--small { min-height: 44px; padding: 8px 12px; }
 .ar-button--large { min-height: 50px; padding-inline: 24px; }
 .ar-button--block { width: 100%; }

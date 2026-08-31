@@ -36,14 +36,14 @@
 		'account.title': { fa: 'حساب مشتری', en: 'Customer account' },
 		'account.open': { fa: 'بازکردن حساب مشتری', en: 'Open customer account' }
 	};
-	const phraseTranslations = {
+	const customerTranslations = {
 		'آزمایشی': 'Mock', 'زنده': 'Live', 'فعال': 'Active', 'سالم': 'Healthy', 'در دسترس': 'Available', 'آماده': 'Ready', 'در انتظار': 'Pending', 'در حال ساخت': 'Building', 'در حال پردازش': 'Processing', 'در حال اجرا': 'Running', 'در حال پیگیری': 'Tracking', 'تکمیل‌شده': 'Completed', 'ارسال‌شده': 'Sent', 'صادرشده': 'Issued', 'پرداخت‌شده': 'Paid', 'ناموفق': 'Failed', 'خطا': 'Error', 'لغوشده': 'Cancelled', 'منقضی': 'Expired', 'بازپرداخت‌شده': 'Refunded', 'تعلیق‌شده': 'Suspended', 'خاتمه‌یافته': 'Terminated', 'حذف‌شده': 'Deleted', 'خاموش': 'Powered off', 'مسدود': 'Blocked', 'نامشخص': 'Unknown', 'نیازمند توجه': 'Needs attention', 'اجرا نشده': 'Never run', 'بسته': 'Closed', 'باطل': 'Void', 'پیش‌نویس': 'Draft',
 		'داشبورد': 'Dashboard', 'سرویس‌ها': 'Services', 'ساخت سرور': 'Create server', 'ساخت سرور ابری': 'Create cloud server', 'کیف پول': 'Wallet', 'مصرف و صورتحساب': 'Usage & billing', 'مصرف و صورتحساب‌ها': 'Usage & billing', 'صورت‌حساب‌ها': 'Invoices', 'سفارش‌ها': 'Orders', 'اعلان‌ها': 'Notifications', 'حساب مشتری': 'Customer account', 'خروج از حساب': 'Sign out', 'پنل ابری': 'Cloud panel', 'فروش ابری آروان': 'Arvan cloud commerce',
 		'پرش به محتوای اصلی': 'Skip to main content', 'بازکردن ناوبری': 'Open navigation', 'بستن حساب': 'Close account', 'بستن حساب مشتری': 'Close customer account', 'بازکردن حساب مشتری': 'Open customer account', 'ناوبری پنل مشتری': 'Customer panel navigation', 'ناوبری موبایل': 'Mobile navigation', 'نمایش رمز': 'Show password', 'پنهان کردن رمز': 'Hide password', 'خوش آمدید،': 'Welcome,',
 		'پوسته نمایش': 'Theme', 'زبان نمایش': 'Language', 'روشن': 'Light', 'تیره': 'Dark', 'سرویس جدید': 'New service', 'مرحله قبل': 'Previous', 'مرحله بعد': 'Next', 'ادامه پیکربندی': 'Continue configuration', 'جزئیات': 'Details', 'مشاهده همه': 'View all', 'مشاهده جزئیات': 'View details', 'مشاهده سرویس': 'View service', 'مشاهده صورتحساب': 'View invoices', 'تلاش دوباره': 'Try again', 'تأیید': 'Confirm', 'انصراف': 'Cancel', 'بستن': 'Close',
 		'نمای کوتاه از کیف پول و سرویس‌ها': 'Wallet and service overview', 'سرورهای ابری متعلق به حساب شما': 'Cloud servers owned by your account', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور': 'Step-by-step configuration with a server-side estimate', 'شارژ آزمایشی و دفترکل تغییرناپذیر': 'Mock top-up and immutable ledger', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها': 'Usage windows and invoices', 'رهگیری ساخت و شناسه منبع': 'Provisioning and resource tracking', 'هشدارهای موجودی و رویدادهای سرویس': 'Wallet and service events', 'جزئیات سرویس': 'Service details', 'وضعیت واقعی ثبت‌شده در سامانه': 'Recorded service status',
 		'موجودی کیف پول': 'Wallet balance', 'موجودی قابل استفاده': 'Available balance', 'موجودی قابل استفاده حساب': 'Available account balance', 'سرویس فعال': 'Active service', 'سرویس‌های فعال': 'Active services', 'سفارش اخیر': 'Recent orders', 'سرویس‌های اخیر': 'Recent services', 'هنوز سرویسی ثبت نشده است.': 'No services have been recorded yet.', 'در حال دریافت خلاصه حساب…': 'Loading account summary…', 'در حال دریافت خلاصه حساب': 'Loading account summary', 'در حال آماده‌سازی پنل ابری...': 'Preparing cloud panel…',
-		'در حال آماده‌سازی داشبورد…': 'Preparing dashboard…', 'موجودی کیف پول پایین است': 'Wallet balance is low', 'برای جلوگیری از اعمال سیاست تعلیق، موجودی را بررسی و در حالت آزمایشی شارژ کنید.': 'Review the balance and top up in Mock mode to prevent suspension policy actions.', 'مصرف دوره': 'Period usage', 'اعلان‌های خوانده‌نشده': 'Unread notifications', 'داده در دسترس نیست': 'Data unavailable', 'مصرف اخیر': 'Recent usage', 'هزینه‌های قطعی ثبت‌شده در سامانه': 'Recorded finalized charges', 'تراکنش‌های اخیر': 'Recent transactions', 'هنوز تراکنشی ندارید': 'No transactions yet', 'سرور فعال': 'Active server', 'همه سرویس‌ها': 'All services', 'سرور فعالی ندارید': 'No active servers', 'از پیکربندی مرحله‌ای برای ساخت سرور ابری استفاده کنید.': 'Use the step-by-step configurator to create a cloud server.', 'آخرین اعلان‌ها': 'Latest notifications', 'اعلانی ندارید': 'No notifications', 'هشدارهای موجودی و سرویس اینجا نمایش داده می‌شوند.': 'Wallet and service alerts appear here.',
+		'در حال آماده‌سازی داشبورد…': 'Preparing dashboard…', 'موجودی کیف پول پایین است': 'Wallet balance is low', 'برای جلوگیری از اعمال سیاست تعلیق، موجودی را بررسی و در حالت آزمایشی شارژ کنید.': 'Review your balance and top up the wallet in Mock mode to avoid suspension.', 'مصرف دوره': 'Period usage', 'اعلان‌های خوانده‌نشده': 'Unread notifications', 'داده در دسترس نیست': 'Data unavailable', 'مصرف اخیر': 'Recent usage', 'هزینه‌های قطعی ثبت‌شده در سامانه': 'Recorded finalized charges', 'تراکنش‌های اخیر': 'Recent transactions', 'هنوز تراکنشی ندارید': 'No transactions yet', 'سرور فعال': 'Active server', 'همه سرویس‌ها': 'All services', 'سرور فعالی ندارید': 'No active servers', 'از پیکربندی مرحله‌ای برای ساخت سرور ابری استفاده کنید.': 'Use the step-by-step configurator to create a cloud server.', 'آخرین اعلان‌ها': 'Latest notifications', 'اعلانی ندارید': 'No notifications', 'هشدارهای موجودی و سرویس اینجا نمایش داده می‌شوند.': 'Wallet and service alerts appear here.',
 		'سرور ابری': 'Cloud server', 'سرویس ابری': 'Cloud service', 'شناسه منبع': 'Resource ID', 'وضعیت راه‌دور': 'Remote status', 'نرخ ساعتی': 'Hourly rate', 'آخرین صورتحساب': 'Latest invoice', 'ساخت سرور جدید': 'Create new server', 'هنوز سرور ابری ندارید': 'No cloud servers yet', 'منطقه، سیستم‌عامل و پلن را از کاتالوگ سرویس انتخاب کنید.': 'Choose a region, operating system, and plan from the service catalog.', 'شروع پیکربندی': 'Start configuration', 'بازگشت به سرویس‌ها': 'Back to services', 'کپی شناسه': 'Copy ID', 'هشدار کاهش موجودی': 'Low-balance warning', 'موجودی کیف پول به آستانه هشدار رسیده است.': 'Wallet balance has reached the warning threshold.', 'منطقه / ناحیه': 'Region / zone', 'مصرف و هزینه سرویس': 'Service usage and cost', 'مقادیر قطعی ثبت‌شده برای همین شناسه منبع': 'Finalized values recorded for this resource ID', 'جزئیات مصرف': 'Usage details', 'پیکربندی ثبت‌شده': 'Recorded configuration', 'تصویر': 'Image', 'پلن': 'Plan', 'دیسک ریشه': 'Root disk', 'نشانی IP': 'IP address', 'ارائه نشده': 'Not provided', 'فقط فیلدهای موجود در پاسخ رسمی سرویس نمایش داده می‌شوند.': 'Only fields returned by the service response are shown.', 'چرخه عمر': 'Lifecycle', 'صورتحساب‌ها': 'Invoices', 'صورتحساب‌های حساب مشتری': 'Customer account invoices',
 		'سفارش ثبت شد': 'Order submitted', 'موجودی و سفارش بررسی شد': 'Balance and order verified', 'درخواست ساخت ارسال شد': 'Provisioning request sent', 'شناسه سرویس دریافت شد': 'Service ID received', 'سرویس فعال شد': 'Service became active', 'فرایند ناموفق یا نیازمند بازیابی': 'Failed or recovery required', 'در حال پیگیری': 'In progress',
 		'شارژ کیف پول': 'Top up wallet', 'آستانه هشدار': 'Warning threshold', 'هشدار خودکار سامانه': 'Automated system warning', 'تراکنش‌ها': 'Transactions', 'دفترکل تغییرناپذیر': 'Immutable ledger', 'پرداخت‌ها': 'Payments', 'مرجع': 'Reference', 'مبلغ': 'Amount', 'وضعیت': 'Status', 'درگاه': 'Provider', 'زمان': 'Time', 'عملیات': 'Actions', 'تأیید پرداخت': 'Confirm payment', 'پرداختی ثبت نشده است': 'No payments recorded', 'تاریخچه تراکنش': 'Transaction history', 'نوع': 'Type', 'شرح': 'Description', 'تراکنشی ثبت نشده است': 'No transactions recorded', 'موجودی در محدوده هشدار است': 'Balance is within the warning range', 'هشدار خودکار سامانه': 'Automated warning',
@@ -52,11 +52,20 @@
 		'سفارش جدید': 'New order', 'مرجع سفارش': 'Order reference', 'برآورد ۲۴ساعته': '24-hour estimate', 'پرداخت سفارش': 'Order payment', 'منبع/بازیابی': 'Resource / recovery', 'ثبت': 'Created', 'سفارشی ثبت نشده است': 'No orders recorded', 'رهگیری فرایند ساخت': 'Provisioning tracker', 'رهگیری خودکار متوقف شد؛ برای بررسی دوباره تازه‌سازی کنید.': 'Automatic tracking stopped; refresh to check again.', 'نیازمند بازیابی': 'Recovery required', 'مشاهده سرویس': 'View service',
 		'اعلان‌های خوانده‌نشده': 'Unread notifications', 'خوانده‌نشده': 'Unread', 'خوانده‌شده': 'Read', 'خواندم': 'Mark read', 'کانال': 'Channel', 'ارسال': 'Sent', 'خوانده‌شدن': 'Read at', 'کد امن': 'Safe code', 'اعلانی وجود ندارد': 'No notifications', 'هشدارهای صورتحساب و چرخه سرویس اینجا ثبت می‌شوند.': 'Billing and service lifecycle alerts appear here.', 'اعلان سیستمی': 'System notification', 'هشدار موجودی کم': 'Low-balance alert', 'تعلیق سرویس': 'Service suspension', 'خاتمه سرویس': 'Service termination', 'خطای ساخت سرویس': 'Provisioning error',
 		'دریافت اطلاعات ممکن نشد': 'Unable to load information', 'در حال دریافت اطلاعات…': 'Loading information…', 'داده‌ای برای نمودار ثبت نشده است.': 'No chart data recorded.', 'نمودار روند': 'Trend chart', 'قدیمی‌تر': 'Earlier', 'اکنون': 'Now', 'پیش از ادامه بررسی کنید': 'Review before continuing', 'عملیات انجام نشد.': 'The operation failed.', 'شناسه کپی شد.': 'ID copied.', 'کپی خودکار ممکن نشد.': 'Automatic copy failed.', 'وقتی داده‌ای ثبت شود، در این بخش نمایش داده می‌شود.': 'Data will appear here when it is recorded.',
-		'است.': 'is.', 'آستانه فعلی': 'Current threshold', 'اعلان اخیر': 'recent notifications', 'آماده شد': 'is ready', 'انتخاب‌شده': 'Selected', 'بازه': 'Window', 'بازه مجاز:': 'Allowed range:', 'برداشت پیش‌پرداخت، دریافت شناسه منبع و نگاشت محلی با موفقیت ثبت شد.': 'The prepaid debit, resource ID, and local mapping were recorded successfully.', 'به‌صورت اتمیک به کیف پول افزوده می‌شود.': 'is atomically credited to the wallet.', 'به‌صورت اتمیک کنترل می‌شود.': 'is enforced atomically.', 'پایان': 'End', 'پرداخت از': 'Payment from', 'پرداخت تکمیل شد': 'Payment completed', 'پرداخت ناموفق': 'Payment failed', 'پنجره مصرف': 'usage windows', 'پوشش‌نیافته': 'Uncovered', 'تا': 'to', 'تأیید و ساخت سرور': 'Confirm and create server', 'تنظیمات': 'Settings', 'جدول دسترس‌پذیر مصرف': 'Accessible usage table', 'جمع': 'Total', 'حالت': 'Mode', '· حالت': '· Mode', '+ سهم فروشنده': '+ reseller margin', 'افزایش موجودی': 'Balance credit', 'کاهش موجودی': 'Balance debit', 'اصلاح حساب': 'Account adjustment', 'نشست شما پایان یافته است. به صفحه ورود هدایت می‌شوید.': 'Your session has ended. Redirecting to sign in.', 'در حال آماده‌سازی داشبورد': 'Preparing dashboard', 'در ساعت': 'per hour', 'دریافت‌شده': 'Received', 'رکوردهای ثبت‌شده': 'Recorded entries', 'روند مصرف': 'Usage trend', 'ساخت سرور ابری در حالت': 'Create cloud server in', 'سرور ابری در حالت': 'Cloud server in', 'سرویس ثبت‌شده': 'registered services', 'سفارش سرور ابری': 'Cloud server order', 'شروع': 'Start', 'صادرشده/': 'Issued /', 'صورتحسابی ثبت نشده است': 'No invoices recorded', 'کسری کیف پول': 'Wallet shortfall', 'کفایت موجودی و برداشت نهایی در': 'Balance sufficiency and final debit in', 'گیگابایت': 'GB', 'گیگابایت دیسک': 'GB disk', 'مرحله': 'Step', 'مقدار': 'Value', 'مگابایت رم': 'MB RAM', 'منبع': 'Resource', 'موجود ساخته و سپس از مسیر تأیید': 'is created and then confirmed through', 'نشانی': 'Address', 'نه برآورد مرورگر': 'not a browser estimate', 'هزینه ثبت‌شده': 'Recorded charge', 'هنوز مصرفی ثبت نشده است': 'No usage recorded yet'
+		'است.': 'is.', 'آستانه فعلی': 'Current threshold', 'اعلان اخیر': 'Recent notification', 'آماده شد': 'is ready', 'انتخاب‌شده': 'Selected', 'بازه': 'Window', 'بازه مجاز:': 'Allowed range:', 'برداشت پیش‌پرداخت، دریافت شناسه منبع و نگاشت محلی با موفقیت ثبت شد.': 'The prepaid debit, resource ID, and local mapping were recorded successfully.', 'به‌صورت اتمیک به کیف پول افزوده می‌شود.': 'is atomically credited to the wallet.', 'به‌صورت اتمیک کنترل می‌شود.': 'is enforced atomically.', 'پایان': 'End', 'پرداخت از': 'Payment from', 'پرداخت تکمیل شد': 'Payment completed', 'پرداخت ناموفق': 'Payment failed', 'پنجره مصرف': 'Billing window', 'پوشش‌نیافته': 'Uncovered', 'تا': 'to', 'تأیید و ساخت سرور': 'Confirm and create server', 'در حال ساخت…': 'Creating…', 'تنظیمات': 'Settings', 'جدول دسترس‌پذیر مصرف': 'Accessible usage table', 'جمع': 'Total', 'حالت': 'Mode', '· حالت': '· Mode', '+ سهم فروشنده': '+ reseller margin', 'افزایش موجودی': 'Balance credit', 'کاهش موجودی': 'Balance debit', 'اصلاح حساب': 'Account adjustment', 'نشست شما پایان یافته است. به صفحه ورود هدایت می‌شوید.': 'Your session has ended. Redirecting to sign in.', 'در حال آماده‌سازی داشبورد': 'Preparing dashboard', 'در ساعت': 'per hour', 'دریافت‌شده': 'Received', 'رکوردهای ثبت‌شده': 'Recorded entries', 'روند مصرف': 'Usage trend', 'ساخت سرور ابری در حالت': 'Create cloud server in', 'سرور ابری در حالت': 'Cloud server in', 'سرویس ثبت‌شده': 'Registered service', 'سفارش سرور ابری': 'Cloud server order', 'شروع': 'Start', 'صادرشده/': 'Issued /', 'صورتحسابی ثبت نشده است': 'No invoices recorded', 'کسری کیف پول': 'Wallet shortfall', 'کفایت موجودی و برداشت نهایی در': 'Balance sufficiency and final debit in', 'گیگابایت': 'GB', 'گیگابایت دیسک': 'GB disk', 'مرحله': 'Step', 'مقدار': 'Value', 'مگابایت رم': 'MB RAM', 'منبع': 'Resource', 'موجود ساخته و سپس از مسیر تأیید': 'is created and then confirmed through', 'نشانی': 'Address', 'نه برآورد مرورگر': 'not a browser estimate', 'هزینه ثبت‌شده': 'Recorded charge', 'هنوز مصرفی ثبت نشده است': 'No usage recorded yet',
+		'معرفی پنل ابری': 'Cloud panel introduction', 'مبتنی بر زیرساخت آروان‌کلاد': 'Powered by ArvanCloud infrastructure', 'دسترسی امن مشتریان': 'Secure customer access', 'مدیریت یکپارچه زیرساخت ابری': 'Unified cloud infrastructure management', 'کیف پول، سفارش‌ها، سرورهای ابری، صورتحساب‌ها و اعلان‌های عملیاتی را با حساب امن وردپرس خود مدیریت کنید.': 'Manage your wallet, orders, cloud servers, invoices, and operational notifications with your secure WordPress account.', 'رمز عبور فقط توسط وردپرس پردازش می‌شود و این افزونه آن را ذخیره نمی‌کند.': 'Your password is processed only by WordPress and is never stored by this plugin.', 'نشست محافظت‌شده': 'Protected session', 'ورود به پنل ابری': 'Sign in to the cloud panel', 'از اطلاعات حساب وردپرس خود استفاده کنید.': 'Use your WordPress account credentials.', 'نام کاربری یا ایمیل': 'Username or email', 'رمز عبور': 'Password', 'نمایش رمز عبور': 'Show password', 'ورود من را حفظ کن': 'Remember me', 'ورود امن': 'Secure sign in', 'رمز عبور را فراموش کرده‌اید؟': 'Forgot your password?', 'ایجاد حساب': 'Create account',
+		'خرید و مدیریت سرور ابری با کیف پول پیش‌پرداخت و صورتحساب شفاف.': 'Buy and manage cloud servers with a prepaid wallet and transparent billing.', 'ناوبری فروشگاه': 'Store navigation', 'کیف پول و مصرف': 'Wallet & usage', 'امنیت': 'Security', 'راهنما': 'Guide', 'ورود': 'Sign in', 'پنل مشتری': 'Customer panel', 'زیرساخت ابری بدون پیچیدگی': 'Cloud infrastructure without complexity', 'سرور ابری، سریع، شفاف و قابل مدیریت': 'Fast, transparent, manageable cloud servers', 'برآورد قیمت، ثبت سفارش و مدیریت چرخه سرویس در یک تجربه یکپارچه انجام می‌شود.': 'Estimate pricing, place orders, and manage the service lifecycle in one integrated experience.', 'ورود به پنل مشتری': 'Sign in to customer panel', 'انتخاب منطقه، تصویر و پلن از کاتالوگ سرویس': 'Choose a region, image, and plan from the service catalog', 'برآورد معتبر قیمت پیش از ثبت سفارش': 'Authoritative price estimate before ordering', 'مدیریت کیف پول، مصرف و صورتحساب در یک پنل': 'Manage wallet, usage, and billing in one panel',
+		'معرفی محصول سرور ابری': 'Cloud server product overview', 'سرور ابری قابل پیکربندی': 'Configurable cloud server', 'آماده سفارش': 'Ready to order', 'منطقه پیش‌فرض': 'Default region', 'پس از پیکربندی': 'After configuration', 'شیوه پرداخت': 'Payment method', 'کیف پول پیش‌پرداخت': 'Prepaid wallet', 'محاسبه مصرف': 'Usage calculation', 'بازه‌های ساعتی': 'Hourly windows', 'ارز تنظیم‌شده': 'Configured currency', 'قیمت‌گذاری سمت سرور': 'Server-side pricing', 'مبلغ نهایی پس از انتخاب پلن از سامانه دریافت می‌شود؛ مرورگر قیمت را حدس نمی‌زند.': 'The final amount is returned by the service after plan selection; the browser never guesses the price.', 'شروع پیکربندی سرور': 'Start server configuration',
+		'اصول تجربه سرویس': 'Service experience principles', 'برآورد معتبر': 'Authoritative estimate', 'قیمت از سرویس سمت سرور': 'Price from the server-side service', 'مالکیت امن': 'Secure ownership', 'هر منبع در حساب مشتری': 'Every resource belongs to the customer account', 'مالی شفاف': 'Transparent billing', 'کیف پول، مصرف و صورتحساب': 'Wallet, usage, and billing', 'تجربه یکپارچه سرویس': 'Integrated service experience', 'هرآنچه برای خرید و مدیریت سرور نیاز دارید': 'Everything you need to buy and manage a server', 'از برآورد تا صورتحساب، همه مراحل با داده معتبر سامانه و در یک رابط روشن انجام می‌شود.': 'From estimate to invoice, every step uses authoritative system data in one clear interface.',
+		'پرداخت به‌اندازه مصرف': 'Pay for recorded usage', 'هزینه‌های ثبت‌شده و بازه‌های مصرف را با واحد و ارز واقعی دنبال کنید.': 'Track recorded charges and usage windows with their actual unit and currency.', 'موجودی، تراکنش‌ها و هشدار کاهش اعتبار همیشه در دسترس است.': 'Balance, transactions, and low-credit alerts are always available.', 'کنترل کامل سرویس': 'Complete service control', 'وضعیت ساخت، شناسه منبع، مصرف و چرخه سرویس را یکجا ببینید.': 'View provisioning status, resource ID, usage, and service lifecycle in one place.', 'امنیت حساب': 'Account security', 'نشست وردپرس، کنترل مالکیت و درخواست‌های احرازشده از حساب محافظت می‌کنند.': 'WordPress sessions, ownership checks, and authenticated requests protect the account.',
+		'عملیات ابری یکپارچه': 'Integrated cloud operations', 'زیرساخت ابری برای کسب‌وکارهای در حال رشد': 'Cloud infrastructure for growing businesses', 'پیکربندی سرور، برآورد مصرف، کنترل کیف پول و مشاهده چرخه منبع در یک فضای عملیاتی منسجم کنار هم قرار گرفته‌اند.': 'Server configuration, usage estimates, wallet controls, and resource lifecycle visibility come together in one consistent workspace.', 'انتخاب مستقیم از کاتالوگ سرویس': 'Direct selection from the service catalog', 'برآورد معتبر پیش از سفارش': 'Authoritative estimate before ordering', 'مالکیت امن منابع در حساب مشتری': 'Secure resource ownership in the customer account', 'سرویس، مصرف، کیف پول': 'Service, usage, wallet',
+		'مسیر سفارش': 'Order journey', 'از انتخاب تا شناسه سرویس، در یک فرایند روشن': 'From selection to service ID in one clear flow', 'کاتالوگ و برآورد از سامانه می‌آیند و وضعیت ساخت تا دریافت شناسه منبع قابل مشاهده است.': 'The catalog and estimate come from the system, while provisioning remains visible through resource ID delivery.', 'انتخاب پیکربندی': 'Choose configuration', 'منطقه، سیستم‌عامل و منابع': 'Region, operating system, and resources', 'بررسی برآورد': 'Review estimate', 'قیمت معتبر و موجودی کیف پول': 'Authoritative price and wallet balance', 'ثبت و ساخت': 'Place order and provision', 'سفارش تکرارپذیر امن و رهگیری وضعیت': 'Safe idempotent ordering and status tracking', 'مدیریت سرویس': 'Manage service', 'شناسه منبع، مصرف و صورتحساب': 'Resource ID, usage, and billing', 'فروش مستقل سرور ابری': 'Independent cloud server commerce',
+		'نشست شما پایان یافته است. برای ادامه دوباره وارد شوید.': 'Your session has ended. Sign in again to continue.', 'دسترسی لازم برای این عملیات را ندارید.': 'You do not have permission for this operation.', 'تعداد درخواست‌ها زیاد است. کمی بعد دوباره تلاش کنید.': 'Too many requests. Try again shortly.', 'پاسخ سرویس بیش از حد طول کشید. دوباره تلاش کنید.': 'The service response timed out. Try again.', 'ارتباط شبکه برقرار نشد. اتصال خود را بررسی کنید.': 'The network connection failed. Check your connection.', 'سرویس پشتیبان در دسترس نیست. کمی بعد دوباره تلاش کنید.': 'The backend service is unavailable. Try again shortly.', 'موجودی کیف پول برای این عملیات کافی نیست.': 'Wallet balance is insufficient for this operation.', 'اطلاعات برآورد کامل یا معتبر نیست.': 'The estimate is incomplete or invalid.', 'پلن انتخاب‌شده دیگر در دسترس نیست. فهرست را تازه کنید.': 'The selected plan is no longer available. Refresh the catalog.', 'پرداخت مورد نظر پیدا نشد.': 'The requested payment was not found.', 'سرویس مورد نظر پیدا نشد.': 'The requested service was not found.', 'سرور ایجاد شده اما ثبت محلی نیازمند بازیابی مدیر است.': 'The server was created, but the local record requires administrator recovery.', 'تعویض و حذف کلید API را هم‌زمان انتخاب نکنید.': 'API key replacement and deletion cannot be selected together.'
 	};
 	const originalText = new WeakMap();
 	const originalAttributes = new WeakMap();
 	const drawerStates = new WeakMap();
+	const translationObservers = new WeakMap();
 	const mobileDrawerMedia = window.matchMedia('(max-width: 1024px)');
 
 	function storedTheme() {
@@ -116,10 +125,11 @@
 		const leading = (source.match(/^\s*/) || [''])[0];
 		const trailing = (source.match(/\s*$/) || [''])[0];
 		const core = source.trim();
-		if (phraseTranslations[core]) return leading + phraseTranslations[core] + trailing;
+		if (/^[۰-۹٠-٩,.]+$/.test(core)) return leading + stableDigits(core) + trailing;
+		if (customerTranslations[core]) return leading + customerTranslations[core] + trailing;
 		const patterns = [
 			[/^([\d,.]+) سرویس ثبت‌شده$/, '$1 registered services'],
-			[/^([\d,.]+) پنجره مصرف$/, '$1 usage windows'],
+			[/^([\d,.]+) پنجره مصرف$/, '$1 billing windows'],
 			[/^([\d,.]+) اعلان اخیر$/, '$1 recent notifications'],
 			[/^([\d,.]+) گیگابایت$/, '$1 GB'],
 			[/^([\d,.]+) گیگابایت دیسک$/, '$1 GB disk'],
@@ -132,7 +142,9 @@
 			[/^بازه مجاز: (.+) تا (.+)$/, 'Allowed range: $1 to $2'],
 			[/^دریافت‌شده در (.+)$/, 'Received at $1'],
 			[/^حالت (.+)$/, (match, mode) => translateOwnedText(mode, 'en') + ' mode'],
-			[/^در ساعت (.+)$/, '$1 per hour']
+			[/^در ساعت (.+)$/, '$1 per hour'],
+			[/^خوش آمدید، (.+)$/, 'Welcome, $1'],
+			[/^عملیات انجام نشد\. با کد پشتیبانی (.+) دوباره تلاش کنید\.$/, 'The operation failed. Support code: $1.']
 		];
 		for (const pattern of patterns) {
 			if (pattern[0].test(core)) return leading + core.replace(pattern[0], pattern[1]) + trailing;
@@ -148,7 +160,8 @@
 		scope.querySelectorAll('[data-ar-i18n]').forEach((node) => nodes.push(node));
 		nodes.forEach((node) => {
 			if (node.closest('[data-ar-language-fixed]')) return;
-			node.textContent = t(node.dataset.arI18n, node.textContent);
+			const translated = t(node.dataset.arI18n, node.textContent);
+			if (node.textContent !== translated) node.textContent = translated;
 		});
 		scope.querySelectorAll('[data-ar-i18n-label]').forEach((node) => {
 			if (node.closest('[data-ar-language-fixed]')) return;
@@ -158,10 +171,11 @@
 		let textNode = walker.nextNode();
 		while (textNode) {
 			const parent = textNode.parentElement;
-			if (parent && !parent.closest('[data-ar-i18n], [data-ar-no-i18n], [data-ar-language-fixed], code, bdi, script, style, [dir="ltr"]')) {
+			if (parent && !parent.closest('[data-ar-i18n], [data-ar-no-i18n], [data-ar-language-fixed], code, bdi, script, style')) {
 				if (!originalText.has(textNode)) originalText.set(textNode, textNode.nodeValue);
 				const original = originalText.get(textNode);
-				textNode.nodeValue = language === 'en' ? translateOwnedText(original, 'en') : original;
+				const translated = language === 'en' ? translateOwnedText(original, 'en') : original;
+				if (textNode.nodeValue !== translated) textNode.nodeValue = translated;
 			}
 			textNode = walker.nextNode();
 		}
@@ -185,6 +199,12 @@
 			const parsed = new Date(node.dataset.arDate);
 			if (!Number.isNaN(parsed.getTime())) node.textContent = formatDate(parsed, ownerLanguage || language);
 		});
+	}
+
+	function setText(node, source) {
+		if (!node) return;
+		node.textContent = String(source === null || typeof source === 'undefined' ? '' : source);
+		translateDom(node);
 	}
 
 	function applyLanguage(language, persist) {
@@ -394,12 +414,6 @@
 
 	function errorMessage(error) {
 		const code = error && error.code;
-		if (storedLanguage() === 'en') {
-			const englishErrors = {
-				arvan_reseller_unauthorized: 'Your session has ended. Sign in again to continue.', arvan_reseller_forbidden: 'You do not have permission for this operation.', arvan_reseller_rate_limited: 'Too many requests. Try again shortly.', arvan_reseller_timeout: 'The service response timed out. Try again.', arvan_reseller_network_failure: 'The network connection failed. Check your connection.', arvan_reseller_backend_unavailable: 'The backend service is unavailable. Try again shortly.', arvan_reseller_insufficient_balance: 'Wallet balance is insufficient for this operation.', arvan_reseller_invalid_estimate: 'The estimate is incomplete or invalid.', arvan_reseller_flavor_not_found: 'The selected plan is no longer available. Refresh the catalog.', arvan_reseller_payment_not_found: 'The requested payment was not found.', arvan_reseller_resource_not_found: 'The requested service was not found.', arvan_reseller_provisioning_recovery_required: 'The server was created, but the local record requires administrator recovery.', arvan_reseller_conflicting_key_action: 'API key replacement and deletion cannot be selected together.'
-			};
-			return englishErrors[code] || 'The operation failed. Support code: ' + escape(code || 'unknown') + '.';
-		}
 		return errorMessages[code] || 'عملیات انجام نشد. با کد پشتیبانی ' + escape(code || 'unknown') + ' دوباره تلاش کنید.';
 	}
 
@@ -466,7 +480,7 @@
 			const instance = modal({
 				title: options.title,
 				description: options.description,
-				body: '<div class="ar-alert ' + (options.danger ? 'ar-alert--danger' : 'ar-alert--warning') + '">' + icon('warning') + '<div><strong>' + escape(options.notice || 'پیش از ادامه بررسی کنید') + '</strong><p>' + escape(options.detail || '') + '</p></div></div><div class="ar-modal__actions"><button type="button" class="ar-button ' + (options.danger ? 'ar-button--danger' : (options.accent ? 'ar-button--accent' : 'ar-button--primary')) + '" data-confirm>' + escape(options.confirmLabel || 'تأیید') + '</button><button type="button" class="ar-button ar-button--secondary" data-cancel>انصراف</button></div>',
+				body: '<div class="ar-alert ' + (options.danger ? 'ar-alert--danger' : 'ar-alert--warning') + '">' + icon('warning') + '<div><strong>' + escape(options.notice || 'پیش از ادامه بررسی کنید') + '</strong><p>' + escape(options.detail || '') + '</p></div></div><div class="ar-modal__actions"><button type="button" class="ar-button ' + (options.danger ? 'ar-button--danger' : 'ar-button--primary') + '" data-confirm>' + escape(options.confirmLabel || 'تأیید') + '</button><button type="button" class="ar-button ar-button--secondary" data-cancel>انصراف</button></div>',
 				onClose: () => { if (!settled) { settled = true; resolve(false); } }
 			});
 			instance.dialog.querySelector('[data-confirm]').addEventListener('click', () => { settled = true; instance.close(); resolve(true); });
@@ -534,6 +548,17 @@
 		mountIcons(app);
 		wireThemeControls(app);
 		wireLanguageControls(app);
+		if (!translationObservers.has(app)) {
+			const observer = new MutationObserver((records) => {
+				const targets = new Set();
+				records.forEach((record) => {
+					if (record.target && record.target.nodeType === Node.ELEMENT_NODE) targets.add(record.target);
+				});
+				targets.forEach((target) => translateDom(target));
+			});
+			observer.observe(app, { childList: true, subtree: true });
+			translationObservers.set(app, observer);
+		}
 		app.addEventListener('click', (event) => {
 			const action = event.target.closest('[data-ar-action]');
 			if (!action) return;
@@ -572,7 +597,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, setText, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});

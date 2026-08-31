@@ -8,7 +8,7 @@
 .arvan-reseller-admin .ar-card-head h2 { color: var(--ar-color-text-strong); }
 .arvan-reseller-admin .ar-grid--metrics .ar-metric { border-block-start: 1px solid var(--ar-color-border); }
 .arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(2) .ar-metric__icon { background: var(--ar-color-teal-soft); color: var(--ar-teal-700); }
-.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(3) .ar-metric__icon { background: var(--ar-color-accent-soft); color: var(--ar-color-accent); }
+.arvan-reseller-admin .ar-grid--metrics .ar-metric:nth-child(3) .ar-metric__icon { background: var(--ar-color-primary-soft); color: var(--ar-color-primary); }
 .arvan-reseller-admin .ar-ops-strip { display: grid; gap: var(--ar-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); margin-block-start: var(--ar-space-4); }
 .arvan-reseller-admin .ar-ops-item { align-items: center; background: var(--ar-color-surface-soft); border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-md); display: flex; gap: var(--ar-space-3); padding: var(--ar-space-3); }
 .arvan-reseller-admin .ar-ops-item > .ar-icon { background: var(--ar-color-primary-soft); border-radius: 9px; color: var(--ar-color-primary); height: 36px; padding: 8px; width: 36px; }
