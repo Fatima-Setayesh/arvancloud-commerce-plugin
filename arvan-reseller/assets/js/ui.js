@@ -36,6 +36,28 @@
 		'account.title': { fa: 'حساب مشتری', en: 'Customer account' },
 		'account.open': { fa: 'بازکردن حساب مشتری', en: 'Open customer account' }
 	};
+	const phraseTranslations = {
+		'آزمایشی': 'Mock', 'زنده': 'Live', 'فعال': 'Active', 'سالم': 'Healthy', 'در دسترس': 'Available', 'آماده': 'Ready', 'در انتظار': 'Pending', 'در حال ساخت': 'Building', 'در حال پردازش': 'Processing', 'در حال اجرا': 'Running', 'در حال پیگیری': 'Tracking', 'تکمیل‌شده': 'Completed', 'ارسال‌شده': 'Sent', 'صادرشده': 'Issued', 'پرداخت‌شده': 'Paid', 'ناموفق': 'Failed', 'خطا': 'Error', 'لغوشده': 'Cancelled', 'منقضی': 'Expired', 'بازپرداخت‌شده': 'Refunded', 'تعلیق‌شده': 'Suspended', 'خاتمه‌یافته': 'Terminated', 'حذف‌شده': 'Deleted', 'خاموش': 'Powered off', 'مسدود': 'Blocked', 'نامشخص': 'Unknown', 'نیازمند توجه': 'Needs attention', 'اجرا نشده': 'Never run', 'بسته': 'Closed', 'باطل': 'Void', 'پیش‌نویس': 'Draft',
+		'داشبورد': 'Dashboard', 'سرویس‌ها': 'Services', 'ساخت سرور': 'Create server', 'ساخت سرور ابری': 'Create cloud server', 'کیف پول': 'Wallet', 'مصرف و صورتحساب': 'Usage & billing', 'مصرف و صورتحساب‌ها': 'Usage & billing', 'صورت‌حساب‌ها': 'Invoices', 'سفارش‌ها': 'Orders', 'اعلان‌ها': 'Notifications', 'حساب مشتری': 'Customer account', 'خروج از حساب': 'Sign out', 'پنل ابری': 'Cloud panel', 'فروش ابری آروان': 'Arvan cloud commerce',
+		'پرش به محتوای اصلی': 'Skip to main content', 'بازکردن ناوبری': 'Open navigation', 'بستن حساب': 'Close account', 'بستن حساب مشتری': 'Close customer account', 'بازکردن حساب مشتری': 'Open customer account', 'ناوبری پنل مشتری': 'Customer panel navigation', 'ناوبری موبایل': 'Mobile navigation', 'نمایش رمز': 'Show password', 'پنهان کردن رمز': 'Hide password', 'خوش آمدید،': 'Welcome,',
+		'پوسته نمایش': 'Theme', 'زبان نمایش': 'Language', 'روشن': 'Light', 'تیره': 'Dark', 'سرویس جدید': 'New service', 'مرحله قبل': 'Previous', 'مرحله بعد': 'Next', 'ادامه پیکربندی': 'Continue configuration', 'جزئیات': 'Details', 'مشاهده همه': 'View all', 'مشاهده جزئیات': 'View details', 'مشاهده سرویس': 'View service', 'مشاهده صورتحساب': 'View invoices', 'تلاش دوباره': 'Try again', 'تأیید': 'Confirm', 'انصراف': 'Cancel', 'بستن': 'Close',
+		'نمای کوتاه از کیف پول و سرویس‌ها': 'Wallet and service overview', 'سرورهای ابری متعلق به حساب شما': 'Cloud servers owned by your account', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور': 'Step-by-step configuration with a server-side estimate', 'شارژ آزمایشی و دفترکل تغییرناپذیر': 'Mock top-up and immutable ledger', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها': 'Usage windows and invoices', 'رهگیری ساخت و شناسه منبع': 'Provisioning and resource tracking', 'هشدارهای موجودی و رویدادهای سرویس': 'Wallet and service events', 'جزئیات سرویس': 'Service details', 'وضعیت واقعی ثبت‌شده در سامانه': 'Recorded service status',
+		'موجودی کیف پول': 'Wallet balance', 'موجودی قابل استفاده': 'Available balance', 'موجودی قابل استفاده حساب': 'Available account balance', 'سرویس فعال': 'Active service', 'سرویس‌های فعال': 'Active services', 'سفارش اخیر': 'Recent orders', 'سرویس‌های اخیر': 'Recent services', 'هنوز سرویسی ثبت نشده است.': 'No services have been recorded yet.', 'در حال دریافت خلاصه حساب…': 'Loading account summary…', 'در حال دریافت خلاصه حساب': 'Loading account summary', 'در حال آماده‌سازی پنل ابری...': 'Preparing cloud panel…',
+		'در حال آماده‌سازی داشبورد…': 'Preparing dashboard…', 'موجودی کیف پول پایین است': 'Wallet balance is low', 'برای جلوگیری از اعمال سیاست تعلیق، موجودی را بررسی و در حالت آزمایشی شارژ کنید.': 'Review the balance and top up in Mock mode to prevent suspension policy actions.', 'مصرف دوره': 'Period usage', 'اعلان‌های خوانده‌نشده': 'Unread notifications', 'داده در دسترس نیست': 'Data unavailable', 'مصرف اخیر': 'Recent usage', 'هزینه‌های قطعی ثبت‌شده در سامانه': 'Recorded finalized charges', 'تراکنش‌های اخیر': 'Recent transactions', 'هنوز تراکنشی ندارید': 'No transactions yet', 'سرور فعال': 'Active server', 'همه سرویس‌ها': 'All services', 'سرور فعالی ندارید': 'No active servers', 'از پیکربندی مرحله‌ای برای ساخت سرور ابری استفاده کنید.': 'Use the step-by-step configurator to create a cloud server.', 'آخرین اعلان‌ها': 'Latest notifications', 'اعلانی ندارید': 'No notifications', 'هشدارهای موجودی و سرویس اینجا نمایش داده می‌شوند.': 'Wallet and service alerts appear here.',
+		'سرور ابری': 'Cloud server', 'سرویس ابری': 'Cloud service', 'شناسه منبع': 'Resource ID', 'وضعیت راه‌دور': 'Remote status', 'نرخ ساعتی': 'Hourly rate', 'آخرین صورتحساب': 'Latest invoice', 'ساخت سرور جدید': 'Create new server', 'هنوز سرور ابری ندارید': 'No cloud servers yet', 'منطقه، سیستم‌عامل و پلن را از کاتالوگ سرویس انتخاب کنید.': 'Choose a region, operating system, and plan from the service catalog.', 'شروع پیکربندی': 'Start configuration', 'بازگشت به سرویس‌ها': 'Back to services', 'کپی شناسه': 'Copy ID', 'هشدار کاهش موجودی': 'Low-balance warning', 'موجودی کیف پول به آستانه هشدار رسیده است.': 'Wallet balance has reached the warning threshold.', 'منطقه / ناحیه': 'Region / zone', 'مصرف و هزینه سرویس': 'Service usage and cost', 'مقادیر قطعی ثبت‌شده برای همین شناسه منبع': 'Finalized values recorded for this resource ID', 'جزئیات مصرف': 'Usage details', 'پیکربندی ثبت‌شده': 'Recorded configuration', 'تصویر': 'Image', 'پلن': 'Plan', 'دیسک ریشه': 'Root disk', 'نشانی IP': 'IP address', 'ارائه نشده': 'Not provided', 'فقط فیلدهای موجود در پاسخ رسمی سرویس نمایش داده می‌شوند.': 'Only fields returned by the service response are shown.', 'چرخه عمر': 'Lifecycle', 'صورتحساب‌ها': 'Invoices', 'صورتحساب‌های حساب مشتری': 'Customer account invoices',
+		'سفارش ثبت شد': 'Order submitted', 'موجودی و سفارش بررسی شد': 'Balance and order verified', 'درخواست ساخت ارسال شد': 'Provisioning request sent', 'شناسه سرویس دریافت شد': 'Service ID received', 'سرویس فعال شد': 'Service became active', 'فرایند ناموفق یا نیازمند بازیابی': 'Failed or recovery required', 'در حال پیگیری': 'In progress',
+		'شارژ کیف پول': 'Top up wallet', 'آستانه هشدار': 'Warning threshold', 'هشدار خودکار سامانه': 'Automated system warning', 'تراکنش‌ها': 'Transactions', 'دفترکل تغییرناپذیر': 'Immutable ledger', 'پرداخت‌ها': 'Payments', 'مرجع': 'Reference', 'مبلغ': 'Amount', 'وضعیت': 'Status', 'درگاه': 'Provider', 'زمان': 'Time', 'عملیات': 'Actions', 'تأیید پرداخت': 'Confirm payment', 'پرداختی ثبت نشده است': 'No payments recorded', 'تاریخچه تراکنش': 'Transaction history', 'نوع': 'Type', 'شرح': 'Description', 'تراکنشی ثبت نشده است': 'No transactions recorded', 'موجودی در محدوده هشدار است': 'Balance is within the warning range', 'هشدار خودکار سامانه': 'Automated warning',
+		'پرداخت آنلاین در حالت فعلی در دسترس نیست.': 'Online payment is not available in the current mode.', 'درگاه پرداخت پیکربندی نشده است': 'Payment gateway is not configured', 'برای جلوگیری از نمایش یک درگاه غیرواقعی، عملیات شارژ در حالت زنده غیرفعال است.': 'Top-up is disabled in Live mode so a fake gateway is never shown.', 'شارژ آزمایشی کیف پول': 'Mock wallet top-up', 'این عملیات کاملاً آزمایشی و بدون تراکنش بانکی واقعی است.': 'This is a fully mocked operation with no real bank transaction.', 'مبلغ‌های پیشنهادی': 'Suggested amounts', 'پرداخت و تأیید آزمایشی': 'Mock payment and confirmation', 'پرداخت از endpoint موجود ساخته و سپس از مسیر تأیید Mock به‌صورت اتمیک به کیف پول افزوده می‌شود.': 'The payment is created through the existing endpoint and atomically credited through Mock confirmation.', 'مبلغ شارژ': 'Top-up amount', 'مبلغ پرداخت': 'Payment amount', 'روش: پرداخت آزمایشی': 'Method: Mock payment', 'تکمیل شارژ آزمایشی': 'Complete Mock top-up', 'در حال ثبت…': 'Submitting…', 'در حال ثبت': 'Submitting', 'شارژ آزمایشی با موفقیت تکمیل شد.': 'Mock top-up completed successfully.', 'تأیید پرداخت آزمایشی': 'Confirm Mock payment', 'کیف پول به‌شکل اتمیک و تکرارپذیر شارژ می‌شود.': 'The wallet is credited atomically and idempotently.', 'هیچ پرداخت بانکی واقعی انجام نمی‌شود': 'No real bank payment is performed', 'تأیید و شارژ': 'Confirm and credit', 'کیف پول با موفقیت شارژ شد.': 'Wallet credited successfully.',
+		'در حال دریافت کاتالوگ سرور ابری...': 'Loading cloud server catalog…', 'مراحل ساخت سرور': 'Server creation steps', 'منطقه': 'Region', 'سیستم‌عامل': 'Operating system', 'منابع': 'Resources', 'پیکربندی': 'Configuration', 'بررسی و سفارش': 'Review & order', 'منطقه سرویس': 'Service region', 'منطقه از کاتالوگ سامانه دریافت شده است.': 'Regions are loaded from the service catalog.', 'تصویر و سیستم‌عامل': 'Image and operating system', 'فقط تصویرهای موجود در کاتالوگ نمایش داده می‌شوند.': 'Only catalog images are shown.', 'پلن پردازشی': 'Compute plan', 'قیمت اولیه از کاتالوگ است؛ مبلغ نهایی تنها از برآورد سمت سرور می‌آید.': 'Catalog pricing is indicative; the final amount comes only from the server estimate.', 'تنظیمات پشتیبانی‌شده': 'Supported settings', 'نام و حجم دیسک ریشه مطابق محدودیت سفارش است.': 'Server name and root disk follow order constraints.', 'نام سرور': 'Server name', 'حجم دیسک ریشه (گیگابایت)': 'Root disk size (GB)', 'فعال‌سازی پشتیبان‌گیری': 'Enable backup', 'فعال‌سازی جایگزینی خودکار': 'Enable failover', 'IPv4 در صورت پشتیبانی': 'IPv4 when supported', 'IPv6 در صورت پشتیبانی': 'IPv6 when supported', 'در صورت پشتیبانی': 'when supported', 'بررسی و برآورد سمت سرور': 'Review and server-side estimate', 'برآورد برای ۲۴ ساعت استفاده درخواست می‌شود؛ تخمین ماهانه ساخته نمی‌شود.': 'The estimate covers 24 hours; no browser-side monthly estimate is fabricated.', 'در حال دریافت برآورد معتبر...': 'Loading a valid estimate…', 'برآورد معتبر ۲۴ ساعت': 'Valid 24-hour estimate', 'هزینه پایه': 'Base cost', 'سهم فروشنده': 'Reseller share', 'دریافت‌شده در': 'Received at', 'برداشت پیش‌پرداخت از سمت سرور': 'Server-side prepaid debit', 'مبلغ قطعی ۲۴ ساعت نخست هنگام سفارش از کیف پول کسر می‌شود؛ پس از آن پنجره‌های کامل ساعتی با نرخ ذخیره‌شده صورتحساب می‌شوند.': 'The first finalized 24-hour amount is debited on order; later complete hourly windows use the stored rate.', 'شرایط سرویس پیش‌پرداخت و محدودیت‌های سرور ابری را خوانده‌ام.': 'I have read the prepaid service terms and cloud server limits.', 'موجودی فعلی': 'Current balance', 'کفایت موجودی و برداشت نهایی در backend به‌صورت اتمیک کنترل می‌شود.': 'Balance sufficiency and final debit are enforced atomically by the backend.', '— کفایت موجودی و برداشت نهایی در backend به‌صورت اتمیک کنترل می‌شود.': '— Balance sufficiency and final debit are enforced atomically by the backend.', 'خلاصه سفارش': 'Order summary', 'موقعیت': 'Location', 'قیمت قطعی از سرویس برآورد سمت سرور دریافت می‌شود.': 'Final pricing comes from the server-side estimate service.', 'موجودی برای این برآورد کافی نیست': 'Balance is insufficient for this estimate', 'پیش از ثبت سفارش، کیف پول را شارژ کنید.': 'Top up the wallet before placing the order.', 'برای ادامه، گزینه‌های لازم این مرحله را کامل کنید.': 'Complete the required selections for this step.', 'ثبت سفارش و ساخت سرور': 'Place order and create server', 'پیش از سفارش، شرایط سرویس را تأیید کنید.': 'Accept the service terms before ordering.', 'سفارش به سامانه معتبر ارسال می‌شود.': 'The order is sent to the authoritative backend.', 'عملیات آزمایشی و بدون هزینه خارجی است': 'Mock operation with no external charge', 'عملیات زنده می‌تواند هزینه‌زا باشد؛ فقط با تأیید آگاهانه ادامه دهید': 'Live operation can incur costs; continue only with informed confirmation', 'ساخت سرور آزمایشی': 'Create Mock server', 'تأیید ساخت زنده': 'Confirm Live creation',
+		'سفارش جدید': 'New order', 'مرجع سفارش': 'Order reference', 'برآورد ۲۴ساعته': '24-hour estimate', 'پرداخت سفارش': 'Order payment', 'منبع/بازیابی': 'Resource / recovery', 'ثبت': 'Created', 'سفارشی ثبت نشده است': 'No orders recorded', 'رهگیری فرایند ساخت': 'Provisioning tracker', 'رهگیری خودکار متوقف شد؛ برای بررسی دوباره تازه‌سازی کنید.': 'Automatic tracking stopped; refresh to check again.', 'نیازمند بازیابی': 'Recovery required', 'مشاهده سرویس': 'View service',
+		'اعلان‌های خوانده‌نشده': 'Unread notifications', 'خوانده‌نشده': 'Unread', 'خوانده‌شده': 'Read', 'خواندم': 'Mark read', 'کانال': 'Channel', 'ارسال': 'Sent', 'خوانده‌شدن': 'Read at', 'کد امن': 'Safe code', 'اعلانی وجود ندارد': 'No notifications', 'هشدارهای صورتحساب و چرخه سرویس اینجا ثبت می‌شوند.': 'Billing and service lifecycle alerts appear here.', 'اعلان سیستمی': 'System notification', 'هشدار موجودی کم': 'Low-balance alert', 'تعلیق سرویس': 'Service suspension', 'خاتمه سرویس': 'Service termination', 'خطای ساخت سرویس': 'Provisioning error',
+		'دریافت اطلاعات ممکن نشد': 'Unable to load information', 'در حال دریافت اطلاعات…': 'Loading information…', 'داده‌ای برای نمودار ثبت نشده است.': 'No chart data recorded.', 'نمودار روند': 'Trend chart', 'قدیمی‌تر': 'Earlier', 'اکنون': 'Now', 'پیش از ادامه بررسی کنید': 'Review before continuing', 'عملیات انجام نشد.': 'The operation failed.', 'شناسه کپی شد.': 'ID copied.', 'کپی خودکار ممکن نشد.': 'Automatic copy failed.', 'وقتی داده‌ای ثبت شود، در این بخش نمایش داده می‌شود.': 'Data will appear here when it is recorded.',
+		'است.': 'is.', 'آستانه فعلی': 'Current threshold', 'اعلان اخیر': 'recent notifications', 'آماده شد': 'is ready', 'انتخاب‌شده': 'Selected', 'بازه': 'Window', 'بازه مجاز:': 'Allowed range:', 'برداشت پیش‌پرداخت، دریافت شناسه منبع و نگاشت محلی با موفقیت ثبت شد.': 'The prepaid debit, resource ID, and local mapping were recorded successfully.', 'به‌صورت اتمیک به کیف پول افزوده می‌شود.': 'is atomically credited to the wallet.', 'به‌صورت اتمیک کنترل می‌شود.': 'is enforced atomically.', 'پایان': 'End', 'پرداخت از': 'Payment from', 'پرداخت تکمیل شد': 'Payment completed', 'پرداخت ناموفق': 'Payment failed', 'پنجره مصرف': 'usage windows', 'پوشش‌نیافته': 'Uncovered', 'تا': 'to', 'تأیید و ساخت سرور': 'Confirm and create server', 'تنظیمات': 'Settings', 'جدول دسترس‌پذیر مصرف': 'Accessible usage table', 'جمع': 'Total', 'حالت': 'Mode', '· حالت': '· Mode', '+ سهم فروشنده': '+ reseller margin', 'افزایش موجودی': 'Balance credit', 'کاهش موجودی': 'Balance debit', 'اصلاح حساب': 'Account adjustment', 'نشست شما پایان یافته است. به صفحه ورود هدایت می‌شوید.': 'Your session has ended. Redirecting to sign in.', 'در حال آماده‌سازی داشبورد': 'Preparing dashboard', 'در ساعت': 'per hour', 'دریافت‌شده': 'Received', 'رکوردهای ثبت‌شده': 'Recorded entries', 'روند مصرف': 'Usage trend', 'ساخت سرور ابری در حالت': 'Create cloud server in', 'سرور ابری در حالت': 'Cloud server in', 'سرویس ثبت‌شده': 'registered services', 'سفارش سرور ابری': 'Cloud server order', 'شروع': 'Start', 'صادرشده/': 'Issued /', 'صورتحسابی ثبت نشده است': 'No invoices recorded', 'کسری کیف پول': 'Wallet shortfall', 'کفایت موجودی و برداشت نهایی در': 'Balance sufficiency and final debit in', 'گیگابایت': 'GB', 'گیگابایت دیسک': 'GB disk', 'مرحله': 'Step', 'مقدار': 'Value', 'مگابایت رم': 'MB RAM', 'منبع': 'Resource', 'موجود ساخته و سپس از مسیر تأیید': 'is created and then confirmed through', 'نشانی': 'Address', 'نه برآورد مرورگر': 'not a browser estimate', 'هزینه ثبت‌شده': 'Recorded charge', 'هنوز مصرفی ثبت نشده است': 'No usage recorded yet'
+	};
+	const originalText = new WeakMap();
+	const originalAttributes = new WeakMap();
+	const drawerStates = new WeakMap();
+	const mobileDrawerMedia = window.matchMedia('(max-width: 1024px)');
 
 	function storedTheme() {
 		try {
@@ -88,14 +110,80 @@
 		return entry && entry[storedLanguage()] ? entry[storedLanguage()] : (fallback || key);
 	}
 
+	function translateOwnedText(value, language) {
+		const source = String(value === null || typeof value === 'undefined' ? '' : value);
+		if ((language || storedLanguage()) !== 'en' || !source.trim()) return source;
+		const leading = (source.match(/^\s*/) || [''])[0];
+		const trailing = (source.match(/\s*$/) || [''])[0];
+		const core = source.trim();
+		if (phraseTranslations[core]) return leading + phraseTranslations[core] + trailing;
+		const patterns = [
+			[/^([\d,.]+) سرویس ثبت‌شده$/, '$1 registered services'],
+			[/^([\d,.]+) پنجره مصرف$/, '$1 usage windows'],
+			[/^([\d,.]+) اعلان اخیر$/, '$1 recent notifications'],
+			[/^([\d,.]+) گیگابایت$/, '$1 GB'],
+			[/^([\d,.]+) گیگابایت دیسک$/, '$1 GB disk'],
+			[/^([\d,.]+) مگابایت رم$/, '$1 MB RAM'],
+			[/^مرحله ([\d,.]+)$/, 'Step $1'],
+			[/^سرور ابری · (.+)$/, 'Cloud server · $1'],
+			[/^ساخت سرور ابری در حالت (.+)$/, (match, mode) => 'Create cloud server in ' + translateOwnedText(mode, 'en') + ' mode'],
+			[/^سرور ابری در حالت (.+) آماده شد$/, (match, mode) => 'Cloud server is ready in ' + translateOwnedText(mode, 'en') + ' mode'],
+			[/^آستانه فعلی (.+) است\.$/, 'Current threshold is $1.'],
+			[/^بازه مجاز: (.+) تا (.+)$/, 'Allowed range: $1 to $2'],
+			[/^دریافت‌شده در (.+)$/, 'Received at $1'],
+			[/^حالت (.+)$/, (match, mode) => translateOwnedText(mode, 'en') + ' mode'],
+			[/^در ساعت (.+)$/, '$1 per hour']
+		];
+		for (const pattern of patterns) {
+			if (pattern[0].test(core)) return leading + core.replace(pattern[0], pattern[1]) + trailing;
+		}
+		return source;
+	}
+
 	function translateDom(root) {
 		const scope = root || document;
+		const language = storedLanguage();
 		const nodes = [];
 		if (scope.matches && scope.matches('[data-ar-i18n]')) nodes.push(scope);
 		scope.querySelectorAll('[data-ar-i18n]').forEach((node) => nodes.push(node));
-		nodes.forEach((node) => { node.textContent = t(node.dataset.arI18n, node.textContent); });
+		nodes.forEach((node) => {
+			if (node.closest('[data-ar-language-fixed]')) return;
+			node.textContent = t(node.dataset.arI18n, node.textContent);
+		});
 		scope.querySelectorAll('[data-ar-i18n-label]').forEach((node) => {
+			if (node.closest('[data-ar-language-fixed]')) return;
 			node.setAttribute('aria-label', t(node.dataset.arI18nLabel, node.getAttribute('aria-label')));
+		});
+		const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+		let textNode = walker.nextNode();
+		while (textNode) {
+			const parent = textNode.parentElement;
+			if (parent && !parent.closest('[data-ar-i18n], [data-ar-no-i18n], [data-ar-language-fixed], code, bdi, script, style, [dir="ltr"]')) {
+				if (!originalText.has(textNode)) originalText.set(textNode, textNode.nodeValue);
+				const original = originalText.get(textNode);
+				textNode.nodeValue = language === 'en' ? translateOwnedText(original, 'en') : original;
+			}
+			textNode = walker.nextNode();
+		}
+		const attributeNodes = [];
+		if (scope.matches && scope.matches('[aria-label], [title], [placeholder], [data-label]')) attributeNodes.push(scope);
+		scope.querySelectorAll('[aria-label], [title], [placeholder], [data-label]').forEach((node) => attributeNodes.push(node));
+		attributeNodes.forEach((node) => {
+			if (node.closest('[data-ar-no-i18n], [data-ar-language-fixed]')) return;
+			if (!originalAttributes.has(node)) originalAttributes.set(node, {});
+			const originals = originalAttributes.get(node);
+			['aria-label', 'title', 'placeholder', 'data-label'].forEach((attribute) => {
+				if (!node.hasAttribute(attribute)) return;
+				if (attribute === 'aria-label' && node.hasAttribute('data-ar-i18n-label')) return;
+				if (typeof originals[attribute] === 'undefined') originals[attribute] = node.getAttribute(attribute);
+				node.setAttribute(attribute, language === 'en' ? translateOwnedText(originals[attribute], 'en') : originals[attribute]);
+			});
+		});
+		scope.querySelectorAll('[data-ar-date]').forEach((node) => {
+			const owner = node.closest('.arvan-reseller-app');
+			const ownerLanguage = owner && owner.hasAttribute('data-ar-language-fixed') ? owner.dataset.arLanguageFixed : (owner && owner.lang);
+			const parsed = new Date(node.dataset.arDate);
+			if (!Number.isNaN(parsed.getTime())) node.textContent = formatDate(parsed, ownerLanguage || language);
 		});
 	}
 
@@ -105,7 +193,16 @@
 			try { window.localStorage.setItem(languageStorageKey, value); } catch (error) { /* Preference remains active for this page. */ }
 		}
 		document.documentElement.dataset.arLanguage = value;
-		document.querySelectorAll('.arvan-reseller-app').forEach((app) => {
+		const apps = Array.from(document.querySelectorAll('.arvan-reseller-app'));
+		const languageEnabledApps = apps.filter((app) => !app.hasAttribute('data-ar-language-fixed'));
+		if (languageEnabledApps.length) {
+			document.documentElement.lang = value;
+			document.documentElement.dir = value === 'en' ? 'ltr' : 'rtl';
+		}
+		apps.forEach((app) => {
+			if (app.hasAttribute('data-ar-language-fixed')) {
+				app.lang = app.dataset.arLanguageFixed || 'fa'; app.dir = 'rtl'; return;
+			}
 			app.lang = value;
 			app.dir = value === 'en' ? 'ltr' : 'rtl';
 		});
@@ -266,12 +363,19 @@
 		return '<span class="ar-money"><bdi>' + escape(amount) + '</bdi> <small dir="ltr">' + escape(currency || (window.ArvanResellerRuntime.settings || {}).currency || 'IRR') + '</small></span>';
 	}
 
+	function formatDate(parsed, language) {
+		const locale = language === 'en' ? 'en-GB' : 'fa-IR-u-nu-latn';
+		return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(parsed);
+	}
+
 	function date(value) {
 		if (!value) return '—';
 		const normalized = typeof value === 'number' ? value : (String(value).includes('T') ? String(value) : String(value).replace(' ', 'T') + 'Z');
 		const parsed = new Date(normalized);
 		if (Number.isNaN(parsed.getTime())) return escape(value);
-		return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(parsed);
+		const app = document.querySelector('.arvan-reseller-app');
+		const language = app && app.hasAttribute('data-ar-language-fixed') ? app.dataset.arLanguageFixed : (app && app.lang) || storedLanguage();
+		return '<time class="ar-date" datetime="' + escape(parsed.toISOString()) + '" data-ar-date="' + escape(parsed.toISOString()) + '">' + escape(formatDate(parsed, language)) + '</time>';
 	}
 
 	function statusLabel(value) {
@@ -289,7 +393,14 @@
 	}
 
 	function errorMessage(error) {
-		return errorMessages[error && error.code] || 'عملیات انجام نشد. با کد پشتیبانی ' + escape(error && error.code ? error.code : 'unknown') + ' دوباره تلاش کنید.';
+		const code = error && error.code;
+		if (storedLanguage() === 'en') {
+			const englishErrors = {
+				arvan_reseller_unauthorized: 'Your session has ended. Sign in again to continue.', arvan_reseller_forbidden: 'You do not have permission for this operation.', arvan_reseller_rate_limited: 'Too many requests. Try again shortly.', arvan_reseller_timeout: 'The service response timed out. Try again.', arvan_reseller_network_failure: 'The network connection failed. Check your connection.', arvan_reseller_backend_unavailable: 'The backend service is unavailable. Try again shortly.', arvan_reseller_insufficient_balance: 'Wallet balance is insufficient for this operation.', arvan_reseller_invalid_estimate: 'The estimate is incomplete or invalid.', arvan_reseller_flavor_not_found: 'The selected plan is no longer available. Refresh the catalog.', arvan_reseller_payment_not_found: 'The requested payment was not found.', arvan_reseller_resource_not_found: 'The requested service was not found.', arvan_reseller_provisioning_recovery_required: 'The server was created, but the local record requires administrator recovery.', arvan_reseller_conflicting_key_action: 'API key replacement and deletion cannot be selected together.'
+			};
+			return englishErrors[code] || 'The operation failed. Support code: ' + escape(code || 'unknown') + '.';
+		}
+		return errorMessages[code] || 'عملیات انجام نشد. با کد پشتیبانی ' + escape(code || 'unknown') + ' دوباره تلاش کنید.';
 	}
 
 	function pageHead(title, description, actions) {
@@ -313,7 +424,7 @@
 		if (!region) return;
 		const item = document.createElement('div');
 		item.className = 'ar-toast ar-toast--' + (tone || 'info');
-		item.innerHTML = icon(tone === 'danger' ? 'warning' : 'check') + '<span>' + escape(message) + '</span>';
+		item.innerHTML = icon(tone === 'danger' ? 'warning' : 'check') + '<span>' + escape(translateOwnedText(message)) + '</span>';
 		region.appendChild(item);
 		window.setTimeout(() => item.remove(), 5200);
 	}
@@ -325,6 +436,7 @@
 		root.innerHTML = '<div class="ar-modal-backdrop" data-ar-modal-backdrop><section class="ar-modal" role="dialog" aria-modal="true" aria-labelledby="ar-modal-title"><div class="ar-modal__head"><div><h2 id="ar-modal-title">' + escape(options.title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button class="ar-icon-button" type="button" data-ar-modal-close aria-label="بستن">' + icon('close') + '</button></div><div class="ar-modal__body">' + (options.body || '') + '</div></section></div>';
 		const backdrop = root.querySelector('[data-ar-modal-backdrop]');
 		const dialog = root.querySelector('.ar-modal');
+		translateDom(root);
 		const close = () => {
 			root.innerHTML = '';
 			document.removeEventListener('keydown', keyHandler);
@@ -354,7 +466,7 @@
 			const instance = modal({
 				title: options.title,
 				description: options.description,
-				body: '<div class="ar-alert ' + (options.danger ? 'ar-alert--danger' : 'ar-alert--warning') + '">' + icon('warning') + '<div><strong>' + escape(options.notice || 'پیش از ادامه بررسی کنید') + '</strong><p>' + escape(options.detail || '') + '</p></div></div><div class="ar-modal__actions"><button type="button" class="ar-button ' + (options.danger ? 'ar-button--danger' : 'ar-button--primary') + '" data-confirm>' + escape(options.confirmLabel || 'تأیید') + '</button><button type="button" class="ar-button ar-button--secondary" data-cancel>انصراف</button></div>',
+				body: '<div class="ar-alert ' + (options.danger ? 'ar-alert--danger' : 'ar-alert--warning') + '">' + icon('warning') + '<div><strong>' + escape(options.notice || 'پیش از ادامه بررسی کنید') + '</strong><p>' + escape(options.detail || '') + '</p></div></div><div class="ar-modal__actions"><button type="button" class="ar-button ' + (options.danger ? 'ar-button--danger' : (options.accent ? 'ar-button--accent' : 'ar-button--primary')) + '" data-confirm>' + escape(options.confirmLabel || 'تأیید') + '</button><button type="button" class="ar-button ar-button--secondary" data-cancel>انصراف</button></div>',
 				onClose: () => { if (!settled) { settled = true; resolve(false); } }
 			});
 			instance.dialog.querySelector('[data-confirm]').addEventListener('click', () => { settled = true; instance.close(); resolve(true); });
@@ -376,6 +488,47 @@
 		return '<div class="ar-chart" aria-label="نمودار روند"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="ar-chart-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1473e6"/><stop offset="1" stop-color="#1473e6" stop-opacity="0"/></linearGradient></defs><g class="ar-chart-grid"><line x1="0" y1="25" x2="100" y2="25"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="75" x2="100" y2="75"/></g><polygon class="ar-chart-area" points="' + area + '"/><polyline class="ar-chart-line" points="' + polyline + '" vector-effect="non-scaling-stroke"/><g class="ar-chart-dots">' + points.map((point) => '<circle cx="' + point[0] + '" cy="' + point[1] + '" r="1.6" vector-effect="non-scaling-stroke"/>').join('') + '</g></svg><div class="ar-chart-legend"><span>قدیمی‌تر</span><span>اکنون</span></div></div>';
 	}
 
+	function drawerState(app) {
+		if (!drawerStates.has(app)) drawerStates.set(app, { trigger: null, open: false });
+		return drawerStates.get(app);
+	}
+
+	function setSidebarOpen(app, open, restoreFocus) {
+		const sidebar = app.querySelector('.ar-sidebar');
+		const trigger = app.querySelector('[data-ar-action="toggle-sidebar"]');
+		const scrim = app.querySelector('.ar-sidebar-scrim');
+		const main = app.querySelector('.ar-main');
+		const topbarActions = app.querySelector('.ar-topbar__actions');
+		const bottomNav = app.querySelector('.ar-bottom-nav');
+		if (!sidebar || !trigger) return;
+		const state = drawerState(app);
+		const mobile = mobileDrawerMedia.matches;
+		const shouldOpen = mobile && Boolean(open);
+		if (shouldOpen && !state.open) state.trigger = document.activeElement === trigger ? trigger : document.activeElement;
+		state.open = shouldOpen;
+		app.classList.toggle('is-sidebar-open', shouldOpen);
+		trigger.setAttribute('aria-expanded', String(shouldOpen));
+		if (scrim) scrim.hidden = !shouldOpen;
+		document.body.classList.toggle('ar-mobile-drawer-open', shouldOpen);
+		if (main) main.inert = shouldOpen;
+		if (topbarActions) topbarActions.inert = shouldOpen;
+		if (bottomNav) bottomNav.inert = shouldOpen;
+		if (mobile) {
+			sidebar.setAttribute('role', 'dialog'); sidebar.setAttribute('aria-modal', 'true'); sidebar.setAttribute('aria-hidden', String(!shouldOpen));
+		} else {
+			sidebar.removeAttribute('role'); sidebar.removeAttribute('aria-modal'); sidebar.removeAttribute('aria-hidden');
+		}
+		if (shouldOpen) {
+			window.requestAnimationFrame(() => (sidebar.querySelector('[data-ar-action="close-sidebar"], .ar-nav-item, a[href], button') || sidebar).focus());
+		} else if (restoreFocus !== false && state.trigger && typeof state.trigger.focus === 'function') {
+			state.trigger.focus();
+		}
+	}
+
+	function closeSidebar(app, restoreFocus) {
+		setSidebarOpen(app, false, restoreFocus);
+	}
+
 	function wireGlobalActions(app) {
 		if (!app) return;
 		mountIcons(app);
@@ -385,27 +538,41 @@
 			const action = event.target.closest('[data-ar-action]');
 			if (!action) return;
 			if (action.dataset.arAction === 'toggle-sidebar') {
-				const open = !app.classList.contains('is-sidebar-open');
-				app.classList.toggle('is-sidebar-open', open);
-				action.setAttribute('aria-expanded', String(open));
-				const scrim = app.querySelector('.ar-sidebar-scrim'); if (scrim) scrim.hidden = !open;
+				event.preventDefault();
+				setSidebarOpen(app, !drawerState(app).open, true);
 			}
-			if (action.dataset.arAction === 'close-sidebar') {
-				app.classList.remove('is-sidebar-open'); action.hidden = true;
+			if (action.dataset.arAction === 'close-sidebar' && mobileDrawerMedia.matches) {
+				event.preventDefault();
+				closeSidebar(app, true);
 			}
 			if (action.dataset.arAction === 'toggle-password') {
 				const input = action.closest('.ar-password-field').querySelector('input');
 				input.type = input.type === 'password' ? 'text' : 'password';
-				action.setAttribute('aria-label', input.type === 'password' ? 'نمایش رمز' : 'پنهان کردن رمز');
+				action.setAttribute('aria-label', translateOwnedText(input.type === 'password' ? 'نمایش رمز' : 'پنهان کردن رمز'));
 			}
 		});
+		app.addEventListener('keydown', (event) => {
+			const state = drawerState(app); const sidebar = app.querySelector('.ar-sidebar');
+			if (!state.open || !mobileDrawerMedia.matches || !sidebar) return;
+			if (event.key === 'Escape') { event.preventDefault(); closeSidebar(app, true); return; }
+			if (event.key !== 'Tab') return;
+			const focusable = Array.from(sidebar.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((node) => !node.hidden);
+			if (!focusable.length) { event.preventDefault(); sidebar.focus(); return; }
+			const first = focusable[0]; const last = focusable[focusable.length - 1];
+			if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+			else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+		});
+		const syncDrawerViewport = () => setSidebarOpen(app, drawerState(app).open, false);
+		if (typeof mobileDrawerMedia.addEventListener === 'function') mobileDrawerMedia.addEventListener('change', syncDrawerViewport);
+		else if (typeof mobileDrawerMedia.addListener === 'function') mobileDrawerMedia.addListener(syncDrawerViewport);
+		syncDrawerViewport();
 		window.addEventListener('arvan:session-expired', () => {
 			toast('نشست شما پایان یافته است. به صفحه ورود هدایت می‌شوید.', 'danger');
 			window.setTimeout(() => { window.location.href = window.ArvanResellerRuntime.loginUrl; }, 1800);
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateDom, applyLanguage, applyTheme, wireLanguageControls, wireThemeControls, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});

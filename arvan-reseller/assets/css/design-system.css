@@ -194,6 +194,7 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .arvan-reseller-app code,
 .arvan-reseller-app .ar-ltr { direction: ltr; font-family: var(--ar-font-mono); max-width: 100%; overflow-wrap: anywhere; unicode-bidi: isolate; }
 .arvan-reseller-app .ar-money { display: inline-block; font-variant-numeric: tabular-nums; max-width: 100%; unicode-bidi: isolate; white-space: nowrap; }
+.arvan-reseller-app .ar-date { font-variant-numeric: tabular-nums; unicode-bidi: isolate; }
 .arvan-reseller-app .screen-reader-text { border: 0; clip: rect(1px, 1px, 1px, 1px); clip-path: inset(50%); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; word-wrap: normal !important; }
 .arvan-reseller-app .screen-reader-text:focus { background: var(--ar-color-surface); clip: auto !important; clip-path: none; height: auto; margin: 0; padding: var(--ar-space-3); width: auto; }
 
@@ -205,9 +206,13 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .ar-icon-button { align-items: center; background: transparent; border: 1px solid var(--ar-color-border); border-radius: var(--ar-radius-md); color: var(--ar-color-text); display: inline-flex; height: 44px; justify-content: center; padding: 0; transition: background var(--ar-motion-fast), border-color var(--ar-motion-fast); width: 44px; }
 .ar-icon-button:hover { background: var(--ar-color-primary-soft); border-color: var(--ar-color-primary); color: var(--ar-color-primary); }
 
-.ar-button { align-items: center; background: var(--ar-color-primary); border: 1px solid var(--ar-color-primary); border-radius: 10px; color: var(--ar-color-on-primary) !important; display: inline-flex; font-weight: 800; gap: var(--ar-space-2); justify-content: center; line-height: 1.4; min-height: 44px; padding: 10px 18px; transition: background var(--ar-motion-fast), border-color var(--ar-motion-fast), transform var(--ar-motion-fast), box-shadow var(--ar-motion-fast); }
-.ar-button:hover { background: var(--ar-color-primary-hover); border-color: var(--ar-color-primary-hover); box-shadow: 0 6px 18px rgb(20 115 230 / 18%); transform: translateY(-1px); }
-.ar-button:active { transform: translateY(0); }
+.ar-button { align-items: center; background: var(--ar-color-primary); border: 1px solid var(--ar-color-primary); border-radius: 9px; color: var(--ar-color-on-primary) !important; display: inline-flex; font-weight: 800; gap: var(--ar-space-2); isolation: isolate; justify-content: center; line-height: 1.4; min-height: 44px; overflow: hidden; padding: 10px 18px; position: relative; transition: background 200ms var(--ar-ease), border-color 200ms var(--ar-ease), transform 200ms var(--ar-ease), box-shadow 200ms var(--ar-ease); }
+.ar-button::before { background: linear-gradient(110deg, transparent 25%, rgb(255 255 255 / 18%) 50%, transparent 75%); content: ""; inset: 0; opacity: 0; pointer-events: none; position: absolute; transform: translateX(-45%); transition: opacity 200ms var(--ar-ease), transform 200ms var(--ar-ease); z-index: 0; }
+.ar-button > * { position: relative; z-index: 1; }
+.ar-button:hover { background: var(--ar-color-primary-hover); border-color: var(--ar-color-primary-hover); box-shadow: 0 7px 18px color-mix(in srgb, var(--ar-color-primary) 18%, transparent); transform: translateY(-1px); }
+.ar-button:hover::before { opacity: 1; transform: translateX(38%); }
+.ar-button:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ar-color-focus) 72%, transparent), 0 7px 18px color-mix(in srgb, var(--ar-color-primary) 16%, transparent); outline: 0; }
+.ar-button:active { box-shadow: 0 2px 8px color-mix(in srgb, var(--ar-color-primary) 14%, transparent); transform: translateY(1px); }
 .ar-button--secondary { background: var(--ar-color-surface); border-color: var(--ar-color-border); color: var(--ar-color-text) !important; }
 .ar-button--secondary:hover,
 .ar-button--ghost:hover { background: var(--ar-color-primary-soft); border-color: var(--ar-color-primary); color: var(--ar-color-primary-hover) !important; }
@@ -215,7 +220,7 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .ar-button--accent { background: var(--ar-color-accent); border-color: var(--ar-color-accent); box-shadow: 0 5px 14px color-mix(in srgb, var(--ar-color-accent) 20%, transparent); color: var(--ar-color-on-accent) !important; }
 .ar-button--accent:hover { background: var(--ar-color-accent-hover); border-color: var(--ar-color-accent-hover); box-shadow: 0 6px 16px color-mix(in srgb, var(--ar-color-accent) 24%, transparent); color: var(--ar-color-on-accent) !important; }
 .ar-button--danger { background: var(--ar-color-danger); border-color: var(--ar-color-danger); }
-.ar-button--small { min-height: 36px; padding: 6px 12px; }
+.ar-button--small { min-height: 44px; padding: 8px 12px; }
 .ar-button--large { min-height: 50px; padding-inline: 24px; }
 .ar-button--block { width: 100%; }
 
@@ -245,8 +250,8 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .ar-sidebar .ar-brand { padding: 0 var(--ar-space-2) var(--ar-space-6); }
 .ar-sidebar__nav { display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; }
 .ar-nav-item { align-items: center; background: transparent; border: 0; border-radius: var(--ar-radius-md); color: var(--ar-color-sidebar-text) !important; display: flex; font-weight: 600; gap: var(--ar-space-3); min-height: 44px; padding: 10px 13px; text-align: start; transition: background var(--ar-motion-fast), color var(--ar-motion-fast); width: 100%; }
-.ar-nav-item:hover { background: var(--ar-color-navy-soft); color: #fff !important; }
-.ar-nav-item.is-active { background: var(--ar-color-primary); box-shadow: 0 8px 18px rgb(0 89 196 / 22%); color: var(--ar-color-on-primary) !important; }
+.ar-nav-item:hover { background: color-mix(in srgb, var(--ar-teal-500) 14%, var(--ar-color-sidebar)); color: #fff !important; }
+.ar-nav-item.is-active { background: var(--ar-color-primary); box-shadow: 0 8px 18px color-mix(in srgb, var(--ar-color-primary) 24%, transparent); color: var(--ar-color-on-primary) !important; }
 .ar-sidebar__footer { border-block-start: 1px solid rgb(255 255 255 / 12%); display: flex; flex-direction: column; gap: var(--ar-space-3); margin-block-start: var(--ar-space-5); padding: var(--ar-space-5) var(--ar-space-2) 0; }
 .ar-sidebar__footer small,
 .ar-sidebar__footer a { color: #9bb1c7; }
@@ -395,16 +400,28 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 }
 
 @media (max-width: 1024px) {
-	.ar-sidebar { box-shadow: var(--ar-shadow-3); height: 100vh; position: fixed; transform: translateX(110%); transition: transform var(--ar-motion-normal) var(--ar-ease); }
-	.arvan-reseller-app.is-sidebar-open .ar-sidebar { transform: translateX(0); }
+	body.ar-mobile-drawer-open { overflow: hidden; }
+	.ar-sidebar { bottom: auto; box-shadow: var(--ar-shadow-3); height: calc(100dvh - var(--ar-topbar-height)); max-width: calc(100vw - 48px); pointer-events: none; position: fixed; top: var(--ar-topbar-height); transition: transform var(--ar-motion-normal) var(--ar-ease), visibility 0s linear var(--ar-motion-normal); visibility: hidden; }
+	.arvan-reseller-app[dir="rtl"] .ar-sidebar { left: auto; right: 0; transform: translateX(105%); }
+	.arvan-reseller-app[dir="ltr"] .ar-sidebar { left: 0; right: auto; transform: translateX(-105%); }
+	.arvan-reseller-app.is-sidebar-open .ar-sidebar { pointer-events: auto; transform: translateX(0); transition-delay: 0s; visibility: visible; }
+	.arvan-reseller-app .ar-workspace { width: 100%; }
+	.arvan-reseller-app .ar-sidebar-scrim { z-index: 19; }
+	body.admin-bar .arvan-reseller-app .ar-sidebar { height: calc(100dvh - 32px - var(--ar-topbar-height)); top: calc(32px + var(--ar-topbar-height)); }
 	.ar-mobile-menu { display: inline-flex; }
 	.ar-main { padding: var(--ar-space-5); }
 	.ar-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+@media (max-width: 782px) {
+	body.admin-bar .arvan-reseller-app .ar-sidebar { height: calc(100dvh - 46px - var(--ar-topbar-height)); top: calc(46px + var(--ar-topbar-height)); }
+}
+
 @media (max-width: 640px) {
 	.arvan-reseller-app { font-size: 13px; }
 	.ar-topbar { height: 62px; padding-inline: var(--ar-space-4); }
+	.ar-sidebar { height: calc(100dvh - 62px); top: 62px; }
+	body.admin-bar .arvan-reseller-app .ar-sidebar { height: calc(100dvh - 108px); top: 108px; }
 	.ar-topbar .ar-env { display: none; }
 	.ar-topbar > div:first-of-type small { display: none; }
 	.ar-theme-toggle button { min-width: 32px; padding-inline: 7px; }

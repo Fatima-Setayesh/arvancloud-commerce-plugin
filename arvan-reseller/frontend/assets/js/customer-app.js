@@ -23,13 +23,13 @@
 	};
 
 	const routeMeta = {
-		dashboard: ['nav.dashboard', 'داشبورد', 'Dashboard', 'نمای کوتاه از کیف پول و سرویس‌ها', 'Wallet and service overview'], services: ['nav.services', 'سرویس‌ها', 'Services', 'سرورهای ابری متعلق به حساب شما', 'Cloud servers owned by your account'],
-		'create-server': ['nav.createServer', 'ساخت سرور ابری', 'Create cloud server', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور', 'Step-by-step configuration with a server-side estimate'], wallet: ['nav.wallet', 'کیف پول', 'Wallet', 'شارژ آزمایشی و دفترکل تغییرناپذیر', 'Mock top-up and immutable ledger'],
-		billing: ['nav.billing', 'مصرف و صورتحساب', 'Usage & billing', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها', 'Usage windows and invoices'], orders: ['nav.orders', 'سفارش‌ها', 'Orders', 'رهگیری ساخت و شناسه منبع', 'Provisioning and resource tracking'],
-		notifications: ['nav.notifications', 'اعلان‌ها', 'Notifications', 'هشدارهای موجودی و رویدادهای سرویس', 'Wallet and service events'], resource: ['nav.services', 'جزئیات سرویس', 'Service details', 'وضعیت واقعی ثبت‌شده در سامانه', 'Recorded service status']
+		dashboard: ['nav.dashboard', 'داشبورد', 'نمای کوتاه از کیف پول و سرویس‌ها'], services: ['nav.services', 'سرویس‌ها', 'سرورهای ابری متعلق به حساب شما'],
+		'create-server': ['nav.createServer', 'ساخت سرور ابری', 'پیکربندی مرحله‌ای با برآورد معتبر سمت سرور'], wallet: ['nav.wallet', 'کیف پول', 'شارژ آزمایشی و دفترکل تغییرناپذیر'],
+		billing: ['nav.billing', 'مصرف و صورتحساب', 'پنجره‌های دقیق مصرف و صورت‌حساب‌ها'], orders: ['nav.orders', 'سفارش‌ها', 'رهگیری ساخت و شناسه منبع'],
+		notifications: ['nav.notifications', 'اعلان‌ها', 'هشدارهای موجودی و رویدادهای سرویس'], resource: ['nav.services', 'جزئیات سرویس', 'وضعیت واقعی ثبت‌شده در سامانه']
 	};
 
-	function currentMeta() { const meta = routeMeta[state.route] || routeMeta.dashboard; const english = document.documentElement.dataset.arLanguage === 'en'; return [english ? meta[2] : meta[1], english ? meta[4] : meta[3]]; }
+	function currentMeta() { const meta = routeMeta[state.route] || routeMeta.dashboard; return [ui.translateOwnedText(meta[1]), ui.translateOwnedText(meta[2])]; }
 	function setContent(html) { content.innerHTML = html; ui.mountIcons(content); ui.translateDom(content); }
 	function numeric(value) { const number = Number(String(value || '0').replace(/,/g, '')); return Number.isFinite(number) ? number : 0; }
 	function modeLabel(mode) { return mode === 'live' ? 'زنده' : 'آزمایشی'; }
@@ -40,14 +40,14 @@
 			titleNode.dataset.arI18n = (routeMeta[state.route] || routeMeta.dashboard)[0];
 			titleNode.textContent = meta[0];
 		}
-		document.title = meta[0] + ' — فروش ابری آروان';
+		document.title = meta[0] + ' — ' + ui.translateOwnedText('فروش ابری آروان');
 	}
 	function pageHead(actions) { const meta = currentMeta(); return ui.pageHead(meta[0], meta[1], actions); }
 
 	function metric(label, value, icon, meta, route) {
 		const missing = value === null || typeof value === 'undefined' || value === '' || (typeof value === 'number' && !Number.isFinite(value)) || /^(?:undefined|null|nan)$/i.test(String(value).trim());
 		const displayValue = missing ? '—' : value;
-		const opening = route ? '<button type="button" class="ar-card ar-metric ar-dashboard-link" data-ar-route="' + ui.escape(route) + '" aria-label="' + ui.escape(label) + '">' : '<article class="ar-card ar-metric">';
+		const opening = route ? '<button type="button" class="ar-card ar-metric ar-dashboard-card ar-dashboard-link" data-ar-route="' + ui.escape(route) + '" aria-label="' + ui.escape(label) + '">' : '<article class="ar-card ar-metric">';
 		return opening + '<span class="ar-metric__icon">' + ui.icon(icon) + '</span><span class="ar-metric__label">' + ui.escape(label) + '</span><strong class="ar-metric__value">' + displayValue + '</strong><span class="ar-metric__meta">' + ui.escape(meta || '') + '</span>' + (route ? '</button>' : '</article>');
 	}
 
@@ -109,7 +109,7 @@
 		const transactionRows = transactions.map((row) => [ui.status(row.type === 'credit' || String(row.amount || '').charAt(0) !== '-' ? 'completed' : 'issued').replace(/تکمیل‌شده|صادرشده/, ui.escape(ui.statusLabel(row.type))), ui.money(row.amount, row.currency), ui.escape(row.description || row.reference_type), ui.date(row.created_at)]);
 		setContent(pageHead('<button class="ar-button ar-button--secondary" type="button" data-ar-route="wallet">' + ui.icon('wallet') + '<span data-ar-i18n="action.topupWallet">شارژ کیف پول</span></button><button class="ar-button ar-button--accent" type="button" data-ar-route="create-server">' + ui.icon('plus') + '<span data-ar-i18n="action.createServer">ساخت سرور</span></button>') +
 			(low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>موجودی کیف پول پایین است</strong><p>برای جلوگیری از اعمال سیاست تعلیق، موجودی را بررسی و در حالت آزمایشی شارژ کنید.</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="wallet">شارژ کیف پول</button></div>' : '') +
-			'<section class="ar-grid ar-grid--metrics ar-customer-metrics" style="margin-top:16px"><article class="ar-card ar-wallet-hero ar-wallet-hero--dashboard"><button class="ar-wallet-hero__link" type="button" data-ar-route="wallet" aria-label="کیف پول"><small>موجودی کیف پول</small><strong class="ar-wallet-balance">' + ui.money(wallet && wallet.balance, wallet && wallet.currency) + '</strong></button><button class="ar-button ar-button--accent" type="button" data-ar-action="open-topup">' + ui.icon('plus') + '<span data-ar-i18n="action.topupWallet">شارژ کیف پول</span></button></article>' + metric('سرویس‌های فعال', available[1] ? ui.persianDigits(active.length) : '—', 'server', available[1] ? ui.persianDigits(resources.length) + ' سرویس ثبت‌شده' : 'داده در دسترس نیست', 'services') + metric('مصرف دوره', ui.money(usageTotal, runtime.settings.currency), 'chart', available[4] ? ui.persianDigits(usage.length) + ' پنجره مصرف' : 'داده در دسترس نیست', 'billing') + metric('اعلان‌های خوانده‌نشده', available[2] ? ui.persianDigits(unread) : '—', 'bell', available[2] ? ui.persianDigits(notifications.length) + ' اعلان اخیر' : 'داده در دسترس نیست', 'notifications') + '</section>' +
+			'<section class="ar-grid ar-grid--metrics ar-customer-metrics" style="margin-top:16px"><article class="ar-card ar-metric ar-dashboard-card ar-dashboard-wallet"><button class="ar-dashboard-wallet__target" type="button" data-ar-route="wallet" aria-label="کیف پول"><span class="ar-metric__icon">' + ui.icon('wallet') + '</span><span class="ar-metric__label">موجودی کیف پول</span><strong class="ar-metric__value">' + ui.money(wallet && wallet.balance, wallet && wallet.currency) + '</strong><span class="ar-metric__meta">' + (wallet ? ui.status(wallet.status) : '—') + '</span></button><button class="ar-button ar-button--accent ar-button--small" type="button" data-ar-action="open-topup">' + ui.icon('plus') + '<span data-ar-i18n="action.topupWallet">شارژ کیف پول</span></button></article>' + metric('سرویس‌های فعال', available[1] ? ui.persianDigits(active.length) : '—', 'server', available[1] ? ui.persianDigits(resources.length) + ' سرویس ثبت‌شده' : 'داده در دسترس نیست', 'services') + metric('مصرف دوره', ui.money(usageTotal, runtime.settings.currency), 'chart', available[4] ? ui.persianDigits(usage.length) + ' پنجره مصرف' : 'داده در دسترس نیست', 'billing') + metric('اعلان‌های خوانده‌نشده', available[2] ? ui.persianDigits(unread) : '—', 'bell', available[2] ? ui.persianDigits(notifications.length) + ' اعلان اخیر' : 'داده در دسترس نیست', 'notifications') + '</section>' +
 			'<section class="ar-layout-main"><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><div><h2>مصرف اخیر</h2><p>هزینه‌های قطعی ثبت‌شده در سامانه</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="billing">جزئیات</button></div>' + ui.lineChart(costs.length ? costs : [0]) + '</article><article class="ar-card ar-card--flush"><div class="ar-card-head" style="padding:20px 20px 0"><h2>تراکنش‌های اخیر</h2></div>' + table(['نوع', 'مبلغ', 'شرح', 'زمان'], transactionRows, 'هنوز تراکنشی ندارید') + '</article></div><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><h2>سرور فعال</h2><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="services">همه سرویس‌ها</button></div>' + (active[0] ? resourceCard(active[0]) : ui.empty('سرور فعالی ندارید', 'از پیکربندی مرحله‌ای برای ساخت سرور ابری استفاده کنید.', '<button class="ar-button" type="button" data-ar-route="create-server">ساخت سرور</button>')) + '</article><article class="ar-card"><div class="ar-card-head"><h2>آخرین اعلان‌ها</h2></div>' + (notifications.length ? '<ol class="ar-timeline">' + notifications.map((item) => '<li class="' + (item.status === 'sent' ? 'is-complete' : 'is-current') + '"><span class="ar-timeline__marker">' + ui.icon(item.status === 'sent' ? 'check' : 'bell') + '</span><div><strong>' + notificationLabel(item.type) + '</strong><small>' + ui.date(item.created_at) + '</small></div></li>').join('') + '</ol>' : ui.empty('اعلانی ندارید', 'هشدارهای موجودی و سرویس اینجا نمایش داده می‌شوند.')) + '</article></div></section>');
 	}
 
@@ -148,7 +148,7 @@
 		try {
 			const [walletData, payments, transactions] = await Promise.all([api.get('wallet'), api.get('payments', { query: { limit: 50 } }), api.get('wallet/transactions', { query: { limit: 100 } })]);
 			const low = numeric(walletData.balance) <= numeric(walletData.threshold);
-			const paymentRows = payments.map((payment) => ['<code dir="ltr">' + ui.escape(payment.payment_reference) + '</code>', ui.money(payment.amount, payment.currency), ui.status(payment.status), ui.escape(payment.provider === 'mock' ? 'آزمایشی' : payment.provider), ui.date(payment.created_at), payment.status === 'pending' && payment.provider === 'mock' ? '<button class="ar-button ar-button--small" type="button" data-confirm-payment="' + ui.escape(payment.payment_reference) + '">تأیید پرداخت</button>' : '—']);
+			const paymentRows = payments.map((payment) => ['<code dir="ltr">' + ui.escape(payment.payment_reference) + '</code>', ui.money(payment.amount, payment.currency), ui.status(payment.status), ui.escape(payment.provider === 'mock' ? 'آزمایشی' : payment.provider), ui.date(payment.created_at), payment.status === 'pending' && payment.provider === 'mock' ? '<button class="ar-button ar-button--accent ar-button--small" type="button" data-confirm-payment="' + ui.escape(payment.payment_reference) + '">تأیید پرداخت</button>' : '—']);
 			const transactionRows = transactions.map((row) => [ui.escape(ui.statusLabel(row.type)), ui.money(row.amount, row.currency), ui.escape(row.reference_type), ui.escape(row.description || '—'), ui.date(row.created_at)]);
 			setContent(pageHead('<button class="ar-button ar-button--accent" type="button" data-ar-action="open-topup">' + ui.icon('plus') + 'شارژ کیف پول</button>') + (low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>موجودی در محدوده هشدار است</strong><p>آستانه فعلی ' + ui.money(walletData.threshold, walletData.currency) + ' است.</p></div></div>' : '') + '<section class="ar-grid ar-grid--3" style="margin-top:16px"><article class="ar-card ar-wallet-hero"><small>موجودی قابل استفاده</small><strong class="ar-wallet-balance">' + ui.money(walletData.balance, walletData.currency) + '</strong><span>' + ui.status(walletData.status) + '</span></article>' + metric('آستانه هشدار', ui.money(walletData.threshold, walletData.currency), 'warning', 'هشدار خودکار سامانه') + metric('تراکنش‌ها', ui.persianDigits(transactions.length), 'receipt', 'دفترکل تغییرناپذیر') + '</section><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>پرداخت‌ها</h2><span class="ar-env ar-env--' + ui.escape(runtime.settings.mode) + '"><span></span>' + modeLabel(runtime.settings.mode) + '</span></div>' + table(['مرجع', 'مبلغ', 'وضعیت', 'درگاه', 'زمان', 'عملیات'], paymentRows, 'پرداختی ثبت نشده است') + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>تاریخچه تراکنش</h2></div>' + table(['نوع', 'مبلغ', 'مرجع', 'شرح', 'زمان'], transactionRows, 'تراکنشی ثبت نشده است') + '</article>');
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
@@ -170,17 +170,17 @@
 		modal.dialog.addEventListener('click', (event) => { const preset = event.target.closest('[data-topup-preset]'); if (!preset) return; amountInput.value = preset.dataset.topupPreset; preview.innerHTML = ui.money(amountInput.value, runtime.settings.currency); amountInput.focus(); });
 		amountInput.addEventListener('input', () => { preview.innerHTML = ui.money(amountInput.value || '0', runtime.settings.currency); });
 		modal.dialog.querySelector('#ar-topup-form').addEventListener('submit', async (event) => {
-			event.preventDefault(); const button = event.target.querySelector('button[type="submit"]'); button.disabled = true; button.textContent = 'در حال ثبت…';
+			event.preventDefault(); const button = event.target.querySelector('button[type="submit"]'); button.disabled = true; button.textContent = ui.translateOwnedText('در حال ثبت…');
 			try {
 				const payment = await api.post('payments', { amount: event.target.amount.value }, { idempotencyKey: key, safeRetry: true });
 				await api.post('payments/' + encodeURIComponent(payment.payment_reference) + '/confirm', {});
 				api.completeOperation(operation); modal.close(); ui.toast('شارژ آزمایشی با موفقیت تکمیل شد.', 'success'); await wallet();
-			} catch (error) { ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; button.textContent = 'تکمیل شارژ آزمایشی'; }
+			} catch (error) { ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; button.textContent = ui.translateOwnedText('تکمیل شارژ آزمایشی'); }
 		});
 	}
 
 	async function confirmPayment(reference, button) {
-		const accepted = await ui.confirm({ title: 'تأیید پرداخت آزمایشی', description: 'کیف پول به‌شکل اتمیک و تکرارپذیر شارژ می‌شود.', notice: 'هیچ پرداخت بانکی واقعی انجام نمی‌شود', detail: reference, confirmLabel: 'تأیید و شارژ' });
+		const accepted = await ui.confirm({ title: 'تأیید پرداخت آزمایشی', description: 'کیف پول به‌شکل اتمیک و تکرارپذیر شارژ می‌شود.', notice: 'هیچ پرداخت بانکی واقعی انجام نمی‌شود', detail: reference, confirmLabel: 'تأیید و شارژ', accent: true });
 		if (!accepted) return;
 		button.disabled = true;
 		try { await api.post('payments/' + encodeURIComponent(reference) + '/confirm', {}); ui.toast('کیف پول با موفقیت شارژ شد.', 'success'); await wallet(); }
@@ -242,7 +242,7 @@
 
 	async function createOrder(button) {
 		const terms = content.querySelector('[data-terms]'); if (!terms || !terms.checked) { ui.toast('پیش از سفارش، شرایط سرویس را تأیید کنید.', 'danger'); terms && terms.focus(); return; }
-		const accepted = await ui.confirm({ title: 'ساخت سرور ابری در حالت ' + modeLabel(runtime.settings.mode), description: 'سفارش به سامانه معتبر ارسال می‌شود.', notice: runtime.settings.mode === 'mock' ? 'عملیات آزمایشی و بدون هزینه خارجی است' : 'عملیات زنده می‌تواند هزینه‌زا باشد؛ فقط با تأیید آگاهانه ادامه دهید', detail: state.config.region + ' · ' + state.config.flavor.id + ' · ' + state.config.image.id, confirmLabel: runtime.settings.mode === 'mock' ? 'ساخت سرور آزمایشی' : 'تأیید ساخت زنده' });
+		const accepted = await ui.confirm({ title: 'ساخت سرور ابری در حالت ' + modeLabel(runtime.settings.mode), description: 'سفارش به سامانه معتبر ارسال می‌شود.', notice: runtime.settings.mode === 'mock' ? 'عملیات آزمایشی و بدون هزینه خارجی است' : 'عملیات زنده می‌تواند هزینه‌زا باشد؛ فقط با تأیید آگاهانه ادامه دهید', detail: state.config.region + ' · ' + state.config.flavor.id + ' · ' + state.config.image.id, confirmLabel: runtime.settings.mode === 'mock' ? 'ساخت سرور آزمایشی' : 'تأیید ساخت زنده', accent: true });
 		if (!accepted) return;
 		const operation = state.orderOperation; const key = api.operationKey(operation); button.disabled = true; button.textContent = 'در حال ساخت…';
 		const payload = { region: state.config.region, availabilityZone: state.config.availabilityZone, flavorId: state.config.flavor.id, imageId: state.config.image.id, name: state.config.name.trim(), rootVolumeSizeGigaBytes: Number(state.config.rootVolumeSizeGigaBytes), enableBackup: state.config.enableBackup, enableFailOver: state.config.enableFailOver, enableIpv4: state.config.enableIpv4, enableIpv6: state.config.enableIpv6 };
@@ -298,7 +298,7 @@
 		closeAccount(false);
 		window.clearTimeout(state.pollTimer); state.route = route; state.resourceId = resourceId || state.resourceId; app.dataset.arRoute = route; title();
 		app.querySelectorAll('[data-ar-route]').forEach((node) => { const active = node.dataset.arRoute === route; node.classList.toggle('is-active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); });
-		app.classList.remove('is-sidebar-open'); const scrim = app.querySelector('.ar-sidebar-scrim'); if (scrim) scrim.hidden = true;
+		ui.closeSidebar(app, false);
 		const handlers = { dashboard, services, 'create-server': configurator, wallet, billing, orders, notifications, resource: resourceDetail };
 		await (handlers[route] || dashboard)(); content.focus({ preventScroll: true });
 	}
