@@ -7,7 +7,9 @@
 		provisioning: 'در حال ساخت', provisioned: 'آماده', suspended: 'تعلیق‌شده', terminated: 'خاتمه‌یافته',
 		error: 'خطا', draft: 'پیش‌نویس', issued: 'صادرشده', paid: 'پرداخت‌شده', void: 'باطل',
 		processing: 'در حال پردازش', sent: 'ارسال‌شده', healthy: 'سالم', degraded: 'نیازمند توجه',
-		running: 'در حال اجرا', never_run: 'اجرا نشده', AVAILABLE: 'در دسترس', ACTIVE: 'فعال', SHUTOFF: 'خاموش', TERMINATED: 'خاتمه‌یافته'
+		running: 'در حال اجرا', never_run: 'اجرا نشده', available: 'در دسترس', creating: 'در حال ساخت',
+		build: 'در حال ساخت', building: 'در حال ساخت', shutoff: 'خاموش', powered_off: 'خاموش', deleted: 'حذف‌شده', unknown: 'نامشخص',
+		AVAILABLE: 'در دسترس', ACTIVE: 'فعال', BUILD: 'در حال ساخت', BUILDING: 'در حال ساخت', SHUTOFF: 'خاموش', POWERED_OFF: 'خاموش', TERMINATED: 'خاتمه‌یافته', DELETED: 'حذف‌شده', ERROR: 'خطا', UNKNOWN: 'نامشخص'
 	};
 
 	const errorMessages = {
@@ -76,21 +78,38 @@
 		});
 	}
 
+	function isMissingValue(value) {
+		return value === null || typeof value === 'undefined' || String(value).trim() === '' || /^(?:undefined|null|nan)$/i.test(String(value).trim());
+	}
+
+	function stableDigits(value) {
+		const persian = '۰۱۲۳۴۵۶۷۸۹';
+		const arabic = '٠١٢٣٤٥٦٧٨٩';
+		return String(value).replace(/[۰-۹٠-٩]/g, (digit) => {
+			const persianIndex = persian.indexOf(digit);
+			return String(persianIndex >= 0 ? persianIndex : arabic.indexOf(digit));
+		});
+	}
+
+	// Kept as a public compatibility name; stable Latin glyphs prevent fallback fonts rendering Persian zero as a diamond.
 	function persianDigits(value) {
-		return String(value).replace(/\d/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
+		return isMissingValue(value) ? '—' : stableDigits(value);
 	}
 
 	function decimal(value, maxFraction) {
-		const source = String(value === null || typeof value === 'undefined' ? '0' : value).replace(/,/g, '').trim();
+		if (isMissingValue(value)) return '—';
+		const source = stableDigits(value).replace(/,/g, '').trim();
 		const match = source.match(/^(-?)(\d+)(?:\.(\d+))?$/);
-		if (!match) return persianDigits(source);
+		if (!match) return '—';
 		const grouped = match[2].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 		const fraction = (match[3] || '').slice(0, typeof maxFraction === 'number' ? maxFraction : 4).replace(/0+$/, '');
 		return persianDigits(match[1] + grouped + (fraction ? '.' + fraction : ''));
 	}
 
 	function money(value, currency) {
-		return '<span class="ar-money"><bdi>' + escape(decimal(value, 4)) + '</bdi> <small dir="ltr">' + escape(currency || (window.ArvanResellerRuntime.settings || {}).currency || 'IRR') + '</small></span>';
+		const amount = decimal(value, 4);
+		if (amount === '—') return '<span class="ar-money ar-money--unavailable">—</span>';
+		return '<span class="ar-money"><bdi>' + escape(amount) + '</bdi> <small dir="ltr">' + escape(currency || (window.ArvanResellerRuntime.settings || {}).currency || 'IRR') + '</small></span>';
 	}
 
 	function date(value) {
@@ -101,13 +120,18 @@
 		return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(parsed);
 	}
 
+	function statusLabel(value) {
+		const raw = String(value || 'unknown');
+		return statusLabels[raw] || statusLabels[raw.toLowerCase()] || statusLabels.unknown;
+	}
+
 	function status(value) {
-		const raw = String(value || 'pending');
-		const success = ['active', 'completed', 'provisioned', 'paid', 'sent', 'healthy', 'AVAILABLE', 'ACTIVE'];
-		const warning = ['pending', 'provisioning', 'processing', 'suspended', 'degraded', 'running', 'never_run', 'SHUTOFF'];
-		const danger = ['failed', 'cancelled', 'expired', 'terminated', 'error', 'void', 'TERMINATED'];
+		const raw = String(value || 'unknown');
+		const success = ['active', 'available', 'completed', 'provisioned', 'paid', 'sent', 'healthy', 'AVAILABLE', 'ACTIVE'];
+		const warning = ['pending', 'provisioning', 'processing', 'suspended', 'degraded', 'running', 'never_run', 'creating', 'build', 'building', 'BUILD', 'BUILDING', 'SHUTOFF', 'POWERED_OFF'];
+		const danger = ['failed', 'cancelled', 'expired', 'terminated', 'deleted', 'error', 'void', 'TERMINATED', 'DELETED', 'ERROR'];
 		const tone = success.includes(raw) ? 'success' : (warning.includes(raw) ? 'warning' : (danger.includes(raw) ? 'danger' : 'info'));
-		return '<span class="ar-status ar-status--' + tone + '" title="' + escape(raw) + '">' + escape(statusLabels[raw] || raw) + '</span>';
+		return '<span class="ar-status ar-status--' + tone + '" title="' + escape(raw) + '">' + escape(statusLabel(raw)) + '</span>';
 	}
 
 	function errorMessage(error) {
@@ -225,7 +249,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});

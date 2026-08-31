@@ -31,7 +31,9 @@
 	}
 
 	function metric(label, value, icon, meta) {
-		return '<article class="ar-card ar-metric"><span class="ar-metric__icon">' + ui.icon(icon) + '</span><span class="ar-metric__label">' + ui.escape(label) + '</span><strong class="ar-metric__value">' + value + '</strong><span class="ar-metric__meta">' + ui.escape(meta || 'براساس داده فعلی') + '</span></article>';
+		const missing = value === null || typeof value === 'undefined' || value === '' || (typeof value === 'number' && !Number.isFinite(value)) || /^(?:undefined|null|nan)$/i.test(String(value).trim());
+		const displayValue = missing ? '—' : value;
+		return '<article class="ar-card ar-metric"><span class="ar-metric__icon">' + ui.icon(icon) + '</span><span class="ar-metric__label">' + ui.escape(label) + '</span><strong class="ar-metric__value">' + displayValue + '</strong><span class="ar-metric__meta">' + ui.escape(meta || 'براساس داده فعلی') + '</span></article>';
 	}
 
 	function table(headers, rows, emptyText) {
@@ -76,6 +78,7 @@
 		const payments = value(results[3], []); const orders = value(results[4], []); const usage = value(results[5], []);
 		const health = value(results[6], {}); const audit = value(results[7], []); const settlements = value(results[8], []);
 		const partial = results.some((result) => result.status === 'rejected');
+		const available = results.map((result) => result.status === 'fulfilled');
 		const active = resources.filter((resource) => ['active', 'provisioned'].includes(resource.status)).length;
 		const suspended = resources.filter((resource) => resource.status === 'suspended').length;
 		const resourceErrors = resources.filter((resource) => ['error', 'failed'].includes(resource.status)).length;
@@ -84,8 +87,8 @@
 		const suspendedEnd = ((active + suspended) / resourceTotal * 100).toFixed(2);
 		const errorEnd = ((active + suspended + resourceErrors) / resourceTotal * 100).toFixed(2);
 		const failedOrders = orders.filter((order) => order.status === 'failed').length;
-		const walletTotal = wallets.reduce((sum, wallet) => sum + numeric(wallet.balance), 0).toFixed(4);
-		const currentCost = usage.reduce((sum, row) => sum + numeric(row.total_charge), 0).toFixed(4);
+		const walletTotal = available[1] ? wallets.reduce((sum, wallet) => sum + numeric(wallet.balance), 0).toFixed(4) : null;
+		const currentCost = available[5] ? usage.reduce((sum, row) => sum + numeric(row.total_charge), 0).toFixed(4) : null;
 		const lineValues = usage.slice().reverse().map((row) => numeric(row.total_charge));
 		const latestOrders = orders.slice(0, 6).map((order) => [
 			'<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', ui.escape('#' + order.customer_id),
@@ -95,7 +98,7 @@
 		setContent(
 			ui.pageHead(pageMeta.dashboard[0], pageMeta.dashboard[1], '<button class="ar-button ar-button--secondary" type="button" data-ar-action="refresh-page">' + ui.icon('refresh') + 'تازه‌سازی</button><a class="ar-button" href="' + ui.escape(runtime.adminUrl.replace('page=arvan-reseller', 'page=arvan-reseller-setup')) + '">' + ui.icon('spark') + 'راه‌اندازی</a>') +
 			(partial ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>نمایش داده جزئی</strong><p>بعضی شاخص‌ها دریافت نشدند؛ بخش‌های در دسترس با داده واقعی نمایش داده شده‌اند.</p></div></div>' : '') +
-			'<section class="ar-grid ar-grid--metrics">' + metric('مشتریان', ui.persianDigits(customers.length), 'users', 'حساب‌های قابل مشاهده') + metric('سرورهای فعال', ui.persianDigits(active), 'server', ui.persianDigits(suspended) + ' تعلیق‌شده') + metric('مجموع کیف پول', ui.money(walletTotal, runtime.settings.currency), 'wallet', 'جمع موجودی مجازی') + metric('مصرف ثبت‌شده', ui.money(currentCost, runtime.settings.currency), 'chart', ui.persianDigits(usage.length) + ' پنجره مصرف') + '</section>' +
+			'<section class="ar-grid ar-grid--metrics">' + metric('مشتریان', available[0] ? ui.persianDigits(customers.length) : '—', 'users', available[0] ? 'حساب‌های قابل مشاهده' : 'داده در دسترس نیست') + metric('سرورهای فعال', available[2] ? ui.persianDigits(active) : '—', 'server', available[2] ? ui.persianDigits(suspended) + ' تعلیق‌شده' : 'داده در دسترس نیست') + metric('مجموع کیف پول', ui.money(walletTotal, runtime.settings.currency), 'wallet', available[1] ? 'جمع موجودی مجازی' : 'داده در دسترس نیست') + metric('مصرف ثبت‌شده', ui.money(currentCost, runtime.settings.currency), 'chart', available[5] ? ui.persianDigits(usage.length) + ' پنجره مصرف' : 'داده در دسترس نیست') + '</section>' +
 			'<section class="ar-layout-main"><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><div><h2>روند هزینه ثبت‌شده</h2><p>مقادیر دقیق در جدول مصرف قابل دسترسی است.</p></div><span class="ar-status ar-status--info">' + ui.persianDigits(usage.length) + ' رکورد</span></div>' + ui.lineChart(lineValues.length ? lineValues : [0]) + '</article><article class="ar-card ar-card--flush"><div class="ar-card-head" style="padding:20px 20px 0"><h2>سفارش‌های اخیر</h2><a href="' + ui.escape(runtime.adminUrl.replace('page=arvan-reseller', 'page=arvan-reseller-orders')) + '">مشاهده همه</a></div>' + table(['شناسه سفارش', 'مشتری', 'وضعیت', 'شناسه منبع', 'زمان'], latestOrders, 'هنوز سفارشی ثبت نشده است') + '</article></div>' +
 			'<div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><h2>توزیع وضعیت سرویس</h2></div><div class="ar-donut-wrap"><div class="ar-donut" style="--ar-donut-active:' + activeEnd + '%;--ar-donut-suspended:' + suspendedEnd + '%;--ar-donut-error:' + errorEnd + '%"><span class="ar-donut__value"><strong>' + ui.persianDigits(resources.length) + '</strong>کل سرویس‌ها</span></div><div class="ar-legend"><span><i style="--legend-color:var(--ar-color-success)"></i>فعال ' + ui.persianDigits(active) + '</span><span><i style="--legend-color:var(--ar-color-warning)"></i>تعلیق ' + ui.persianDigits(suspended) + '</span><span><i style="--legend-color:var(--ar-color-danger)"></i>خطا ' + ui.persianDigits(resourceErrors) + '</span></div></div></article>' +
 			'<article class="ar-card"><div class="ar-card-head"><h2>سلامت عملیات</h2>' + ui.status(health.cron && health.cron.status || 'never_run') + '</div><div class="ar-ops-strip"><div class="ar-ops-item">' + ui.icon('chart') + '<div><strong>' + ui.persianDigits(health.cron && health.cron.processed || 0) + '</strong><small>پردازش Cron</small></div></div><div class="ar-ops-item">' + ui.icon('warning') + '<div><strong>' + ui.persianDigits(health.cron && health.cron.failed || 0) + '</strong><small>خطای اخیر</small></div></div><div class="ar-ops-item">' + ui.icon('receipt') + '<div><strong>' + ui.persianDigits(settlements.length) + '</strong><small>تسویه داخلی</small></div></div></div>' + (failedOrders ? '<div class="ar-alert ar-alert--warning" style="margin-top:16px">' + ui.icon('warning') + '<div><strong>' + ui.persianDigits(failedOrders) + ' سفارش ناموفق</strong><p>وضعیت بازیابی را بررسی کنید.</p></div></div>' : '') + '</article>' +
