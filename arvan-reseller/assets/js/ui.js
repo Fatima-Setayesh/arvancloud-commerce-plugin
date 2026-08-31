@@ -1,6 +1,48 @@
 (function () {
 	'use strict';
 
+	const themeStorageKey = 'arvan-reseller-theme';
+	const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+
+	function storedTheme() {
+		try {
+			const value = window.localStorage.getItem(themeStorageKey);
+			return ['light', 'dark', 'system'].includes(value) ? value : 'system';
+		} catch (error) {
+			return 'system';
+		}
+	}
+
+	function resolvedTheme(preference) {
+		return preference === 'system' ? (themeMedia.matches ? 'dark' : 'light') : preference;
+	}
+
+	function applyTheme(preference, persist) {
+		const mode = ['light', 'dark', 'system'].includes(preference) ? preference : 'system';
+		document.documentElement.dataset.arTheme = resolvedTheme(mode);
+		document.documentElement.dataset.arThemeMode = mode;
+		if (persist) {
+			try { window.localStorage.setItem(themeStorageKey, mode); } catch (error) { /* Preference remains active for this page. */ }
+		}
+		document.querySelectorAll('[data-ar-theme-select]').forEach((select) => { select.value = mode; });
+		document.dispatchEvent(new CustomEvent('arvan:theme-change', { detail: { mode: mode, theme: resolvedTheme(mode) } }));
+	}
+
+	function wireThemeControls(root) {
+		(root || document).querySelectorAll('[data-ar-theme-select]:not([data-ar-theme-mounted])').forEach((select) => {
+			select.dataset.arThemeMounted = '1';
+			select.value = storedTheme();
+			select.addEventListener('change', () => applyTheme(select.value, true));
+		});
+	}
+
+	applyTheme(storedTheme(), false);
+	const syncSystemTheme = () => {
+		if (storedTheme() === 'system') applyTheme('system', false);
+	};
+	if (typeof themeMedia.addEventListener === 'function') themeMedia.addEventListener('change', syncSystemTheme);
+	else if (typeof themeMedia.addListener === 'function') themeMedia.addListener(syncSystemTheme);
+
 	const statusLabels = {
 		active: 'فعال', frozen: 'مسدود', closed: 'بسته', pending: 'در انتظار', completed: 'تکمیل‌شده',
 		failed: 'ناموفق', cancelled: 'لغوشده', expired: 'منقضی', refunded: 'بازپرداخت‌شده',
@@ -8,6 +50,7 @@
 		error: 'خطا', draft: 'پیش‌نویس', issued: 'صادرشده', paid: 'پرداخت‌شده', void: 'باطل',
 		processing: 'در حال پردازش', sent: 'ارسال‌شده', healthy: 'سالم', degraded: 'نیازمند توجه',
 		running: 'در حال اجرا', never_run: 'اجرا نشده', available: 'در دسترس', creating: 'در حال ساخت',
+		credit: 'افزایش موجودی', debit: 'کاهش موجودی', topup: 'شارژ کیف پول', adjustment: 'اصلاح حساب',
 		build: 'در حال ساخت', building: 'در حال ساخت', shutoff: 'خاموش', powered_off: 'خاموش', deleted: 'حذف‌شده', unknown: 'نامشخص',
 		AVAILABLE: 'در دسترس', ACTIVE: 'فعال', BUILD: 'در حال ساخت', BUILDING: 'در حال ساخت', SHUTOFF: 'خاموش', POWERED_OFF: 'خاموش', TERMINATED: 'خاتمه‌یافته', DELETED: 'حذف‌شده', ERROR: 'خطا', UNKNOWN: 'نامشخص'
 	};
@@ -59,7 +102,8 @@
 		info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
 		search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
 		close: '<path d="m6 6 12 12M18 6 6 18"/>',
-		download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'
+		download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+		theme: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>'
 	};
 
 	function escape(value) {
@@ -225,6 +269,7 @@
 	function wireGlobalActions(app) {
 		if (!app) return;
 		mountIcons(app);
+		wireThemeControls(app);
 		app.addEventListener('click', (event) => {
 			const action = event.target.closest('[data-ar-action]');
 			if (!action) return;
@@ -249,7 +294,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, applyTheme, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});

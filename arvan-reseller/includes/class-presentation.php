@@ -14,6 +14,9 @@ class Arvan_Reseller_Presentation {
 	/** @var array<string, bool> */
 	private static $enqueued = array();
 
+	/** @var bool */
+	private static $theme_bootstrapped = false;
+
 	/**
 	 * Enqueue the shared runtime and one application entry point.
 	 *
@@ -87,7 +90,14 @@ class Arvan_Reseller_Presentation {
 		extract( $variables, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 		ob_start();
 		require $file;
-		return (string) ob_get_clean();
+		$markup = (string) ob_get_clean();
+
+		if ( self::$theme_bootstrapped ) {
+			return $markup;
+		}
+
+		self::$theme_bootstrapped = true;
+		return '<script>(function(){try{var m=localStorage.getItem("arvan-reseller-theme")||"system";if(["light","dark","system"].indexOf(m)<0){m="system";}var t=m==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;document.documentElement.dataset.arTheme=t;document.documentElement.dataset.arThemeMode=m;}catch(e){}}());</script>' . $markup;
 	}
 
 	/**
