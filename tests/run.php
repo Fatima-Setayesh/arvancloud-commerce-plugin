@@ -355,6 +355,15 @@ $tests['server order cannot bypass authoritative prepaid wallet debit'] = static
 	arvan_test_assert_same( 'failed', $db->orders[1]['status'], 'unfunded order state was not terminal' );
 	arvan_test_assert_same( 0, count( get_option( 'arvan_reseller_mock_resources', array() ) ), 'unfunded order reached cloud provisioning' );
 	arvan_test_assert_same( 0, count( $db->transactions ), 'failed order mutated immutable ledger' );
+	$replay = $service->create_server_order( 7, array( 'region'=>'ir-thr-mock','availabilityZone'=>'mock-zone-1','flavorId'=>'mock-g2-1-2','imageId'=>'image','name'=>'unfunded-server','rootVolumeSizeGigaBytes'=>25 ), 'unfunded-order' );
+	arvan_test_assert_same( 'arvan_reseller_insufficient_balance', $replay->get_error_code(), 'failed idempotent replay was reported as success' );
+	arvan_test_assert_same( 409, $replay->get_error_data()['status'], 'failed idempotent replay did not return a terminal HTTP status' );
+	$wallet->increase_balance( 7, '30000.0000', 'payment', 'retry-funds' );
+	$funded_replay = $service->create_server_order( 7, array( 'region'=>'ir-thr-mock','availabilityZone'=>'mock-zone-1','flavorId'=>'mock-g2-1-2','imageId'=>'image','name'=>'unfunded-server','rootVolumeSizeGigaBytes'=>25 ), 'unfunded-order' );
+	arvan_test_assert_same( 'arvan_reseller_insufficient_balance', $funded_replay->get_error_code(), 'failed idempotency key was reused as a new operation' );
+	$retry = $service->create_server_order( 7, array( 'region'=>'ir-thr-mock','availabilityZone'=>'mock-zone-1','flavorId'=>'mock-g2-1-2','imageId'=>'image','name'=>'unfunded-server','rootVolumeSizeGigaBytes'=>25 ), 'funded-order' );
+	arvan_test_assert_same( 'provisioned', $retry['status'], 'funded retry with a new operation key did not provision' );
+	arvan_test_assert_same( 1, count( get_option( 'arvan_reseller_mock_resources', array() ) ), 'funded retry did not map exactly one remote resource' );
 };
 
 $tests['resource contract allowlists useful details without leaking remote payload'] = static function () {

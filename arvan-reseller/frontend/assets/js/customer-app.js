@@ -251,7 +251,13 @@
 		try {
 			const order = await api.post('orders', payload, { idempotencyKey: key, safeRetry: true }); api.completeOperation(operation); state.orderOperation = 'cloud-server-order-' + Date.now(); state.catalog = null; state.estimate = null;
 			setContent(pageHead('<button class="ar-button" type="button" data-ar-route="services">مشاهده سرویس</button>') + '<section class="ar-provision-banner">' + ui.icon('server') + '<div><span class="ar-status ar-status--success">سفارش ثبت شد</span><h2>سرور ابری در حالت ' + modeLabel(runtime.settings.mode) + ' آماده شد</h2><p>برداشت پیش‌پرداخت، دریافت شناسه منبع و نگاشت محلی با موفقیت ثبت شد.</p><code dir="ltr">' + ui.escape(order.resource_id || 'در انتظار') + '</code></div></section><article class="ar-card" style="margin-top:16px"><h2>رهگیری فرایند ساخت</h2>' + provisioningTimeline(order.status, order.resource_id) + '</article>');
-		} catch (error) { ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; ui.setText(button, 'تأیید و ساخت سرور'); }
+		} catch (error) {
+			if (error && error.code === 'arvan_reseller_insufficient_balance') {
+				api.completeOperation(operation);
+				state.orderOperation = 'cloud-server-order-' + Date.now();
+			}
+			ui.toast(ui.errorMessage(error), 'danger'); button.disabled = false; ui.setText(button, 'تأیید و ساخت سرور');
+		}
 	}
 
 	async function orders() {

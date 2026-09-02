@@ -8,7 +8,7 @@ class Arvan_Reseller_Provisioning {
 	private $api;
 	private $wallet;
 
-	public function __construct( Arvan_Reseller_Database $database, Arvan_Reseller_API_Client $api, Arvan_Reseller_Wallet $wallet = null ) {
+	public function __construct( Arvan_Reseller_Database $database, Arvan_Reseller_API_Client $api, ?Arvan_Reseller_Wallet $wallet = null ) {
 		$this->database = $database;
 		$this->api      = $api;
 		$this->wallet   = null === $wallet ? new Arvan_Reseller_Wallet( $database ) : $wallet; }
@@ -27,6 +27,16 @@ class Arvan_Reseller_Provisioning {
 		$idempotency_key = hash( 'sha256', 'cloud-server-order-v1|' . $customer_id . '|' . $client_key );
 		$existing        = $this->database->get_order_by_idempotency_key( $idempotency_key );
 		if ( null !== $existing ) {
+			if ( 'failed' === (string) ( $existing['status'] ?? '' ) && '' !== (string) ( $existing['failure_code'] ?? '' ) ) {
+				return new WP_Error(
+					sanitize_key( (string) $existing['failure_code'] ),
+					__( 'The previous order attempt failed.', 'arvan-reseller' ),
+					array(
+						'status'     => 409,
+						'idempotent' => true,
+					)
+				);
+			}
 			return $this->serialize_order( $existing, true ); }
 
 		$reference = 'ord_' . str_replace( '-', '', wp_generate_uuid4() );
