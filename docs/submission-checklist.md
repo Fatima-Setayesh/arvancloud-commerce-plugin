@@ -11,7 +11,7 @@
 - [x] Mock top-up and provisioning are visibly labelled.
 - [x] Internal settlement never claims external payout.
 - [ ] Live read-only connection verified by a human.
-- [ ] Contract gaps accepted or backend serializers extended after review.
+- [x] Safe serializers, ownership fields, recovery/payment state, read state, and bounded pagination extended.
 
 ## Security
 
@@ -20,21 +20,23 @@
 - [x] Admin page creation uses capability and nonce checks.
 - [x] Refund/Cron/reconciliation/billable actions require confirmation.
 - [x] UI error mapping hides raw backend detail and preserves stable codes.
-- [ ] Run a final secret scan immediately before release.
+- [x] Secret-pattern/debug-output scan completed without exposed credential material.
 
 ## Validation
 
 - [x] JavaScript syntax checked with `node --check`.
 - [x] `git diff --check` passes.
-- [ ] PHP syntax checked with PHP 8.2 CLI (CLI unavailable on the current machine).
-- [ ] Runtime shortcode/page registration verified in a clean WordPress browser.
-- [ ] Mock REST flow exercised through the new UI.
+- [x] PHP syntax checked with the available LocalWP PHP 8.2 CLI.
+- [x] Clean/repeated activation and shortcode/page creation verified by the activation harness.
+- [x] Complete Mock REST/domain lifecycle exercised by the no-network harness.
 - [ ] Keyboard and screen-reader sanity pass completed.
 - [ ] Visual acceptance recorded at 375, 768, 1024, and 1440px.
 
 ## Clean package
 
-The release archive must contain only the plugin runtime directory. From repository root, after the release commit:
+The release archive must contain only the plugin runtime directory. Packaging is a
+separate release action and is not performed by the hardening branch. From repository
+root, after an approved release commit:
 
 ```powershell
 if (Test-Path 'dist\arvan-reseller-1.1.0.zip') { throw 'Release ZIP already exists; obtain approval before overwrite.' }

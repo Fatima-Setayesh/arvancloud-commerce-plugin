@@ -11,8 +11,8 @@ $mode     = 'live' === $settings['mode'] ? 'live' : 'mock';
 	<aside class="ar-auth-aside" aria-label="<?php esc_attr_e( 'معرفی پنل ابری', 'arvan-reseller' ); ?>">
 		<div class="ar-auth-aside__top">
 			<a class="ar-brand" href="<?php echo esc_url( home_url( '/' ) ); ?>">
-				<?php if ( '' !== (string) $settings['company_logo_url'] ) : ?><img class="ar-brand__logo" src="<?php echo esc_url( $settings['company_logo_url'] ); ?>" alt="" /><?php else : ?><span class="ar-brand__mark" aria-hidden="true">A</span><?php endif; ?>
-				<span><strong><?php echo esc_html( $company ); ?></strong><small><?php esc_html_e( 'پنل سرور ابری', 'arvan-reseller' ); ?></small></span>
+				<?php if ( '' !== (string) $settings['company_logo_url'] ) : ?><img class="ar-brand__logo" src="<?php echo esc_url( $settings['company_logo_url'] ); ?>" alt="" /><?php else : ?><span class="ar-brand__mark" aria-hidden="true"><span class="ar-icon"><svg viewBox="0 0 24 24"><path d="M17.5 19H7a5 5 0 0 1-.8-9.94A7 7 0 0 1 19.5 11a4 4 0 0 1-2 8z"/></svg></span></span><?php endif; ?>
+				<span><strong><?php echo esc_html( $company ); ?></strong><small><?php esc_html_e( 'مبتنی بر زیرساخت آروان‌کلاد', 'arvan-reseller' ); ?></small></span>
 			</a>
 			<span class="ar-env ar-env--<?php echo esc_attr( $mode ); ?>"><span></span><?php echo esc_html( 'live' === $mode ? __( 'زنده', 'arvan-reseller' ) : __( 'آزمایشی', 'arvan-reseller' ) ); ?></span>
 		</div>

@@ -1,53 +1,70 @@
 # Project status
 
-Status reflects the `feat/product-experience` implementation and does not overstate runtime or Live validation.
+This status describes the approved product baseline at
+`b0a0b53419bd6bff4037571d0c95c4cf53b1e888`. It separates complete Mock behavior,
+implemented but unverified Live behavior, internal-only operations, and documented
+external limitations.
 
-| Requirement | Status | Evidence / limitation |
-|---|---|---|
-| Custom financial tables | Complete | Validated backend schema/migrations retained. |
-| Wallet | Complete | Backend contract integrated in customer/admin UI. |
-| Immutable ledger | Complete | Transactions rendered from safe REST serializer. |
-| Payments | Mock only | Create/confirm/refund integrated; provider is Mock. |
-| Orders | Complete | Idempotent creation/list/timeline integrated. |
-| Provisioning | Mock only | Deterministic Mock UI implemented; Live not executed. |
-| Resource ID | Complete | Returned IDs shown LTR and copyable. |
-| Billing | Complete | Exact usage fields and accessible table integrated. |
-| Reseller share | Complete | Backend estimate/usage values displayed; setup capped at 20%. |
-| Notifications | Partial | Delivery records shown; read/unread missing from contract. |
-| Suspension | Complete | States/policy represented without billing-freeze claim. |
-| Termination | Complete | States/policy represented with confirmation language. |
-| Settlement | Mock only | Explicitly simulated/internal accounting. |
-| CSS/theme isolation | Complete | Product rules scoped under `.arvan-reseller-app`. |
-| Secret security | Complete | Existing encrypted backend retained; UI never preloads key. |
-| Admin product | Partial | Major screens complete; resource ownership/order diagnostic fields need serializer additions. |
-| Customer product | Partial | Main flow complete; detailed name/image/flavor/read-state fields need serializer additions. |
-| Responsive | Partial | 375/768/1024/1440 breakpoints implemented; browser captures pending. |
-| Accessibility | Partial | Foundations implemented; runtime keyboard/screen-reader audit pending. |
-| Mock | Partial | Full UI flow implemented; local WordPress execution unavailable. |
-| Live | Not attempted | API key absent; connection test not run. |
-| Documentation | Complete | Product, UI, setup, Live, demo, packaging, and status docs added. |
-| ZIP | Complete | Clean runtime archive created and contents inspected; SHA-256 recorded below. |
-| Demo | Complete | Five-minute script prepared. Deterministic reset/seed route is unavailable. |
-| Deployment | Partial | Checklist prepared; staging validation pending. |
+| Capability | Status | Evidence or boundary |
+| --- | --- | --- |
+| Custom financial tables and migrations | **COMPLETE** | Ten InnoDB domain tables, schema version 1.4.0, clean and repeated activation harnesses pass |
+| Wallet and immutable ledger | **COMPLETE** | Integer scale 10,000, transactional balance and ledger mutation, currency isolation, idempotency, reconciliation |
+| Payments | **MOCK ONLY** | Mock create, confirm, and refund are atomic and idempotent; no external payment gateway is claimed |
+| Cloud Server catalog and estimate | **COMPLETE IN MOCK** | Deterministic catalog and backend-authoritative estimate; Live credential connection remains unverified |
+| Cloud Server ordering and provisioning | **COMPLETE IN MOCK** | First-24-hour quote/debit, compensation, ambiguity hold, retry hardening, and duplicate prevention |
+| Resource mapping and recovery | **COMPLETE** | Stable Resource ID mapping, customer ownership, recovery marker, and reconciliation paths |
+| Hourly billing | **COMPLETE** | Starts after the prepaid cursor; exact UTC windows, partial debit, uncovered tracking, immutable resource currency |
+| Invoices | **COMPLETE** | Idempotent per-currency customer invoices for the covered period |
+| Notifications | **COMPLETE** | Payment, provisioning, low-balance, suspension, and termination events with customer-owned read state |
+| Suspension and termination | **COMPLETE WITH LIMITATION** | Adapter operations exist; power-off is not claimed to stop provider-side billing |
+| Settlement | **INTERNAL ONLY** | Per-currency internal accounting summaries; no external payout API is invoked |
+| REST API | **COMPLETE FOR CURRENT SCOPE** | Cookie and nonce authentication, capability checks, safe serializers, bounded collections |
+| Customer isolation | **VERIFIED** | Server-derived customer identity, anti-IDOR lookup behavior, and cross-customer tests pass |
+| Secret lifecycle | **VERIFIED** | Authenticated encryption, fail-closed handling, response redaction, explicit rotation/deletion, uninstall cleanup |
+| Customer portal | **COMPLETE** | Storefront, auth, wallet, configurator, orders, resources, billing, notifications, responsive mobile UI |
+| Reseller admin portal | **COMPLETE** | Setup, customers, payments, orders, resources, usage, settlement, health, audit, settings |
+| Customer internationalization | **FA / EN COMPLETE** | Customer-owned UI text, state labels, preferences, and responsive navigation |
+| Mock Mode | **COMPLETE** | Deterministic, no-network customer and administrator flow |
+| Live adapter | **LIVE UNVERIFIED** | Code and host/operation allowlists exist; no real Machine User credential has been human-verified |
+| Commercial products | **CLOUD SERVER ONLY** | CDN and Object Storage purchase flows are intentionally absent |
 
-## Contract mismatches
+## Verification record
 
-1. `/admin/resources` does not return customer ownership.
-2. Resource responses omit server name, image, flavor/configuration, IP, and lifecycle timestamps beyond created/sync/billed.
-3. Admin order responses omit configuration/quote, safe failure reason, recovery flag, and local mapping ID.
-4. Orders expose no payment reference/acceptance relationship for a payment step in the provisioning timeline.
-5. Notification responses have no read/unread state or mutation.
-6. List endpoints lack offset/cursor/total for true server-side search and pagination.
-7. No protected Demo reset/seed endpoint exists.
+- Standalone invariant harness: **29 passed, 0 failed**.
+- PHPUnit: **11 tests, 51 assertions**.
+- PHPStan: **0 errors**.
+- PHP syntax: **43/43 files passed**.
+- JavaScript syntax: **4/4 files passed**.
+- Activation and versioned migration harness: **PASS**.
+- Mock top-up → prepaid order → provisioning → mapping → billing → notification →
+  suspension/termination → invoice/settlement lifecycle: **PASS**.
+- Real disposable WordPress E2E: **PASS**.
+- Clean-install test: **PASS**.
+- Cross-customer isolation: **PASS**.
+- Authenticated-encryption and secret-lifecycle tests: **PASS**.
+- Retry verification: insufficient balance cannot produce false success; after Mock
+  top-up, one retry creates exactly one stable resource and repeated refresh creates
+  no duplicate.
 
-The UI does not invent these values. The smallest future backend work is to extend safe serializers and list arguments, plus add capability/nonce-protected read-state and Mock reset endpoints without changing financial or secret logic.
+PHPCS currently reports **2,252 errors and 217 warnings across 34 files**. The
+findings are predominantly formatting, whitespace, alignment, naming, and CRLF
+debt. Security-adjacent samples were inspected; no known release-critical
+correctness or security finding remains. The repository is not represented as
+PHPCS-clean.
 
-## Validation record
+## Live and operational limitations
 
-- Git branch created from synchronized `backend` and published upstream.
-- JavaScript entry files pass `node --check`.
-- `git diff --check` passes.
-- `dist/arvan-reseller-1.1.0.zip` was built from committed runtime files and inspected; SHA-256: `FA92F771F1C1F334BB353944999CD322E6990CC6084E8561269D105C3A6BD296`.
-- PHP CLI is not installed locally, so required PHP 8.2 lint is pending.
-- No unrelated WordPress installation was altered.
-- No dependency was installed and no existing backend suite was rerun.
+1. The Live adapter has not been authenticated against ArvanCloud with a real,
+   least-privilege Machine User credential.
+2. No real payment gateway or external settlement/payout integration exists.
+3. Powering off a Cloud Server does not guarantee that provider-side billing stops.
+4. Ambiguous Live create outcomes are held for human resolution rather than retried
+   or refunded automatically.
+5. Billing uses stored hourly flavor pricing and local UTC windows, not an official
+   per-server usage endpoint.
+6. Traffic-driven WP-Cron is insufficient for billing SLAs; production deployments
+   need a monitored system scheduler.
+7. Cloud Server is the only supported commercial product.
+
+Complete [docs/live-api-checklist.md](docs/live-api-checklist.md) before any Live
+credential connection or potentially billable operation.

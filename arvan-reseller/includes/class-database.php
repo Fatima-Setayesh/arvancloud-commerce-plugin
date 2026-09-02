@@ -55,6 +55,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Start an InnoDB transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function begin_transaction() {
@@ -76,6 +77,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Commit the active transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function commit() {
@@ -100,6 +102,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Roll back the active transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function rollback() {
@@ -412,8 +415,12 @@ class Arvan_Reseller_Database {
 	 * @param int $limit Limit.
 	 * @return array
 	 */
-	public function get_transactions_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'wallet_transactions', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_transactions_by_customer_id( $customer_id, $limit = 50, $currency = '', $offset = 0 ) {
+		$where = array( 'customer_id' => absint( $customer_id ) );
+		if ( '' !== (string) $currency ) {
+			$where['currency'] = $this->normalize_currency( $currency );
+		}
+		return $this->get_results_by( 'wallet_transactions', $where, $limit, $offset );
 	}
 
 	/**
@@ -525,8 +532,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_payments_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'payments', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_payments_by_customer_id( $customer_id, $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'payments', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
 	/**
@@ -568,6 +575,7 @@ class Arvan_Reseller_Database {
 			'region'         => '',
 			'status'         => 'pending',
 			'remote_status'  => 'unknown',
+			'currency'       => 'IRR',
 			'remote_payload' => '',
 			'last_synced_at' => null,
 			'last_billed_at' => null,
@@ -610,8 +618,8 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_resources_by_customer_id( $customer_id ) {
-		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), 500 );
+	public function get_resources_by_customer_id( $customer_id, $limit = 100, $offset = 0 ) {
+		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
 	/** @return array */
@@ -762,11 +770,41 @@ class Arvan_Reseller_Database {
 			'channel'           => 'email',
 			'payload'           => '',
 			'error_code'        => '',
+			'read_at'           => null,
 			'created_at'        => current_time( 'mysql', true ),
 			'sent_at'           => null,
 		);
 
 		return $this->insert( 'notifications', wp_parse_args( $data, $defaults ) );
+	}
+
+	/** Record one idempotent in-app lifecycle notification. @return int|false */
+	public function record_notification_event( $customer_id, $type, $reference, array $payload = array() ) {
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
+			return false;
+		}
+		$type    = sanitize_key( (string) $type );
+		$allowed = array( 'payment_completed', 'payment_failed', 'provisioning_failed', 'suspension', 'termination' );
+		if ( absint( $customer_id ) <= 0 || ! in_array( $type, $allowed, true ) || '' === (string) $reference ) {
+			return false;
+		}
+		$event_key = hash( 'sha256', 'customer-event-v1|' . absint( $customer_id ) . '|' . $type . '|' . (string) $reference );
+		$existing  = $this->get_notification_by_event_key( $event_key );
+		if ( null !== $existing ) {
+			return (int) $existing['id'];
+		}
+		return $this->create_notification(
+			array(
+				'customer_id'       => absint( $customer_id ),
+				'notification_type' => $type,
+				'event_key'         => $event_key,
+				'status'            => 'sent',
+				'channel'           => 'in_app',
+				'payload'           => wp_json_encode( Arvan_Reseller_Security::redact( $payload ) ),
+				'sent_at'           => current_time( 'mysql', true ),
+			)
+		);
 	}
 
 	/** @return array|null */
@@ -775,8 +813,24 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_notifications_by_customer_id( $customer_id, $limit = 50 ) {
-		return $this->get_results_by( 'notifications', array( 'customer_id' => absint( $customer_id ) ), $limit );
+	public function get_notifications_by_customer_id( $customer_id, $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'notifications', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
+	}
+
+	/** Mark an owned notification read and return the updated safe source row. */
+	public function mark_notification_read( $notification_id, $customer_id ) {
+		$where = array(
+			'id'          => absint( $notification_id ),
+			'customer_id' => absint( $customer_id ),
+		);
+		$row = $this->get_row_by( 'notifications', $where );
+		if ( null === $row ) {
+			return null;
+		}
+		if ( empty( $row['read_at'] ) && false === $this->update( 'notifications', array( 'read_at' => current_time( 'mysql', true ) ), $where, array( '%s' ), array( '%d', '%d' ) ) ) {
+			return null;
+		}
+		return $this->get_row_by( 'notifications', $where );
 	}
 
 	/** @return int|false */
@@ -805,8 +859,70 @@ class Arvan_Reseller_Database {
 	}
 
 	/** @return array */
-	public function get_settlements( $limit = 50 ) {
-		return $this->get_results_by( 'settlements', array(), $limit );
+	public function get_settlements( $limit = 50, $offset = 0 ) {
+		return $this->get_results_by( 'settlements', array(), $limit, $offset );
+	}
+
+	/** Aggregate an invoicing period by customer for one immutable currency. */
+	public function aggregate_customer_usage_period( $start, $end, $currency = 'IRR' ) {
+		$table = $this->get_table_name( 'usage_records' );
+		$query = $this->wpdb->prepare(
+			"SELECT customer_id, currency, COALESCE(SUM(base_cost_minor),0) base_cost_minor, COALESCE(SUM(reseller_share_minor),0) reseller_share_minor, COALESCE(SUM(total_charge_minor),0) total_minor, COALESCE(SUM(charged_minor),0) charged_minor, COALESCE(SUM(uncovered_minor),0) uncovered_minor, COUNT(*) usage_count FROM {$table} WHERE usage_start >= %s AND usage_end <= %s AND currency = %s GROUP BY customer_id, currency ORDER BY customer_id ASC",
+			(string) $start,
+			(string) $end,
+			$this->normalize_currency( $currency )
+		);
+		$rows = $this->wpdb->get_results( $query, ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/** Return every immutable currency represented by usage in a period. */
+	public function get_usage_currencies_period( $start, $end ) {
+		$table = $this->get_table_name( 'usage_records' );
+		$query = $this->wpdb->prepare(
+			"SELECT DISTINCT currency FROM {$table} WHERE usage_start >= %s AND usage_end <= %s ORDER BY currency ASC",
+			(string) $start,
+			(string) $end
+		);
+		$rows  = $this->wpdb->get_col( $query );
+
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$currencies = array();
+		foreach ( $rows as $currency ) {
+			$normalized = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $currency ) );
+			if ( 3 === strlen( $normalized ) ) {
+				$currencies[] = $normalized;
+			}
+		}
+
+		return array_values( array_unique( $currencies ) );
+	}
+
+	/** @return array|null */
+	public function get_invoice_by_reference( $reference ) {
+		return $this->get_row_by( 'invoices', array( 'invoice_reference' => (string) $reference ) );
+	}
+
+	/** @return int|false */
+	public function create_invoice( array $data ) {
+		$defaults = array(
+			'customer_id'          => 0,
+			'invoice_reference'    => '',
+			'period_start'         => current_time( 'mysql', true ),
+			'period_end'           => current_time( 'mysql', true ),
+			'base_cost_minor'      => 0,
+			'reseller_share_minor' => 0,
+			'total_minor'          => 0,
+			'currency'             => 'IRR',
+			'status'               => 'draft',
+			'metadata'             => '',
+			'created_at'           => current_time( 'mysql', true ),
+			'updated_at'           => current_time( 'mysql', true ),
+		);
+		return $this->insert( 'invoices', wp_parse_args( $data, $defaults ) );
 	}
 
 	/** @return array */

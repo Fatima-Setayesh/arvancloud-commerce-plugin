@@ -6,7 +6,7 @@ final class BackendTest extends TestCase {
 	public function test_mock_mode_never_uses_http(): void { $GLOBALS['arvan_test_http_count'] = 0; $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $this->assertFalse( is_wp_error( $api->test_connection() ) ); $this->assertSame( 0, $GLOBALS['arvan_test_http_count'] ); }
 	public function test_live_mode_handles_corrupt_key_without_network_or_secret_error(): void { $GLOBALS['arvan_test_options']['arvan_reseller_api_key'] = 'arv2:corrupt-envelope'; $GLOBALS['arvan_test_http_count'] = 0; $result = ( new Arvan_Reseller_Live_Cloud_Adapter() )->test_connection( 'ir-thr-at1' ); $this->assertSame( 'arvan_reseller_api_key_unavailable', $result->get_error_code() ); $this->assertSame( 0, $GLOBALS['arvan_test_http_count'] ); }
 	public function test_payment_idor_and_idempotency(): void { $db = new Arvan_Test_Database(); $service = new Arvan_Reseller_Payment( new Arvan_Reseller_Wallet( $db ), $db ); $p = $service->create_payment( 7, '10.0000', 'phpunit-payment' ); $this->assertSame( 'arvan_reseller_payment_not_found', $service->confirm_payment( 8, $p['payment_reference'] )->get_error_code() ); $this->assertSame( 'completed', $service->confirm_payment( 7, $p['payment_reference'] )['status'] ); $this->assertTrue( $service->confirm_payment( 7, $p['payment_reference'] )['idempotent'] ); }
-	public function test_authenticated_encryption_detects_tampering(): void { $cipher = Arvan_Reseller_Security::encrypt( 'machine-user-key-123456' ); $this->assertFalse( is_wp_error( $cipher ) ); $this->assertSame( 'machine-user-key-123456', Arvan_Reseller_Security::decrypt( $cipher ) ); $this->assertTrue( is_wp_error( Arvan_Reseller_Security::decrypt( substr( $cipher, 0, -2 ) . 'aa' ) ) ); }
+	public function test_authenticated_encryption_detects_tampering(): void { if ( ! function_exists( 'sodium_crypto_secretbox' ) && ( ! function_exists( 'openssl_encrypt' ) || ! in_array( 'aes-256-gcm', array_map( 'strtolower', openssl_get_cipher_methods() ), true ) ) ) { $this->markTestSkipped( 'No authenticated-encryption backend is enabled.' ); } $cipher = Arvan_Reseller_Security::encrypt( 'machine-user-key-123456' ); $this->assertFalse( is_wp_error( $cipher ) ); $this->assertSame( 'machine-user-key-123456', Arvan_Reseller_Security::decrypt( $cipher ) ); $this->assertTrue( is_wp_error( Arvan_Reseller_Security::decrypt( substr( $cipher, 0, -2 ) . 'aa' ) ) ); }
 	public function test_money_rejects_float(): void { $this->assertTrue( is_wp_error( Arvan_Reseller_Money::to_minor( 0.1 ) ) ); $this->assertSame( 12346, Arvan_Reseller_Money::to_minor( '1.23456' ) ); }
 	public function test_rest_nonce_and_resource_idor(): void {
 		$db = new Arvan_Test_Database(); $wallet = new Arvan_Reseller_Wallet( $db ); $api = new Arvan_Reseller_API_Client( new Arvan_Reseller_Mock_Cloud_Adapter() ); $billing = new Arvan_Reseller_Billing( $db, $wallet, $api ); $provisioning = new Arvan_Reseller_Provisioning( $db, $api ); $settlement = new Arvan_Reseller_Settlement( $db ); $cron = new Arvan_Reseller_Cron( $billing, $db, $api, new Arvan_Reseller_Notifications( $db ), $provisioning, $settlement );
@@ -43,18 +43,23 @@ final class BackendTest extends TestCase {
 
 		$error_adapter = $this->provisioning_adapter( 'error' );
 		$error_db = new Arvan_Test_Database();
-		$error_result = ( new Arvan_Reseller_Provisioning( $error_db, new Arvan_Reseller_API_Client( $error_adapter ) ) )->create_server_order( 7, $configuration, 'api-error' );
-		$this->assertSame( 'arvan_reseller_api_server_error', $error_result->get_error_code() );
+		$error_wallet = new Arvan_Reseller_Wallet( $error_db ); $error_wallet->increase_balance( 7, '100.0000', 'payment', 'error-funds' );
+		$error_result = ( new Arvan_Reseller_Provisioning( $error_db, new Arvan_Reseller_API_Client( $error_adapter ), $error_wallet ) )->create_server_order( 7, $configuration, 'api-error' );
+		$this->assertSame( 'arvan_reseller_provisioning_recovery_required', $error_result->get_error_code() );
 		$this->assertSame( 'failed', $error_db->orders[1]['status'] );
+		$this->assertSame( 1, $error_db->orders[1]['recovery_required'] );
 
 		$malformed_db = new Arvan_Test_Database();
-		$malformed_result = ( new Arvan_Reseller_Provisioning( $malformed_db, new Arvan_Reseller_API_Client( $this->provisioning_adapter( 'malformed' ) ) ) )->create_server_order( 7, $configuration, 'malformed' );
+		$malformed_wallet = new Arvan_Reseller_Wallet( $malformed_db ); $malformed_wallet->increase_balance( 7, '100.0000', 'payment', 'malformed-funds' );
+		$malformed_result = ( new Arvan_Reseller_Provisioning( $malformed_db, new Arvan_Reseller_API_Client( $this->provisioning_adapter( 'malformed' ) ), $malformed_wallet ) )->create_server_order( 7, $configuration, 'malformed' );
 		$this->assertSame( 'arvan_reseller_missing_resource_id', $malformed_result->get_error_code() );
 		$this->assertSame( 'failed', $malformed_db->orders[1]['status'] );
+		$this->assertSame( 1000000, $malformed_db->wallets[7]['balance_minor'] );
 
 		$recovery_db = new Arvan_Test_Database();
 		$recovery_db->fail_resource_save = true;
-		$recovery_result = ( new Arvan_Reseller_Provisioning( $recovery_db, new Arvan_Reseller_API_Client( $this->provisioning_adapter( 'success' ) ) ) )->create_server_order( 7, $configuration, 'local-failure' );
+		$recovery_wallet = new Arvan_Reseller_Wallet( $recovery_db ); $recovery_wallet->increase_balance( 7, '100.0000', 'payment', 'recovery-funds' );
+		$recovery_result = ( new Arvan_Reseller_Provisioning( $recovery_db, new Arvan_Reseller_API_Client( $this->provisioning_adapter( 'success' ) ), $recovery_wallet ) )->create_server_order( 7, $configuration, 'local-failure' );
 		$this->assertSame( 'arvan_reseller_provisioning_recovery_required', $recovery_result->get_error_code() );
 		$this->assertSame( 1, $recovery_db->orders[1]['recovery_required'] );
 		$this->assertSame( 'remote-server-1', $recovery_db->orders[1]['resource_id'] );

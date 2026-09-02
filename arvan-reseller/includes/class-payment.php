@@ -148,6 +148,7 @@ class Arvan_Reseller_Payment {
 			$this->database->create_audit_log( 'payment_expired', 'payment', (string) $payment['id'], array(), (int) $payment['customer_id'] );
 			if ( $owns_transaction ) {
 				$this->database->commit(); }
+			$this->database->record_notification_event( (int) $payment['customer_id'], 'payment_failed', (string) $payment['payment_reference'], array( 'reason' => 'expired' ) );
 			return new WP_Error( 'arvan_reseller_payment_expired', __( 'Payment has expired.', 'arvan-reseller' ) );
 		}
 
@@ -192,6 +193,7 @@ class Arvan_Reseller_Payment {
 		if ( $owns_transaction && ! $this->database->commit() ) {
 			return new WP_Error( 'arvan_reseller_transaction_commit_failed', __( 'Payment confirmation could not be committed.', 'arvan-reseller' ) );
 		}
+		$this->database->record_notification_event( (int) $payment['customer_id'], 'payment_completed', (string) $payment['payment_reference'], array( 'currency' => (string) $payment['currency'] ) );
 
 		$payment['status']             = 'completed';
 		$payment['completed_at']       = $completed_at;
@@ -239,8 +241,16 @@ class Arvan_Reseller_Payment {
 			return new WP_Error( 'arvan_reseller_payment_not_closable', __( 'Payment cannot be changed in its current state.', 'arvan-reseller' ) );
 		}
 
-		$this->database->create_audit_log( 'payment_' . $status, 'payment', (string) $payment['id'], array(), (int) $payment['customer_id'] );
-		$this->database->commit();
+		if ( false === $this->database->create_audit_log( 'payment_' . $status, 'payment', (string) $payment['id'], array(), (int) $payment['customer_id'] ) ) {
+			$this->database->rollback();
+			return new WP_Error( 'arvan_reseller_audit_failed', __( 'Payment audit record could not be written.', 'arvan-reseller' ) );
+		}
+		if ( ! $this->database->commit() ) {
+			return new WP_Error( 'arvan_reseller_transaction_commit_failed', __( 'Payment status could not be committed.', 'arvan-reseller' ) );
+		}
+		if ( 'failed' === $status ) {
+			$this->database->record_notification_event( (int) $payment['customer_id'], 'payment_failed', (string) $payment['payment_reference'], array( 'reason' => 'failed' ) );
+		}
 		$payment['status'] = $status;
 
 		return $this->serialize_payment( $payment, false );
@@ -293,12 +303,12 @@ class Arvan_Reseller_Payment {
 	}
 
 	/** @return array */
-	public function list_customer_payments( $customer_id, $limit = 50 ) {
-		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_payments_by_customer_id( absint( $customer_id ), $limit ) );
+	public function list_customer_payments( $customer_id, $limit = 50, $offset = 0 ) {
+		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_payments_by_customer_id( absint( $customer_id ), $limit, $offset ) );
 	}
 
 	/** @return array */
-	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100 ) {
+	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100, $offset = 0 ) {
 		if ( ! Arvan_Reseller_Security::can_manage_plugin() ) {
 			return array();
 		}
@@ -311,7 +321,7 @@ class Arvan_Reseller_Payment {
 			$where['customer_id'] = absint( $customer_id );
 		}
 
-		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_results_by( 'payments', $where, $limit ) );
+		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_results_by( 'payments', $where, $limit, $offset ) );
 	}
 
 	/** @return array */

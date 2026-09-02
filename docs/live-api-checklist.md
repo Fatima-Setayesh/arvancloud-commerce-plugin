@@ -1,6 +1,6 @@
 # Live API checklist
 
-Live has not been verified by this project branch. Complete the full Mock workflow first.
+The adapter paths and host rules have been checked against the official IaaS 3.0.0 OpenAPI document, but authenticated Live operation has not been verified. Complete the full Mock workflow first.
 
 ## Machine User
 
@@ -14,6 +14,7 @@ Official references:
 
 - https://docs.arvancloud.ir/fa/developer-tools/api/api-key/
 - https://www.arvancloud.ir/fa/dev/api
+- https://www.arvancloud.ir/api-docs/iaas-3.0.0.yaml
 
 ## WordPress configuration
 
@@ -34,6 +35,8 @@ Official references:
 - [ ] Read-only connection test passed
 - [ ] Mode badge visibly shows Live
 - [ ] No silent fallback to Mock occurred
+
+Until every acceptance item above is completed by a human with a least-privilege key, release status remains **LIVE UNVERIFIED**. The official specification check does not replace an authenticated connection test.
 
 Before the first potentially billable provisioning, obtain explicit human approval for the region, image, flavor, backend estimate, wallet state, requested operation, and cleanup plan. Never create a paid server automatically.
 

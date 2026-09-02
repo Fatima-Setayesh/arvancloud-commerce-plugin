@@ -14,6 +14,9 @@ class Arvan_Reseller_Presentation {
 	/** @var array<string, bool> */
 	private static $enqueued = array();
 
+	/** @var bool */
+	private static $theme_bootstrapped = false;
+
 	/**
 	 * Enqueue the shared runtime and one application entry point.
 	 *
@@ -26,26 +29,27 @@ class Arvan_Reseller_Presentation {
 			return;
 		}
 		self::$enqueued[ $context ] = true;
-		$version = ARVAN_RESELLER_VERSION;
+		$context_style = 'admin' === $context ? 'admin/assets/css/admin-app.css' : 'frontend/assets/css/customer-app.css';
+		$context_app   = 'admin' === $context ? 'admin/assets/js/admin-app.js' : 'frontend/assets/js/customer-app.js';
 
 		wp_enqueue_style(
 			'arvan-reseller-design-system',
 			ARVAN_RESELLER_URL . 'assets/css/design-system.css',
 			array(),
-			$version
+			self::asset_version( 'assets/css/design-system.css' )
 		);
 		wp_enqueue_style(
 			'arvan-reseller-' . $context,
-			ARVAN_RESELLER_URL . ( 'admin' === $context ? 'admin/assets/css/admin-app.css' : 'frontend/assets/css/customer-app.css' ),
+			ARVAN_RESELLER_URL . $context_style,
 			array( 'arvan-reseller-design-system' ),
-			$version
+			self::asset_version( $context_style )
 		);
 
 		wp_enqueue_script(
 			'arvan-reseller-rest-client',
 			ARVAN_RESELLER_URL . 'assets/js/rest-client.js',
 			array(),
-			$version,
+			self::asset_version( 'assets/js/rest-client.js' ),
 			true
 		);
 		wp_add_inline_script(
@@ -57,16 +61,29 @@ class Arvan_Reseller_Presentation {
 			'arvan-reseller-ui',
 			ARVAN_RESELLER_URL . 'assets/js/ui.js',
 			array( 'arvan-reseller-rest-client' ),
-			$version,
+			self::asset_version( 'assets/js/ui.js' ),
 			true
 		);
 		wp_enqueue_script(
 			'arvan-reseller-' . $context . '-app',
-			ARVAN_RESELLER_URL . ( 'admin' === $context ? 'admin/assets/js/admin-app.js' : 'frontend/assets/js/customer-app.js' ),
+			ARVAN_RESELLER_URL . $context_app,
 			array( 'arvan-reseller-ui' ),
-			$version,
+			self::asset_version( $context_app ),
 			true
 		);
+	}
+
+	/**
+	 * Version presentation assets by their file timestamp so UI fixes bypass stale browser caches.
+	 *
+	 * @param string $relative_file Plugin-relative asset path.
+	 * @return string
+	 */
+	private static function asset_version( $relative_file ) {
+		$file     = ARVAN_RESELLER_PATH . ltrim( (string) $relative_file, '/\\' );
+		$modified = is_readable( $file ) ? filemtime( $file ) : false;
+
+		return false === $modified ? ARVAN_RESELLER_VERSION : ARVAN_RESELLER_VERSION . '.' . (string) $modified;
 	}
 
 	/**
@@ -87,7 +104,14 @@ class Arvan_Reseller_Presentation {
 		extract( $variables, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 		ob_start();
 		require $file;
-		return (string) ob_get_clean();
+		$markup = (string) ob_get_clean();
+
+		if ( self::$theme_bootstrapped ) {
+			return $markup;
+		}
+
+		self::$theme_bootstrapped = true;
+		return '<script>(function(){try{var m=localStorage.getItem("arvan-reseller-theme")||"system";if(["light","dark","system"].indexOf(m)<0){m="system";}var t=m==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;document.documentElement.dataset.arTheme=t;document.documentElement.dataset.arThemeMode=m;}catch(e){}}());</script>' . $markup;
 	}
 
 	/**

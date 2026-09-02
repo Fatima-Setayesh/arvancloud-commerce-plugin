@@ -192,11 +192,11 @@ function arvan_reseller_schema_is_current() {
 		'wallet_transactions' => array( 'amount_minor', 'idempotency_key', 'balance_after_minor' ),
 		'payments'            => array( 'amount_minor', 'idempotency_key', 'customer_id', 'expires_at' ),
 		'orders'              => array( 'idempotency_key', 'resource_record_id', 'customer_id', 'recovery_required' ),
-		'resources'           => array( 'order_id', 'region', 'customer_id', 'hourly_price_minor', 'next_retry_at', 'suspended_at' ),
+		'resources'           => array( 'order_id', 'region', 'customer_id', 'hourly_price_minor', 'currency', 'next_retry_at', 'suspended_at' ),
 		'usage_records'       => array( 'total_charge_minor', 'charged_minor', 'uncovered_minor' ),
 		'invoices'            => array( 'total_minor', 'customer_id' ),
 		'settlements'         => array( 'settlement_reference', 'base_cost_minor', 'adapter' ),
-		'notifications'       => array( 'event_key', 'customer_id' ),
+		'notifications'       => array( 'event_key', 'customer_id', 'read_at' ),
 		'audit_logs'          => array( 'event_type', 'created_at' ),
 	);
 

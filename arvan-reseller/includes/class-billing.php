@@ -201,7 +201,7 @@ class Arvan_Reseller_Billing {
 		$payload['region'] = isset( $payload['region'] ) ? $payload['region'] : (string) ( $settings['region'] ?? '' );
 		$idempotency_key   = isset( $payload['idempotency_key'] ) ? (string) $payload['idempotency_key'] : hash( 'sha256', wp_json_encode( $payload ) );
 
-		return ( new Arvan_Reseller_Provisioning( $this->database, $this->api_client ) )->create_server_order( $customer_id, $payload, $idempotency_key );
+		return ( new Arvan_Reseller_Provisioning( $this->database, $this->api_client, $this->wallet ) )->create_server_order( $customer_id, $payload, $idempotency_key );
 	}
 
 	/**
@@ -317,6 +317,7 @@ class Arvan_Reseller_Billing {
 		);
 
 		if ( $charge['total_charge_minor'] > 0 ) {
+			$currency = $this->resource_currency( $resource );
 			$debit = $this->wallet->charge_up_to_available_minor(
 				$customer_id,
 				$charge['total_charge_minor'],
@@ -326,7 +327,8 @@ class Arvan_Reseller_Billing {
 					/* translators: %s: resource ID. */
 					__( 'Usage billing for resource %s.', 'arvan-reseller' ),
 					$resource_id
-				)
+				),
+				$currency
 			);
 
 			if ( is_wp_error( $debit ) ) {
@@ -353,7 +355,7 @@ class Arvan_Reseller_Billing {
 				'total_charge_minor'    => $charge['total_charge_minor'],
 				'charged_minor'         => (int) $debit['applied_minor'],
 				'uncovered_minor'       => (int) $debit['uncovered_minor'],
-				'currency'              => $this->get_currency(),
+				'currency'              => $this->resource_currency( $resource ),
 				'billing_reference'     => $window['billing_reference'],
 				'api_payload'           => wp_json_encode( $usage_data ),
 			)
@@ -527,6 +529,12 @@ class Arvan_Reseller_Billing {
 		$currency = isset( $settings['currency'] ) ? strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $settings['currency'] ) ) : 'IRR';
 
 		return 3 === strlen( $currency ) ? $currency : 'IRR';
+	}
+
+	/** Resolve the immutable resource currency, with a legacy fallback. */
+	private function resource_currency( array $resource ) {
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $resource['currency'] ?? '' ) ) );
+		return 3 === strlen( $currency ) ? $currency : $this->get_currency();
 	}
 
 	/**

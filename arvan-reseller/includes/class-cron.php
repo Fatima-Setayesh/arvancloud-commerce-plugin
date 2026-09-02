@@ -49,7 +49,8 @@ class Arvan_Reseller_Cron {
 					break; }
 				foreach ( $rows as $resource ) {
 					$cursor                                      = (int) $resource['id'];
-					$customers[ (int) $resource['customer_id'] ] = true;
+					$currency = $this->resource_currency( $resource );
+					$customers[ (int) $resource['customer_id'] ][ $currency ] = true;
 					$result                                      = $this->process_resource( $resource );
 					if ( is_wp_error( $result ) ) {
 						++$health['failed'];
@@ -62,9 +63,12 @@ class Arvan_Reseller_Cron {
 				if ( count( $rows ) < $limit ) {
 					break; }
 			}
-			foreach ( array_keys( $customers ) as $customer_id ) {
-				$this->notifications->maybe_send_low_balance( $customer_id );
-				$this->enforce_balance_policy( $customer_id ); }
+			foreach ( $customers as $customer_id => $currencies ) {
+				foreach ( array_keys( $currencies ) as $currency ) {
+					$this->notifications->maybe_send_low_balance( $customer_id, $currency );
+					$this->enforce_balance_policy( $customer_id, $currency );
+				}
+			}
 			$health['status'] = 0 === $health['failed'] ? 'healthy' : 'degraded';
 		} catch ( Throwable $error ) {
 			$health['status']     = 'failed';
@@ -112,6 +116,7 @@ class Arvan_Reseller_Cron {
 						'customer_id' => (int) $resource['customer_id'],
 					)
 				);
+				$this->record_resource_event( $resource, 'termination', 'remote_not_found' );
 				return array(
 					'skipped' => true,
 					'reason'  => 'remote_not_found',
@@ -145,6 +150,7 @@ class Arvan_Reseller_Cron {
 					'customer_id' => (int) $resource['customer_id'],
 				)
 			);
+			$this->record_resource_event( $resource, 'termination', 'remote_status' );
 			return array(
 				'skipped' => true,
 				'reason'  => 'remote_terminated',
@@ -163,6 +169,7 @@ class Arvan_Reseller_Cron {
 					'customer_id' => (int) $resource['customer_id'],
 				)
 			);
+			$this->record_resource_event( $resource, 'suspension', 'remote_status' );
 			$resource['status'] = 'suspended';
 		}
 		if ( 'suspended' === (string) $resource['status'] ) {
@@ -228,8 +235,8 @@ class Arvan_Reseller_Cron {
 			array( 'id' => (int) $resource['id'] )
 		); }
 
-	private function enforce_balance_policy( $customer_id ) {
-		$wallet = $this->database->get_wallet_by_customer_id( $customer_id );
+	private function enforce_balance_policy( $customer_id, $currency ) {
+		$wallet = $this->database->get_wallet_by_customer_id( $customer_id, $currency );
 		if ( null === $wallet || (int) $wallet['balance_minor'] > 0 ) {
 			return; }
 		$settings = get_option( 'arvan_reseller_settings', array() );
@@ -238,6 +245,9 @@ class Arvan_Reseller_Cron {
 		}
 		$zone = sanitize_text_field( (string) ( $settings['availability_zone'] ?? '' ) );
 		foreach ( $this->database->get_resources_by_customer_id( $customer_id ) as $resource ) {
+			if ( $this->resource_currency( $resource ) !== $currency ) {
+				continue;
+			}
 			if ( in_array( (string) $resource['status'], array( 'terminated', 'pending', 'error' ), true ) ) {
 				continue; }
 			if ( 'suspended' !== (string) $resource['status'] ) {
@@ -260,6 +270,7 @@ class Arvan_Reseller_Cron {
 					)
 				);
 				$this->database->create_audit_log( 'resource_suspended_zero_balance', 'resource', (string) $resource['id'], array(), $customer_id, 0 );
+				$this->record_resource_event( $resource, 'suspension', 'zero_balance' );
 				$resource['status']       = 'suspended';
 				$resource['suspended_at'] = $now; }
 			$this->maybe_terminate( $resource, $settings, $zone );
@@ -290,7 +301,30 @@ class Arvan_Reseller_Cron {
 				'customer_id' => (int) $resource['customer_id'],
 			)
 		);
-		$this->database->create_audit_log( 'resource_terminated_by_policy', 'resource', (string) $resource['id'], array( 'policy' => $policy ), (int) $resource['customer_id'], 0 ); }
+		$this->database->create_audit_log( 'resource_terminated_by_policy', 'resource', (string) $resource['id'], array( 'policy' => $policy ), (int) $resource['customer_id'], 0 );
+		$this->record_resource_event( $resource, 'termination', 'policy_' . $policy ); }
+
+	private function record_resource_event( array $resource, $type, $reason ) {
+		$reference = '' !== (string) ( $resource['resource_id'] ?? '' ) ? (string) $resource['resource_id'] : (string) ( $resource['id'] ?? '' );
+		$this->database->record_notification_event(
+			(int) ( $resource['customer_id'] ?? 0 ),
+			$type,
+			$reference,
+			array(
+				'resource_id' => $reference,
+				'reason'      => sanitize_key( (string) $reason ),
+			)
+		);
+	}
+
+	private function resource_currency( array $resource ) {
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $resource['currency'] ?? '' ) ) );
+		if ( 3 === strlen( $currency ) ) {
+			return $currency;
+		}
+		$settings = get_option( 'arvan_reseller_settings', array() );
+		$currency = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) ( $settings['currency'] ?? 'IRR' ) ) );
+		return 3 === strlen( $currency ) ? $currency : 'IRR'; }
 
 	private function acquire_lock( $key, $ttl ) {
 		$token = wp_generate_uuid4();

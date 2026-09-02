@@ -53,7 +53,7 @@ $provisioning = $loader->get_service( 'provisioning' );
 $cron         = $loader->get_service( 'cron' );
 $settlement   = $loader->get_service( 'settlement' );
 
-$intent = $payment->create_payment( $customer_id, '500.0000', 'docker-e2e-payment' );
+$intent = $payment->create_payment( $customer_id, '25000.0000', 'docker-e2e-payment' );
 $fail( ! is_wp_error( $intent ), 'Payment intent failed.' );
 $confirmed = $payment->confirm_payment( $customer_id, $intent['payment_reference'] );
 $fail( ! is_wp_error( $confirmed ) && 'completed' === $confirmed['status'], 'Payment confirmation failed.' );
@@ -74,7 +74,7 @@ $fail( ! is_wp_error( $order ) && 'provisioned' === $order['status'], 'Provision
 
 $database->update(
 	'resources',
-	array( 'created_at' => gmdate( 'Y-m-d H:i:s', time() - 2 * HOUR_IN_SECONDS ) ),
+	array( 'last_billed_at' => gmdate( 'Y-m-d H:00:00', time() - HOUR_IN_SECONDS ) ),
 	array( 'id' => (int) $order['resource_record_id'] )
 );
 $health = $cron->run_hourly_usage_sync();

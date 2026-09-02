@@ -18,7 +18,7 @@ Open Create Server. Select REST-provided region, image, and flavor. Set server n
 
 ## 02:10–02:55 — Provision and Resource ID
 
-Confirm Mock provisioning. Show the finite timeline, completed order, copyable LTR Resource ID, and service status. Mention that Live provisioning is never automatic.
+Confirm Mock provisioning. Show the backend debit for the first 24 hours, finite timeline, completed order, copyable LTR Resource ID, and service status. Mention that Live provisioning is never automatic.
 
 ## 02:55–03:35 — Usage and financial model
 
@@ -38,4 +38,4 @@ At 375px, show wallet hero, active server, Create Server action, alerts, drawer,
 
 ## 04:45–05:00 — Architecture and limitations
 
-Show native WordPress authentication, one nonce-aware REST client, scoped CSS, no runtime CDN, and the GitHub branch. State the official per-server usage/settlement limitations and the known safe-serializer contract gaps.
+Show native WordPress authentication, one nonce-aware REST client, scoped CSS, no runtime CDN, and the GitHub branch. State the official per-server usage/settlement limitations, internal-only settlement, system-Cron requirement, and **LIVE UNVERIFIED** status.

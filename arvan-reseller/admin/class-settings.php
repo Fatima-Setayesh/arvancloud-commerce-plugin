@@ -196,10 +196,13 @@ class Arvan_Reseller_Settings {
 			'maximum_topup'            => Arvan_Reseller_Money::format( $maximum_minor ),
 		);
 
-		$api_key = Arvan_Reseller_Security::sanitize_api_key( $this->get_input_value( $input, 'api_key' ) );
+		$raw_api_key = $this->get_input_value( $input, 'api_key' );
+		$api_key     = Arvan_Reseller_Security::sanitize_api_key( $raw_api_key );
 
-		if ( '' !== $api_key ) {
-			Arvan_Reseller_Security::store_encrypted_option( $this->api_key_option, $api_key );
+		if ( '' !== $raw_api_key && '' === $api_key ) {
+			add_settings_error( $this->option_name, 'arvan_reseller_invalid_api_key', esc_html__( 'The Machine User API key format is invalid.', 'arvan-reseller' ), 'error' );
+		} elseif ( '' !== $api_key && ! Arvan_Reseller_Security::store_encrypted_option( $this->api_key_option, $api_key ) ) {
+			add_settings_error( $this->option_name, 'arvan_reseller_api_key_storage_failed', esc_html__( 'The Machine User API key could not be encrypted and was not stored.', 'arvan-reseller' ), 'error' );
 		}
 
 		return array_merge( $this->get_defaults(), $current, $sanitized );

@@ -88,8 +88,8 @@ class Arvan_Reseller_Wallet {
 	}
 
 	/** @return array */
-	public function get_balance_history( $customer_id, $limit = 50 ) {
-		return $this->database->get_transactions_by_customer_id( $customer_id, $limit );
+	public function get_balance_history( $customer_id, $limit = 50, $currency = '', $offset = 0 ) {
+		return $this->database->get_transactions_by_customer_id( $customer_id, $limit, $currency, $offset );
 	}
 
 	/**
