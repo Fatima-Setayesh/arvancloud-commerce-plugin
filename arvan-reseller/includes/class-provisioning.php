@@ -4,8 +4,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; }
 
 class Arvan_Reseller_Provisioning {
+	/** @var Arvan_Reseller_Database */
 	private $database;
+
+	/** @var Arvan_Reseller_API_Client */
 	private $api;
+
+	/** @var Arvan_Reseller_Wallet */
 	private $wallet;
 
 	public function __construct( Arvan_Reseller_Database $database, Arvan_Reseller_API_Client $api, ?Arvan_Reseller_Wallet $wallet = null ) {

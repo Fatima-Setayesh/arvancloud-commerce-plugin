@@ -55,6 +55,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Start an InnoDB transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function begin_transaction() {
@@ -76,6 +77,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Commit the active transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function commit() {
@@ -100,6 +102,7 @@ class Arvan_Reseller_Database {
 	/**
 	 * Roll back the active transaction.
 	 *
+	 * @phpstan-impure
 	 * @return bool
 	 */
 	public function rollback() {
