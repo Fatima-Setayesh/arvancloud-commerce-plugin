@@ -308,7 +308,7 @@ class Arvan_Reseller_Payment {
 	}
 
 	/** @return array */
-	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100, $offset = 0 ) {
+	public function list_admin_payments( $status = '', $customer_id = 0, $limit = 100, $offset = 0, $search = '' ) {
 		if ( ! Arvan_Reseller_Security::can_manage_plugin() ) {
 			return array();
 		}
@@ -321,7 +321,7 @@ class Arvan_Reseller_Payment {
 			$where['customer_id'] = absint( $customer_id );
 		}
 
-		return array_map( array( $this, 'serialize_payment_row' ), $this->database->get_results_by( 'payments', $where, $limit, $offset ) );
+		return array_map( array( $this, 'serialize_payment_row' ), $this->database->search_results( 'payments', $where, $search, $limit, $offset ) );
 	}
 
 	/** @return array */

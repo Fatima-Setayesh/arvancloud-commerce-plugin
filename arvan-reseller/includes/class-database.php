@@ -229,6 +229,49 @@ class Arvan_Reseller_Database {
 	}
 
 	/**
+	 * Get a bounded page with an allowlisted multi-column search.
+	 *
+	 * @param string $table Logical table key.
+	 * @param array  $where Equality conditions.
+	 * @param string $search Search term.
+	 * @param int    $limit Limit.
+	 * @param int    $offset Offset.
+	 * @return array
+	 */
+	public function search_results( $table, array $where, $search, $limit = 100, $offset = 0 ) {
+		$table_name = $this->get_table_name( $table );
+		$columns    = array(
+			'wallets'       => array( 'customer_id', 'currency', 'status' ),
+			'payments'      => array( 'payment_reference', 'customer_id', 'status', 'provider' ),
+			'orders'        => array( 'order_reference', 'customer_id', 'resource_id', 'status', 'failure_code', 'region' ),
+			'resources'     => array( 'resource_id', 'customer_id', 'region', 'status', 'remote_status' ),
+			'usage_records' => array( 'resource_id', 'customer_id', 'billing_reference', 'unit' ),
+			'settlements'   => array( 'settlement_reference', 'status', 'currency', 'adapter' ),
+			'audit_logs'    => array( 'event_type', 'object_type', 'object_id', 'request_id', 'actor_user_id', 'customer_id' ),
+		);
+
+		if ( '' === $table_name || ! isset( $columns[ $table ] ) || '' === trim( (string) $search ) ) {
+			return $this->get_results_by( $table, $where, $limit, $offset );
+		}
+
+		$args   = array();
+		$query  = "SELECT * FROM {$table_name}";
+		$query .= empty( $where ) ? '' : $this->build_where_clause( $where, $args );
+		$like   = '%' . $this->wpdb->esc_like( trim( (string) $search ) ) . '%';
+		$parts  = array();
+		foreach ( $columns[ $table ] as $column ) {
+			$parts[] = "{$column} LIKE %s";
+			$args[]  = $like;
+		}
+		$query .= ( empty( $where ) ? ' WHERE ' : ' AND ' ) . '(' . implode( ' OR ', $parts ) . ') ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[] = max( 1, absint( $limit ) );
+		$args[] = max( 0, absint( $offset ) );
+		$rows   = $this->wpdb->get_results( $this->wpdb->prepare( $query, $args ), ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Create or retrieve a customer wallet without a check-then-insert race.
 	 *
 	 * @param int    $customer_id Customer ID.

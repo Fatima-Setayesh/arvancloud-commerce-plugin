@@ -610,7 +610,7 @@ class Arvan_Reseller_REST_API {
 			),
 		); }
 	public function admin_payments( $request ) {
-		return $this->collection( $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->fetch_limit( $request ), $this->offset( $request ) ), $request ); }
+		return $this->collection( $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->fetch_limit( $request ), $this->offset( $request ), $this->search( $request ) ), $request ); }
 	public function refund_payment( $request ) {
 		return $this->payment->refund_payment( sanitize_text_field( (string) $request['reference'] ) ); }
 	public function settlements( $request ) {
@@ -682,16 +682,16 @@ class Arvan_Reseller_REST_API {
 	public function admin_wallets( $request ) {
 		return $this->collection( array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_orders( $request ) {
-		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->search_results( 'orders', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_resources( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->get_results_by( 'resources', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->search_results( 'resources', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_usage( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->search_results( 'usage_records', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function run_reconciliation() {
 		$this->database->create_audit_log( 'manual_reconciliation_started', 'cron', 'reconciliation' );
 		return $this->cron->run_reconciliation(); }
 	public function audit_logs( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_audit' ), $this->database->get_results_by( 'audit_logs', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_audit' ), $this->database->search_results( 'audit_logs', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 
 	private function list_args() {
 		return array(
@@ -708,6 +708,11 @@ class Arvan_Reseller_REST_API {
 				'maximum'           => 1000000,
 				'default'           => 1,
 				'sanitize_callback' => 'absint',
+			),
+			'search' => array(
+				'type'              => 'string',
+				'maxLength'         => 100,
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 		); }
 	private function region_args() {
@@ -806,6 +811,8 @@ class Arvan_Reseller_REST_API {
 		return ( $this->page( $request ) - 1 ) * $this->limit( $request ); }
 	private function fetch_limit( $request ) {
 		return $this->limit( $request ) + 1; }
+	private function search( $request ) {
+		return sanitize_text_field( (string) $request->get_param( 'search' ) ); }
 	private function collection( array $items, $request ) {
 		$limit    = $this->limit( $request );
 		$has_more = count( $items ) > $limit;
