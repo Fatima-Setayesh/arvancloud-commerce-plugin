@@ -154,6 +154,11 @@
 
 	function translateDom(root) {
 		const scope = root || document;
+		const owner = scope.matches && scope.matches('.arvan-reseller-app') ? scope : (scope.closest && scope.closest('.arvan-reseller-app'));
+		if (!owner) {
+			if (scope.querySelectorAll) scope.querySelectorAll('.arvan-reseller-app').forEach((app) => translateDom(app));
+			return;
+		}
 		const language = storedLanguage();
 		const nodes = [];
 		if (scope.matches && scope.matches('[data-ar-i18n]')) nodes.push(scope);
@@ -212,26 +217,20 @@
 		if (persist) {
 			try { window.localStorage.setItem(languageStorageKey, value); } catch (error) { /* Preference remains active for this page. */ }
 		}
-		document.documentElement.dataset.arLanguage = value;
 		const apps = Array.from(document.querySelectorAll('.arvan-reseller-app'));
-		const languageEnabledApps = apps.filter((app) => !app.hasAttribute('data-ar-language-fixed'));
-		if (languageEnabledApps.length) {
-			document.documentElement.lang = value;
-			document.documentElement.dir = value === 'en' ? 'ltr' : 'rtl';
-		}
 		apps.forEach((app) => {
 			if (app.hasAttribute('data-ar-language-fixed')) {
 				app.lang = app.dataset.arLanguageFixed || 'fa'; app.dir = 'rtl'; return;
 			}
 			app.lang = value;
 			app.dir = value === 'en' ? 'ltr' : 'rtl';
+			app.querySelectorAll('[data-ar-language-value]').forEach((button) => {
+				const selected = button.dataset.arLanguageValue === value;
+				button.classList.toggle('is-selected', selected);
+				button.setAttribute('aria-pressed', String(selected));
+			});
+			translateDom(app);
 		});
-		document.querySelectorAll('[data-ar-language-value]').forEach((button) => {
-			const selected = button.dataset.arLanguageValue === value;
-			button.classList.toggle('is-selected', selected);
-			button.setAttribute('aria-pressed', String(selected));
-		});
-		translateDom(document);
 		document.dispatchEvent(new CustomEvent('arvan:language-change', { detail: { language: value, direction: value === 'en' ? 'ltr' : 'rtl' } }));
 	}
 
