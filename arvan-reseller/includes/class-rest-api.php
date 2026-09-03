@@ -512,8 +512,11 @@ class Arvan_Reseller_REST_API {
 		$currency = $this->configured_currency();
 		$row      = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
 		if ( null === $row ) {
-			$this->wallet->create_wallet( get_current_user_id(), $currency );
+			$created = $this->wallet->create_wallet( get_current_user_id(), $currency );
 			$row = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
+			if ( null === $created || null === $row ) {
+				return new WP_Error( 'arvan_reseller_wallet_unavailable', __( 'The wallet is temporarily unavailable. Please try again later.', 'arvan-reseller' ), array( 'status' => 503 ) );
+			}
 		} return array(
 			'balance'   => Arvan_Reseller_Money::format( (int) $row['balance_minor'] ),
 			'threshold' => Arvan_Reseller_Money::format( (int) $row['threshold_minor'] ),
