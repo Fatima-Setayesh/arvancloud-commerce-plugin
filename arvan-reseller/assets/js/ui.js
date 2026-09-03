@@ -446,13 +446,21 @@
 		const root = document.querySelector('.arvan-reseller-app .ar-modal-root');
 		if (!root) return null;
 		const previousFocus = document.activeElement;
-		root.innerHTML = '<div class="ar-modal-backdrop" data-ar-modal-backdrop><section class="ar-modal" role="dialog" aria-modal="true" aria-labelledby="ar-modal-title"><div class="ar-modal__head"><div><h2 id="ar-modal-title">' + escape(options.title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button class="ar-icon-button" type="button" data-ar-modal-close aria-label="بستن">' + icon('close') + '</button></div><div class="ar-modal__body">' + (options.body || '') + '</div></section></div>';
+		const app = root.closest('.arvan-reseller-app');
+		const background = app ? Array.from(app.children).filter((node) => node !== root) : [];
+		const previousInert = background.map((node) => node.inert);
+		const previousOverflow = document.body.style.overflow;
+		background.forEach((node) => { node.inert = true; });
+		document.body.style.overflow = 'hidden';
+		root.innerHTML = '<div class="ar-modal-backdrop" data-ar-modal-backdrop><section class="ar-modal" role="dialog" aria-modal="true" aria-labelledby="ar-modal-title" tabindex="-1"><div class="ar-modal__head"><div><h2 id="ar-modal-title">' + escape(options.title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button class="ar-icon-button" type="button" data-ar-modal-close aria-label="بستن">' + icon('close') + '</button></div><div class="ar-modal__body">' + (options.body || '') + '</div></section></div>';
 		const backdrop = root.querySelector('[data-ar-modal-backdrop]');
 		const dialog = root.querySelector('.ar-modal');
 		translateDom(root);
 		const close = () => {
 			root.innerHTML = '';
 			document.removeEventListener('keydown', keyHandler);
+			background.forEach((node, index) => { node.inert = previousInert[index]; });
+			document.body.style.overflow = previousOverflow;
 			if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
 			if (typeof options.onClose === 'function') options.onClose();
 		};
@@ -460,8 +468,9 @@
 			if (event.key === 'Escape') close();
 			if (event.key === 'Tab') {
 				const focusable = Array.from(dialog.querySelectorAll('button, input, select, textarea, a[href]')).filter((node) => !node.disabled);
-				if (!focusable.length) return;
+				if (!focusable.length) { event.preventDefault(); dialog.focus(); return; }
 				const first = focusable[0]; const last = focusable[focusable.length - 1];
+				if (!dialog.contains(document.activeElement)) { event.preventDefault(); first.focus(); return; }
 				if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
 				if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 			}

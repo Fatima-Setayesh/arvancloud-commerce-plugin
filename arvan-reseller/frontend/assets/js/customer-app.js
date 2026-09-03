@@ -19,7 +19,9 @@
 		pollTimer: null,
 		pollAttempts: 0,
 		orderOperation: 'cloud-server-order-' + Date.now(),
-		accountOpen: false
+		accountOpen: false,
+		accountBackground: [],
+		bodyOverflow: ''
 	};
 
 	const routeMeta = {
@@ -67,6 +69,9 @@
 		const trigger = app.querySelector('[data-ar-action="toggle-account"]');
 		if (!drawer || !state.accountOpen) return;
 		state.accountOpen = false; drawer.hidden = true; scrim.hidden = true;
+		state.accountBackground.forEach((entry) => { entry.node.inert = entry.inert; });
+		state.accountBackground = [];
+		document.body.style.overflow = state.bodyOverflow;
 		trigger.setAttribute('aria-expanded', 'false');
 		if (restoreFocus) trigger.focus();
 	}
@@ -77,6 +82,12 @@
 		const trigger = app.querySelector('[data-ar-action="toggle-account"]');
 		const accountContent = app.querySelector('[data-ar-account-content]');
 		if (!drawer || state.accountOpen) return;
+		state.accountBackground = Array.from(app.children)
+			.filter((node) => node !== drawer && node !== scrim)
+			.map((node) => ({ node: node, inert: node.inert }));
+		state.accountBackground.forEach((entry) => { entry.node.inert = true; });
+		state.bodyOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
 		state.accountOpen = true; drawer.hidden = false; scrim.hidden = false;
 		trigger.setAttribute('aria-expanded', 'true'); drawer.focus();
 		accountContent.innerHTML = ui.loading('در حال دریافت خلاصه حساب…');
@@ -373,6 +384,7 @@
 		const focusable = Array.from(drawer.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
 		if (!focusable.length) { event.preventDefault(); drawer.focus(); return; }
 		const first = focusable[0]; const last = focusable[focusable.length - 1];
+		if (!drawer.contains(document.activeElement)) { event.preventDefault(); first.focus(); return; }
 		if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
 		else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 	});
