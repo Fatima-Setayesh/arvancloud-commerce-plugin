@@ -244,36 +244,46 @@ class Arvan_Reseller_Cron {
 			return;
 		}
 		$zone = sanitize_text_field( (string) ( $settings['availability_zone'] ?? '' ) );
-		foreach ( $this->database->get_resources_by_customer_id( $customer_id ) as $resource ) {
-			if ( $this->resource_currency( $resource ) !== $currency ) {
-				continue;
+		$cursor = 0;
+		$limit  = max( 1, min( 200, (int) apply_filters( 'arvan_reseller_balance_policy_batch_limit', 50 ) ) );
+		while ( true ) {
+			$resources = $this->database->get_resources_for_balance_policy( $customer_id, $cursor, $limit );
+			if ( empty( $resources ) ) {
+				break;
 			}
-			if ( in_array( (string) $resource['status'], array( 'terminated', 'pending', 'error' ), true ) ) {
-				continue; }
-			if ( 'suspended' !== (string) $resource['status'] ) {
-				$response = $this->api->power_off_server( (string) $resource['region'], (string) $resource['resource_id'], $zone );
-				if ( is_wp_error( $response ) ) {
-					$this->record_failure( $resource, $response );
+			foreach ( $resources as $resource ) {
+				$cursor = (int) $resource['id'];
+				if ( $this->resource_currency( $resource ) !== $currency ) {
 					continue;
-				} $now = current_time( 'mysql', true );
-				$this->database->update(
-					'resources',
-					array(
-						'status'        => 'suspended',
-						'remote_status' => 'powered_off',
-						'suspended_at'  => $now,
-						'updated_at'    => $now,
-					),
-					array(
-						'id'          => (int) $resource['id'],
-						'customer_id' => absint( $customer_id ),
-					)
-				);
-				$this->database->create_audit_log( 'resource_suspended_zero_balance', 'resource', (string) $resource['id'], array(), $customer_id, 0 );
-				$this->record_resource_event( $resource, 'suspension', 'zero_balance' );
-				$resource['status']       = 'suspended';
-				$resource['suspended_at'] = $now; }
-			$this->maybe_terminate( $resource, $settings, $zone );
+				}
+				if ( 'suspended' !== (string) $resource['status'] ) {
+					$response = $this->api->power_off_server( (string) $resource['region'], (string) $resource['resource_id'], $zone );
+					if ( is_wp_error( $response ) ) {
+						$this->record_failure( $resource, $response );
+						continue;
+					} $now = current_time( 'mysql', true );
+					$this->database->update(
+						'resources',
+						array(
+							'status'        => 'suspended',
+							'remote_status' => 'powered_off',
+							'suspended_at'  => $now,
+							'updated_at'    => $now,
+						),
+						array(
+							'id'          => (int) $resource['id'],
+							'customer_id' => absint( $customer_id ),
+						)
+					);
+					$this->database->create_audit_log( 'resource_suspended_zero_balance', 'resource', (string) $resource['id'], array(), $customer_id, 0 );
+					$this->record_resource_event( $resource, 'suspension', 'zero_balance' );
+					$resource['status']       = 'suspended';
+					$resource['suspended_at'] = $now; }
+				$this->maybe_terminate( $resource, $settings, $zone );
+			}
+			if ( count( $resources ) < $limit ) {
+				break;
+			}
 		}
 	}
 	private function maybe_terminate( array $resource, array $settings, $zone ) {

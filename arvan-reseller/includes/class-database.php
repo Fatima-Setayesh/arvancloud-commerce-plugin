@@ -725,6 +725,24 @@ class Arvan_Reseller_Database {
 		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
+	/** Return a mutation-safe keyset page for zero-balance lifecycle policy. */
+	public function get_resources_for_balance_policy( $customer_id, $after_id = 0, $limit = 50 ) {
+		$table = $this->get_table_name( 'resources' );
+		$query = $this->wpdb->prepare(
+			"SELECT * FROM {$table} WHERE customer_id = %d AND id > %d AND status IN (%s, %s, %s, %s) ORDER BY id ASC LIMIT %d",
+			absint( $customer_id ),
+			absint( $after_id ),
+			'provisioning',
+			'active',
+			'provisioned',
+			'suspended',
+			max( 1, min( 200, absint( $limit ) ) )
+		);
+		$rows = $this->wpdb->get_results( $query, ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
 	/** @return array */
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) {
 		$table = $this->get_table_name( 'resources' );
