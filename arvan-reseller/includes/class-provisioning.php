@@ -230,7 +230,7 @@ class Arvan_Reseller_Provisioning {
 		$details     = json_decode( (string) $order['details'], true );
 		$resource_id = is_array( $details ) ? (string) ( $details['resource_id'] ?? '' ) : '';
 		if ( '' === $resource_id ) {
-			return new WP_Error( 'arvan_reseller_recovery_missing_resource', __( 'Recovery record has no remote resource ID.', 'arvan-reseller' ) ); }
+			return $this->move_recovery_to_manual_review( $order, is_array( $details ) ? $details : array() ); }
 		$response = $this->api->get_server( (string) $order['region'], $resource_id );
 		if ( is_wp_error( $response ) ) {
 			return $response; }
@@ -278,6 +278,50 @@ class Arvan_Reseller_Provisioning {
 			'order_id'           => (int) $order['id'],
 			'resource_record_id' => (int) $resource_record_id,
 			'status'             => 'reconciled',
+		);
+	}
+
+	/** Stop automatic recovery when there is no safe remote lookup key. */
+	private function move_recovery_to_manual_review( array $order, array $details ) {
+		$failure_code             = 'manual_review_missing_resource_id';
+		$details['manual_review'] = array(
+			'required' => true,
+			'reason'   => $failure_code,
+		);
+		$updated = $this->database->update(
+			'orders',
+			array(
+				'status'            => 'failed',
+				'recovery_required' => 0,
+				'failure_code'      => $failure_code,
+				'details'           => wp_json_encode( $details ),
+				'updated_at'        => current_time( 'mysql', true ),
+			),
+			array( 'id' => (int) $order['id'] )
+		);
+		if ( false === $updated ) {
+			return new WP_Error( 'arvan_reseller_manual_review_persistence_failed', __( 'The recovery record could not be moved to manual review.', 'arvan-reseller' ) );
+		}
+		$this->database->create_audit_log(
+			'order_recovery_manual_review',
+			'order',
+			(string) $order['id'],
+			array( 'failure_code' => $failure_code ),
+			(int) $order['customer_id']
+		);
+		$this->database->record_notification_event(
+			(int) $order['customer_id'],
+			'provisioning_failed',
+			(string) $order['order_reference'],
+			array(
+				'failure_code' => $failure_code,
+				'manual_review' => true,
+			)
+		);
+		return array(
+			'order_id'     => (int) $order['id'],
+			'status'       => 'manual_review',
+			'failure_code' => $failure_code,
 		);
 	}
 

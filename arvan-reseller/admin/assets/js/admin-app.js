@@ -158,7 +158,7 @@
 			const collection = await api.getCollection('admin/orders', { query: collectionQuery() });
 			const rows = collection.items.map((order) => {
 				const config = order.configuration || {};
-				const recovery = order.recovery_required ? ui.status('failed').replace('ناموفق', 'نیازمند بازیابی') : (order.failure_code ? '<code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : '—');
+				const recovery = order.failure_code === 'manual_review_missing_resource_id' ? '<span class="ar-status ar-status--warning">نیازمند بررسی انسانی</span><br><code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : (order.recovery_required ? ui.status('failed').replace('ناموفق', 'نیازمند بازیابی') : (order.failure_code ? '<code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : '—'));
 				return ['<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', '<code dir="ltr">#' + ui.escape(order.customer_id) + '</code>', '<strong>' + ui.escape(config.name || 'سرور ابری') + '</strong><br><small><code dir="ltr">' + ui.escape(config.flavorId || '—') + '</code></small>', ui.status(order.status), '<code dir="ltr">' + ui.escape(order.resource_id || '—') + '</code>', ui.escape(order.payment && order.payment.status || '—'), recovery, ui.date(order.created_at)];
 			});
 			setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع، مشتری یا شناسه منبع' }) + collectionTable(['سفارش', 'مشتری', 'پیکربندی', 'وضعیت', 'شناسه منبع', 'پرداخت سفارش', 'بازیابی/خطا', 'ثبت'], collection, rows, 'سفارشی یافت نشد') + '</article>');
