@@ -306,6 +306,31 @@ class Arvan_Reseller_Database {
 		return is_array( $rows ) ? $rows : array();
 	}
 
+	/** Return exact repository-wide aggregates for the protected admin overview. */
+	public function get_admin_overview_aggregates() {
+		$wallets   = $this->get_table_name( 'wallets' );
+		$payments  = $this->get_table_name( 'payments' );
+		$orders    = $this->get_table_name( 'orders' );
+		$resources = $this->get_table_name( 'resources' );
+		$usage     = $this->get_table_name( 'usage_records' );
+
+		$customer_count = $this->wpdb->get_var( "SELECT COUNT(*) FROM (SELECT customer_id FROM {$wallets} UNION SELECT customer_id FROM {$payments} UNION SELECT customer_id FROM {$orders} UNION SELECT customer_id FROM {$resources}) commerce" );
+		$resource_rows  = $this->wpdb->get_results( "SELECT status, COUNT(*) item_count FROM {$resources} GROUP BY status", ARRAY_A );
+		$wallet_rows    = $this->wpdb->get_results( "SELECT currency, COALESCE(SUM(balance_minor), 0) amount_minor FROM {$wallets} GROUP BY currency ORDER BY currency ASC", ARRAY_A );
+		$billed_rows    = $this->wpdb->get_results( "SELECT currency, COALESCE(SUM(total_charge_minor), 0) amount_minor FROM {$usage} GROUP BY currency ORDER BY currency ASC", ARRAY_A );
+		$pending_count  = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$payments} WHERE status = %s", 'pending' ) );
+		$warning_count  = $this->wpdb->get_var( "SELECT (SELECT COUNT(*) FROM {$orders} WHERE recovery_required = 1) + (SELECT COUNT(*) FROM {$resources} WHERE sync_failure_count > 0 OR last_error_code <> '') + (SELECT COUNT(*) FROM {$usage} WHERE uncovered_minor > 0)" );
+
+		return array(
+			'commerce_customer_count'       => (int) $customer_count,
+			'resource_status_counts'        => is_array( $resource_rows ) ? $resource_rows : array(),
+			'pending_payment_count'         => (int) $pending_count,
+			'wallet_balance_minor'          => is_array( $wallet_rows ) ? $wallet_rows : array(),
+			'current_billed_amount_minor'   => is_array( $billed_rows ) ? $billed_rows : array(),
+			'reconciliation_warning_count' => (int) $warning_count,
+		);
+	}
+
 	/**
 	 * Create or retrieve a customer wallet without a check-then-insert race.
 	 *

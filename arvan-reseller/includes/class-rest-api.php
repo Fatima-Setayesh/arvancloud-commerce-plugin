@@ -254,6 +254,17 @@ class Arvan_Reseller_REST_API {
 		);
 		register_rest_route(
 			$n,
+			'/admin/overview',
+			array_merge(
+				$admin,
+				array(
+					'methods'  => WP_REST_Server::READABLE,
+					'callback' => array( $this, 'admin_overview' ),
+				)
+			)
+		);
+		register_rest_route(
+			$n,
 			'/admin/payments',
 			array_merge(
 				$admin,
@@ -686,6 +697,49 @@ class Arvan_Reseller_REST_API {
 				$rows
 			),
 			$request
+		); }
+	public function admin_overview() {
+		$aggregates = $this->database->get_admin_overview_aggregates();
+		$resources  = array( 'active' => 0, 'suspended' => 0, 'failed' => 0 );
+		foreach ( $aggregates['resource_status_counts'] as $row ) {
+			$status = (string) $row['status'];
+			$count  = (int) $row['item_count'];
+			if ( in_array( $status, array( 'active', 'provisioned' ), true ) ) {
+				$resources['active'] += $count;
+			} elseif ( 'suspended' === $status ) {
+				$resources['suspended'] += $count;
+			} elseif ( in_array( $status, array( 'failed', 'error' ), true ) ) {
+				$resources['failed'] += $count;
+			}
+		}
+		$format_totals = static function ( $rows ) {
+			return array_map(
+				static function ( $row ) {
+					return array(
+						'currency' => (string) $row['currency'],
+						'amount'   => Arvan_Reseller_Money::format( (int) $row['amount_minor'] ),
+					);
+				},
+				$rows
+			);
+		};
+		$cron = get_option( 'arvan_reseller_cron_health', array( 'status' => 'never_run' ) );
+		return array(
+			'commerce_customer_count'       => (int) $aggregates['commerce_customer_count'],
+			'active_resource_count'         => $resources['active'],
+			'suspended_resource_count'      => $resources['suspended'],
+			'failed_resource_count'         => $resources['failed'],
+			'pending_payment_count'         => (int) $aggregates['pending_payment_count'],
+			'wallet_balances'               => $format_totals( $aggregates['wallet_balance_minor'] ),
+			'current_billed_amounts'        => $format_totals( $aggregates['current_billed_amount_minor'] ),
+			'reconciliation_warning_count' => (int) $aggregates['reconciliation_warning_count'],
+			'cron'                          => array(
+				'status'          => sanitize_key( (string) ( $cron['status'] ?? 'never_run' ) ),
+				'last_success_at' => sanitize_text_field( (string) ( $cron['last_success_at'] ?? '' ) ),
+				'last_failure_at' => sanitize_text_field( (string) ( $cron['last_failure_at'] ?? '' ) ),
+				'processed'       => absint( $cron['processed'] ?? 0 ),
+				'failed'          => absint( $cron['failed'] ?? 0 ),
+			),
 		); }
 	public function admin_wallets( $request ) {
 		return $this->collection( array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
