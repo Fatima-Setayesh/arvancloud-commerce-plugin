@@ -7,8 +7,7 @@
 [![Plugin](https://img.shields.io/badge/Plugin-v1.1.0-08A4C7?logo=wordpress&logoColor=white)](arvan-reseller/arvan-reseller.php)
 [![WordPress](https://img.shields.io/badge/WordPress-6.4%2B-21759B?logo=wordpress&logoColor=white)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
-[![PHPStan](https://img.shields.io/badge/PHPStan-0_errors-1F9D68)](#quality-and-testing)
-[![Mock E2E](https://img.shields.io/badge/Mock_E2E-passing-1F9D68)](#quality-and-testing)
+[![CI](https://github.com/Fatima-Setayesh/arvancloud-commerce-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Fatima-Setayesh/arvancloud-commerce-plugin/actions/workflows/ci.yml)
 [![FA / EN](https://img.shields.io/badge/Customer_UI-FA_%2F_EN-1473E6)](#product-tour)
 [![License](https://img.shields.io/badge/License-GPL--2.0%2B-22A06B)](arvan-reseller/readme.txt)
 
