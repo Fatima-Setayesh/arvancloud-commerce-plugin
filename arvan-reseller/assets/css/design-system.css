@@ -297,6 +297,9 @@ html[data-ar-theme="dark"] .arvan-reseller-app {
 .ar-grid--metrics > .ar-metric { min-height: 166px; }
 
 .ar-table-wrap { max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; }
+.ar-pagination { align-items: center; border-block-start: 1px solid var(--ar-color-border); display: flex; gap: var(--ar-space-3); justify-content: center; padding: var(--ar-space-4); }
+.ar-pagination [data-ar-pagination-status] { border-radius: var(--ar-radius-sm); min-width: 92px; text-align: center; }
+.ar-pagination [data-ar-pagination-status]:focus { box-shadow: 0 0 0 3px var(--ar-color-focus); outline: 0; }
 .ar-table { border-collapse: collapse; font-size: 13px; width: 100%; }
 .ar-table th { background: var(--ar-color-surface-soft); border-block-end: 1px solid var(--ar-color-border); color: var(--ar-color-text-muted); font-size: 11px; font-weight: 900; letter-spacing: .01em; padding: 12px 14px; position: sticky; text-align: start; top: 0; white-space: nowrap; z-index: 1; }
 .ar-table td { border-block-start: 1px solid var(--ar-color-border); padding: 13px 14px; text-align: start; vertical-align: middle; }

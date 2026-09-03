@@ -9,7 +9,7 @@
 	const api = window.ArvanResellerAPI;
 	const ui = window.ArvanUI;
 	const runtime = window.ArvanResellerRuntime;
-	const state = { data: {}, wizardStep: 0, search: '', filter: '' };
+	const state = { data: {}, wizardStep: 0, search: '', filter: '', collectionPage: 1, focusCollection: false, focusSearch: false };
 
 	const pageMeta = {
 		dashboard: ['داشبورد عملیات', 'نمای یکپارچه از مشتریان، کیف پول‌ها، سرورها و سلامت سامانه'],
@@ -28,6 +28,17 @@
 	function setContent(html) {
 		content.innerHTML = html;
 		ui.mountIcons(content);
+		content.setAttribute('aria-busy', String(Boolean(content.querySelector('.ar-loading-state'))));
+		window.requestAnimationFrame(() => {
+			if (state.focusCollection) {
+				const status = content.querySelector('[data-ar-pagination-status]');
+				if (status) { status.focus({ preventScroll: true }); state.focusCollection = false; }
+			}
+			if (state.focusSearch) {
+				const search = content.querySelector('[data-ar-search]');
+				if (search) { search.focus({ preventScroll: true }); search.setSelectionRange(search.value.length, search.value.length); state.focusSearch = false; }
+			}
+		});
 	}
 
 	function metric(label, value, icon, meta) {
@@ -39,6 +50,18 @@
 	function table(headers, rows, emptyText) {
 		if (!rows.length) return ui.empty(emptyText || 'داده‌ای ثبت نشده است', 'با شروع فعالیت، رکوردها در این بخش نمایش داده می‌شوند.');
 		return '<div class="ar-table-wrap"><table class="ar-table ar-responsive-table"><thead><tr>' + headers.map((header) => '<th scope="col">' + ui.escape(header) + '</th>').join('') + '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((cell, index) => '<td data-label="' + ui.escape(headers[index]) + '">' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+	}
+
+	function pagination(collection) {
+		return '<nav class="ar-pagination" aria-label="صفحه‌بندی فهرست"><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-page="' + (collection.page - 1) + '"' + (collection.page <= 1 ? ' disabled' : '') + '>قبلی</button><span data-ar-pagination-status tabindex="-1">صفحه <strong>' + ui.persianDigits(collection.page) + '</strong></span><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-page="' + (collection.page + 1) + '"' + (!collection.hasMore ? ' disabled' : '') + '>بعدی</button></nav>';
+	}
+
+	function collectionTable(headers, collection, rows, emptyText) {
+		return table(headers, rows, emptyText) + pagination(collection);
+	}
+
+	function collectionQuery(extra) {
+		return Object.assign({ limit: 25, page: state.collectionPage, search: state.search }, extra || {});
 	}
 
 	function value(result, fallback) {
@@ -54,12 +77,6 @@
 		const source = String(Math.abs(Number(minor || 0))).padStart(5, '0');
 		const sign = Number(minor || 0) < 0 ? '-' : '';
 		return sign + source.slice(0, -4) + '.' + source.slice(-4);
-	}
-
-	function filterRows(rows, fields) {
-		const needle = state.search.trim().toLocaleLowerCase('fa');
-		if (!needle) return rows;
-		return rows.filter((row) => fields.some((field) => String(row[field] || '').toLocaleLowerCase('fa').includes(needle)));
 	}
 
 	function toolbar(options) {
@@ -109,72 +126,67 @@
 	async function renderCustomers() {
 		setContent(ui.loading());
 		try {
-			const [customers, wallets, resources] = await Promise.all([api.get('admin/customers', { query: { limit: 100 } }), api.get('admin/wallets', { query: { limit: 100 } }), api.get('admin/resources', { query: { limit: 100 } })]);
-			state.data.customers = { customers, wallets, resources };
-			const filtered = filterRows(customers, ['display_name', 'email', 'id']);
-			const rows = filtered.map((customer) => {
-				const wallet = wallets.find((item) => Number(item.customer_id) === Number(customer.id));
-				const serviceCount = resources.filter((item) => Number(item.customer_id) === Number(customer.id)).length;
+			const collection = await api.getCollection('admin/customers', { query: collectionQuery() });
+			const rows = collection.items.map((customer) => {
+				const wallet = customer.wallet;
 				const low = wallet && numeric(wallet.balance) <= numeric(wallet.threshold);
-				return ['<strong>' + ui.escape(customer.display_name) + '</strong><br><small>' + ui.escape(customer.email) + '</small>', '<code dir="ltr">#' + ui.escape(customer.id) + '</code>', wallet ? ui.money(wallet.balance, wallet.currency) : '—', ui.persianDigits(serviceCount), low ? ui.status('suspended').replace('تعلیق‌شده', 'موجودی کم') : ui.status(wallet ? wallet.status : 'pending'), ui.date(customer.registered_at)];
+				return ['<strong>' + ui.escape(customer.display_name) + '</strong><br><small>' + ui.escape(customer.email) + '</small>', '<code dir="ltr">#' + ui.escape(customer.id) + '</code>', wallet ? ui.money(wallet.balance, wallet.currency) : '—', ui.persianDigits(customer.resource_count), low ? ui.status('suspended').replace('تعلیق‌شده', 'موجودی کم') : ui.status(wallet ? wallet.status : 'pending'), ui.date(customer.registered_at)];
 			});
-			setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'نام، ایمیل یا شناسه مشتری' }) + table(['مشتری', 'شناسه', 'کیف پول', 'سرویس‌ها', 'وضعیت', 'عضویت'], rows, 'مشتری‌ای یافت نشد') + '</article>');
+			setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'نام، ایمیل یا شناسه مشتری' }) + collectionTable(['مشتری', 'شناسه', 'کیف پول', 'سرویس‌ها', 'وضعیت', 'عضویت'], collection, rows, 'مشتری‌ای یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.customers[0], pageMeta.customers[1]) + ui.error(error, 'refresh-page')); }
 	}
 
 	async function renderPayments() {
 		setContent(ui.loading());
 		try {
-			const query = { limit: 100 }; if (state.filter) query.status = state.filter;
-			const payments = await api.get('admin/payments', { query });
-			const filtered = filterRows(payments, ['payment_reference', 'customer_id', 'status']);
+			const query = collectionQuery(); if (state.filter) query.status = state.filter;
+			const collection = await api.getCollection('admin/payments', { query });
 			const filter = '<select class="ar-input" data-ar-filter aria-label="فیلتر وضعیت"><option value="">همه وضعیت‌ها</option>' + ['pending', 'completed', 'failed', 'cancelled', 'expired', 'refunded'].map((status) => '<option value="' + status + '"' + (state.filter === status ? ' selected' : '') + '>' + ui.status(status).replace(/<[^>]+>/g, '') + '</option>').join('') + '</select>';
-			const rows = filtered.map((payment) => ['<code dir="ltr">' + ui.escape(payment.payment_reference) + '</code>', '<code dir="ltr">#' + ui.escape(payment.id) + '</code>', ui.money(payment.amount, payment.currency), ui.status(payment.status), ui.escape(payment.provider === 'mock' ? 'آزمایشی' : payment.provider), ui.date(payment.created_at), payment.status === 'completed' ? '<button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-refund="' + ui.escape(payment.payment_reference) + '">بازپرداخت</button>' : '—']);
-			setContent(ui.pageHead(pageMeta.payments[0], pageMeta.payments[1], '<span class="ar-env ar-env--' + ui.escape(runtime.settings.mode) + '"><span></span>' + (runtime.settings.mode === 'mock' ? 'آزمایشی' : 'زنده') + '</span>') + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع پرداخت یا مشتری', filter }) + table(['مرجع', 'شناسه', 'مبلغ', 'وضعیت', 'درگاه', 'زمان', 'عملیات'], rows, 'پرداختی یافت نشد') + '</article>');
+			const rows = collection.items.map((payment) => ['<code dir="ltr">' + ui.escape(payment.payment_reference) + '</code>', '<code dir="ltr">#' + ui.escape(payment.id) + '</code>', ui.money(payment.amount, payment.currency), ui.status(payment.status), ui.escape(payment.provider === 'mock' ? 'آزمایشی' : payment.provider), ui.date(payment.created_at), payment.status === 'completed' ? '<button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-refund="' + ui.escape(payment.payment_reference) + '">بازپرداخت</button>' : '—']);
+			setContent(ui.pageHead(pageMeta.payments[0], pageMeta.payments[1], '<span class="ar-env ar-env--' + ui.escape(runtime.settings.mode) + '"><span></span>' + (runtime.settings.mode === 'mock' ? 'آزمایشی' : 'زنده') + '</span>') + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع پرداخت یا مشتری', filter }) + collectionTable(['مرجع', 'شناسه', 'مبلغ', 'وضعیت', 'درگاه', 'زمان', 'عملیات'], collection, rows, 'پرداختی یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.payments[0], pageMeta.payments[1]) + ui.error(error, 'refresh-page')); }
 	}
 
 	async function renderOrders() {
 		setContent(ui.loading());
 		try {
-			const orders = await api.get('admin/orders', { query: { limit: 100 } });
-			const filtered = filterRows(orders, ['order_reference', 'customer_id', 'resource_id', 'status']);
-			const rows = filtered.map((order) => {
+			const collection = await api.getCollection('admin/orders', { query: collectionQuery() });
+			const rows = collection.items.map((order) => {
 				const config = order.configuration || {};
 				const recovery = order.recovery_required ? ui.status('failed').replace('ناموفق', 'نیازمند بازیابی') : (order.failure_code ? '<code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : '—');
 				return ['<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', '<code dir="ltr">#' + ui.escape(order.customer_id) + '</code>', '<strong>' + ui.escape(config.name || 'سرور ابری') + '</strong><br><small><code dir="ltr">' + ui.escape(config.flavorId || '—') + '</code></small>', ui.status(order.status), '<code dir="ltr">' + ui.escape(order.resource_id || '—') + '</code>', ui.escape(order.payment && order.payment.status || '—'), recovery, ui.date(order.created_at)];
 			});
-			setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع، مشتری یا شناسه منبع' }) + table(['سفارش', 'مشتری', 'پیکربندی', 'وضعیت', 'شناسه منبع', 'پرداخت سفارش', 'بازیابی/خطا', 'ثبت'], rows, 'سفارشی یافت نشد') + '</article>');
+			setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'مرجع، مشتری یا شناسه منبع' }) + collectionTable(['سفارش', 'مشتری', 'پیکربندی', 'وضعیت', 'شناسه منبع', 'پرداخت سفارش', 'بازیابی/خطا', 'ثبت'], collection, rows, 'سفارشی یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.orders[0], pageMeta.orders[1]) + ui.error(error, 'refresh-page')); }
 	}
 
 	async function renderResources() {
 		setContent(ui.loading());
 		try {
-			const resources = await api.get('admin/resources', { query: { limit: 100 } });
-			const filtered = filterRows(resources, ['resource_id', 'customer_id', 'region', 'status', 'remote_status']);
-			const rows = filtered.map((resource) => ['<strong>' + ui.escape(resource.name || 'سرور ابری') + '</strong><br><code dir="ltr">' + ui.escape(resource.resource_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.customer_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.order_id || '—') + '</code>', ui.escape(resource.region), ui.status(resource.status), ui.status(resource.remote_status), ui.money(resource.hourly_price, resource.currency), ui.date(resource.last_synced_at)]);
-			setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1], '<button class="ar-button" type="button" data-ar-action="run-reconciliation">' + ui.icon('refresh') + 'بازیابی نگاشت‌ها</button>') + '<article class="ar-card">' + toolbar({ placeholder: 'شناسه منبع، مشتری، منطقه یا وضعیت' }) + table(['سرویس', 'مشتری', 'سفارش', 'منطقه', 'وضعیت محلی', 'وضعیت راه‌دور', 'نرخ ساعتی', 'آخرین همگام‌سازی'], rows, 'سروری یافت نشد') + '</article>');
+			const collection = await api.getCollection('admin/resources', { query: collectionQuery() });
+			const rows = collection.items.map((resource) => ['<strong>' + ui.escape(resource.name || 'سرور ابری') + '</strong><br><code dir="ltr">' + ui.escape(resource.resource_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.customer_id) + '</code>', '<code dir="ltr">#' + ui.escape(resource.order_id || '—') + '</code>', ui.escape(resource.region), ui.status(resource.status), ui.status(resource.remote_status), ui.money(resource.hourly_price, resource.currency), ui.date(resource.last_synced_at)]);
+			setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1], '<button class="ar-button" type="button" data-ar-action="run-reconciliation">' + ui.icon('refresh') + 'بازیابی نگاشت‌ها</button>') + '<article class="ar-card">' + toolbar({ placeholder: 'شناسه منبع، مشتری، منطقه یا وضعیت' }) + collectionTable(['سرویس', 'مشتری', 'سفارش', 'منطقه', 'وضعیت محلی', 'وضعیت راه‌دور', 'نرخ ساعتی', 'آخرین همگام‌سازی'], collection, rows, 'سروری یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.resources[0], pageMeta.resources[1]) + ui.error(error, 'refresh-page')); }
 	}
 
 	async function renderUsage() {
 		setContent(ui.loading());
 		try {
-			const usage = await api.get('admin/usage', { query: { limit: 100 } });
+			const collection = await api.getCollection('admin/usage', { query: collectionQuery() });
+			const usage = collection.items;
 			const total = usage.reduce((sum, row) => sum + numeric(row.total_charge), 0).toFixed(4);
 			const uncovered = usage.reduce((sum, row) => sum + numeric(row.uncovered), 0).toFixed(4);
-			const rows = filterRows(usage, ['resource_id', 'customer_id']).map((row) => ['<code dir="ltr">' + ui.escape(row.resource_id) + '</code>', '<code dir="ltr">#' + ui.escape(row.customer_id) + '</code>', ui.decimal(row.usage_amount) + ' ' + ui.escape(row.unit), ui.money(row.base_cost, row.currency), ui.money(row.reseller_share, row.currency), ui.money(row.charged, row.currency), ui.money(row.uncovered, row.currency), ui.date(row.usage_end)]);
-			setContent(ui.pageHead(pageMeta.usage[0], pageMeta.usage[1]) + '<section class="ar-grid ar-grid--metrics">' + metric('کل هزینه مشتری', ui.money(total, runtime.settings.currency), 'chart') + metric('مصرف پوشش‌نیافته', ui.money(uncovered, runtime.settings.currency), 'warning') + metric('پنجره‌های مصرف', ui.persianDigits(usage.length), 'list') + metric('واحد محاسبه', 'ساعت', 'receipt', 'براساس محدودیت رسمی رابط سرویس') + '</section><article class="ar-card" style="margin-top:16px">' + toolbar({ placeholder: 'شناسه منبع یا مشتری' }) + table(['منبع', 'مشتری', 'مصرف', 'هزینه پایه', 'سهم فروشنده', 'دریافت‌شده', 'پوشش‌نیافته', 'پایان بازه'], rows, 'مصرفی ثبت نشده است') + '</article>');
+			const rows = usage.map((row) => ['<code dir="ltr">' + ui.escape(row.resource_id) + '</code>', '<code dir="ltr">#' + ui.escape(row.customer_id) + '</code>', ui.decimal(row.usage_amount) + ' ' + ui.escape(row.unit), ui.money(row.base_cost, row.currency), ui.money(row.reseller_share, row.currency), ui.money(row.charged, row.currency), ui.money(row.uncovered, row.currency), ui.date(row.usage_end)]);
+			setContent(ui.pageHead(pageMeta.usage[0], pageMeta.usage[1]) + '<section class="ar-grid ar-grid--metrics">' + metric('هزینه این صفحه', ui.money(total, runtime.settings.currency), 'chart') + metric('پوشش‌نیافته این صفحه', ui.money(uncovered, runtime.settings.currency), 'warning') + metric('رکوردهای این صفحه', ui.persianDigits(usage.length), 'list') + metric('واحد محاسبه', 'ساعت', 'receipt', 'براساس محدودیت رسمی رابط سرویس') + '</section><article class="ar-card" style="margin-top:16px">' + toolbar({ placeholder: 'شناسه منبع یا مشتری' }) + collectionTable(['منبع', 'مشتری', 'مصرف', 'هزینه پایه', 'سهم فروشنده', 'دریافت‌شده', 'پوشش‌نیافته', 'پایان بازه'], collection, rows, 'مصرفی ثبت نشده است') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.usage[0], pageMeta.usage[1]) + ui.error(error, 'refresh-page')); }
 	}
 
 	async function renderSettlements() {
 		setContent(ui.loading());
 		try {
-			const rows = await api.get('admin/settlements', { query: { limit: 100 } });
-			const tableRows = rows.map((row) => ['<code dir="ltr">' + ui.escape(row.settlement_reference || row.reference) + '</code>', ui.status(row.status), ui.date(row.period_start), ui.date(row.period_end), ui.money(minorToDecimal(row.base_cost_minor), row.currency), ui.money(minorToDecimal(row.customer_charge_minor), row.currency), ui.money(minorToDecimal(row.reseller_share_minor), row.currency)]);
-			setContent(ui.pageHead(pageMeta.settlements[0], pageMeta.settlements[1]) + '<div class="ar-alert ar-alert--warning">' + ui.icon('info') + '<div><strong>حسابداری داخلی و شبیه‌سازی‌شده</strong><p>این رکوردها خلاصه حسابداری داخلی‌اند و نشان‌دهنده پرداخت یا تسویه خارجی آروان‌کلاد نیستند.</p></div></div><article class="ar-card" style="margin-top:16px">' + table(['مرجع', 'وضعیت', 'شروع دوره', 'پایان دوره', 'هزینه پایه', 'دریافت مشتری', 'سهم فروشنده'], tableRows, 'تسویه داخلی ثبت نشده است') + '</article>');
+			const collection = await api.getCollection('admin/settlements', { query: { limit: 25, page: state.collectionPage } });
+			const tableRows = collection.items.map((row) => ['<code dir="ltr">' + ui.escape(row.settlement_reference || row.reference) + '</code>', ui.status(row.status), ui.date(row.period_start), ui.date(row.period_end), ui.money(minorToDecimal(row.base_cost_minor), row.currency), ui.money(minorToDecimal(row.customer_charge_minor), row.currency), ui.money(minorToDecimal(row.reseller_share_minor), row.currency)]);
+			setContent(ui.pageHead(pageMeta.settlements[0], pageMeta.settlements[1]) + '<div class="ar-alert ar-alert--warning">' + ui.icon('info') + '<div><strong>حسابداری داخلی و شبیه‌سازی‌شده</strong><p>این رکوردها خلاصه حسابداری داخلی‌اند و نشان‌دهنده پرداخت یا تسویه خارجی آروان‌کلاد نیستند.</p></div></div><article class="ar-card" style="margin-top:16px">' + collectionTable(['مرجع', 'وضعیت', 'شروع دوره', 'پایان دوره', 'هزینه پایه', 'دریافت مشتری', 'سهم فروشنده'], collection, tableRows, 'تسویه داخلی ثبت نشده است') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.settlements[0], pageMeta.settlements[1]) + ui.error(error, 'refresh-page')); }
 	}
 
@@ -192,10 +204,9 @@
 	async function renderAudit() {
 		setContent(ui.loading());
 		try {
-			const rows = await api.get('admin/audit-logs', { query: { limit: 100 } });
-			const filtered = filterRows(rows, ['event_type', 'object_type', 'object_id', 'request_id', 'actor_user_id']);
-			const tableRows = filtered.map((row) => ['<code dir="ltr">#' + ui.escape(row.id) + '</code>', '<code dir="ltr">' + ui.escape(row.event_type) + '</code>', ui.escape(row.object_type), '<code dir="ltr">' + ui.escape(row.object_id || '—') + '</code>', ui.escape(row.actor_user_id ? '#' + row.actor_user_id : 'system'), '<code dir="ltr">' + ui.escape(row.request_id || '—') + '</code>', ui.date(row.created_at)]);
-			setContent(ui.pageHead(pageMeta.audit[0], pageMeta.audit[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'رویداد، هدف، بازیگر یا Request ID' }) + table(['ردیف', 'رویداد', 'نوع هدف', 'هدف', 'بازیگر', 'Request ID', 'زمان'], tableRows, 'رویدادی یافت نشد') + '</article>');
+			const collection = await api.getCollection('admin/audit-logs', { query: collectionQuery() });
+			const tableRows = collection.items.map((row) => ['<code dir="ltr">#' + ui.escape(row.id) + '</code>', '<code dir="ltr">' + ui.escape(row.event_type) + '</code>', ui.escape(row.object_type), '<code dir="ltr">' + ui.escape(row.object_id || '—') + '</code>', ui.escape(row.actor_user_id ? '#' + row.actor_user_id : 'system'), '<code dir="ltr">' + ui.escape(row.request_id || '—') + '</code>', ui.date(row.created_at)]);
+			setContent(ui.pageHead(pageMeta.audit[0], pageMeta.audit[1]) + '<article class="ar-card">' + toolbar({ placeholder: 'رویداد، هدف، بازیگر یا Request ID' }) + collectionTable(['ردیف', 'رویداد', 'نوع هدف', 'هدف', 'بازیگر', 'Request ID', 'زمان'], collection, tableRows, 'رویدادی یافت نشد') + '</article>');
 		} catch (error) { setContent(ui.pageHead(pageMeta.audit[0], pageMeta.audit[1]) + ui.error(error, 'refresh-page')); }
 	}
 
@@ -266,16 +277,18 @@
 	let searchTimer;
 	content.addEventListener('input', (event) => {
 		if (!event.target.matches('[data-ar-search]')) return;
-		window.clearTimeout(searchTimer); state.search = event.target.value;
+		window.clearTimeout(searchTimer); state.search = event.target.value; state.collectionPage = 1; state.focusSearch = true;
 		searchTimer = window.setTimeout(() => renderPage(), 260);
 	});
 	content.addEventListener('change', (event) => {
-		if (event.target.matches('[data-ar-filter]')) { state.filter = event.target.value; renderPage(); }
+		if (event.target.matches('[data-ar-filter]')) { state.filter = event.target.value; state.collectionPage = 1; renderPage(); }
 	});
 	content.addEventListener('submit', (event) => {
 		if (event.target.id === 'ar-settings-form') { event.preventDefault(); saveSettings(event.target); }
 	});
 	content.addEventListener('click', async (event) => {
+		const pageButton = event.target.closest('[data-ar-page]');
+		if (pageButton && !pageButton.disabled) { state.collectionPage = Math.max(1, Number(pageButton.dataset.arPage) || 1); state.focusCollection = true; await renderPage(); return; }
 		const refund = event.target.closest('[data-ar-refund]');
 		if (refund) {
 			const accepted = await ui.confirm({ title: 'بازپرداخت پرداخت Mock', description: 'این عملیات دفترکل کیف پول را تغییر می‌دهد.', notice: 'مرجع پرداخت را بررسی کنید', detail: refund.dataset.arRefund, confirmLabel: 'تأیید بازپرداخت', danger: true });
