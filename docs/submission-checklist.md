@@ -22,7 +22,10 @@
 - [x] UI error mapping hides raw backend detail and preserves stable codes.
 - [x] Secret-pattern/debug-output scan completed without exposed credential material.
 
-## Validation
+## Historical validation (baseline only)
+
+The checked items below record the historical approved baseline, not the current
+release-polish branch. Current-branch validation remains outstanding.
 
 - [x] JavaScript syntax checked with `node --check`.
 - [x] `git diff --check` passes.
@@ -31,6 +34,10 @@
 - [x] Complete Mock REST/domain lifecycle exercised by the no-network harness.
 - [ ] Keyboard and screen-reader sanity pass completed.
 - [ ] Visual acceptance recorded at 375, 768, 1024, and 1440px.
+
+Before release, complete every current-branch gate in
+[`release-checklist.md`](release-checklist.md). Do not infer a current pass from the
+historical checkboxes above.
 
 ## Clean package
 

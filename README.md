@@ -7,8 +7,7 @@
 [![Plugin](https://img.shields.io/badge/Plugin-v1.1.0-08A4C7?logo=wordpress&logoColor=white)](arvan-reseller/arvan-reseller.php)
 [![WordPress](https://img.shields.io/badge/WordPress-6.4%2B-21759B?logo=wordpress&logoColor=white)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
-[![PHPStan](https://img.shields.io/badge/PHPStan-0_errors-1F9D68)](#quality-and-testing)
-[![Mock E2E](https://img.shields.io/badge/Mock_E2E-passing-1F9D68)](#quality-and-testing)
+[![CI](https://github.com/Fatima-Setayesh/arvancloud-commerce-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Fatima-Setayesh/arvancloud-commerce-plugin/actions/workflows/ci.yml)
 [![FA / EN](https://img.shields.io/badge/Customer_UI-FA_%2F_EN-1473E6)](#product-tour)
 [![License](https://img.shields.io/badge/License-GPL--2.0%2B-22A06B)](arvan-reseller/readme.txt)
 
@@ -32,10 +31,11 @@ Persian and English. It does **not** claim or depict paid Live provisioning.
 ![Real Mock Cloud Server purchase and provisioning demo](docs/demo/arvan-reseller-demo.gif)
 
 > [!IMPORTANT]
-> Mock Mode is complete, heavily tested, and the safe default. The narrow Live
-> adapter is implemented and code-reviewed, but a real ArvanCloud Machine User
-> connection has not been verified by an authorized human. This is not presented
-> as an official ArvanCloud product or certified partnership.
+> Mock Mode is the safe default. Historical baseline checks are recorded in
+> [PROJECT_STATUS.md](PROJECT_STATUS.md); the current release-polish branch has
+> not been test-run. The narrow Live adapter is implemented, but a real
+> ArvanCloud Machine User connection has not been verified by an authorized
+> human. This is not an official ArvanCloud product or certified partnership.
 
 ArvanCloud Commerce is a standalone WordPress plugin built around ArvanCloud Cloud
 Server reseller APIs. It combines a theme-independent public storefront, bilingual
@@ -58,6 +58,14 @@ a third-party commerce plugin, or a particular WordPress theme.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the detailed implementation and
 verification matrix.
+
+## Portfolio highlights
+
+- Exact fixed-scale wallet, quote, billing, invoice, and settlement presentation.
+- Server-paginated customer/admin operations with bounded search and honest empty states.
+- Theme-safe embedded shortcodes plus isolated standalone Storefront and Portal pages.
+- Idempotent provisioning, recovery/manual-review states, redacted audit events, and bounded Cron work.
+- Keyboard-aware dialogs/drawers, FA/EN customer UI, responsive layouts, and reduced-motion support.
 
 ## Product Tour
 
@@ -218,7 +226,7 @@ Customer identity is always derived server-side.
 | Area | Current routes |
 | --- | --- |
 | Configuration | `GET/PUT/PATCH /admin/settings`, `POST /admin/connection-test` |
-| Operations | `POST /admin/cron/run`, `POST /admin/reconciliation/run`, `GET /admin/health` |
+| Operations | `GET /admin/overview`, `POST /admin/cron/run`, `POST /admin/reconciliation/run`, `GET /admin/health` |
 | Commerce | `GET /admin/customers`, `/wallets`, `/payments`, `/orders`, `/resources`, `/usage` |
 | Finance and audit | `POST /admin/payments/{reference}/refund`, `GET /admin/settlements`, `GET /admin/audit-logs` |
 
@@ -227,7 +235,9 @@ and ownership rules live in the [backend contract](docs/backend.md).
 
 ## Quality and testing
 
-Latest verified results on the approved product baseline:
+The following results belong only to historical baseline commit
+`b0a0b53419bd6bff4037571d0c95c4cf53b1e888`; they are not results for the current
+branch:
 
 | Check | Result |
 | --- | --- |
@@ -245,12 +255,10 @@ Latest verified results on the approved product baseline:
 | Secret and debug scan | **PASS** |
 | Browser Mock provisioning and retry stability | **PASS** |
 
-PHPCS is intentionally **not** represented as green. The current baseline reports
-approximately **2,252 errors and 217 warnings across 34 files**, primarily existing
-WordPress coding-standard, formatting, whitespace, naming, alignment, and CRLF debt.
-Reviewed samples exposed no known release-critical correctness or security defect.
-Repository-wide PHPCBF was intentionally deferred to avoid a large, risky cosmetic
-pre-release diff.
+The current release-polish branch intentionally has no local validation result.
+CI is configured to run Composer install, PHP syntax checks, PHPUnit, and PHPStan
+after the branch is pushed or proposed as a pull request. PHPCS is not part of that
+workflow; historical style debt remains a separate cleanup concern.
 
 ## Installation
 
@@ -265,8 +273,8 @@ pre-release diff.
 
 1. Install the `arvan-reseller/` plugin directory or its release package under
    `wp-content/plugins/`.
-2. Activate **Arvan Reseller** in WordPress.
-3. Open **Arvan Reseller → Setup/Settings** and keep API Mode on **Mock** for
+2. Activate **ArvanCloud Commerce** in WordPress.
+3. Open **ArvanCloud Commerce → Setup/Settings** and keep API Mode on **Mock** for
    development and demonstrations.
 4. Review the activation-created Storefront and Customer Portal pages.
 5. Grant `manage_arvan_reseller` only to trusted administrators.
@@ -329,6 +337,9 @@ Further documentation:
 [Live API checklist](docs/live-api-checklist.md) ·
 [project status](PROJECT_STATUS.md)
 
+Project governance: [security policy](SECURITY.md) · [GPL-2.0-or-later license](LICENSE) ·
+[release checklist](docs/release-checklist.md)
+
 ## Live API boundary
 
 The Live adapter is intentionally narrow and currently implements only these
@@ -364,7 +375,7 @@ operation.
 - Billing uses snapshotted hourly flavor pricing and exact UTC windows, not an
   official per-server usage endpoint.
 - Visitor-triggered WP-Cron is not a guaranteed scheduler.
-- PHPCS style debt remains documented and non-release-critical.
+- Current-branch automated and manual acceptance checks remain outstanding; release is blocked until they pass.
 
 ---
 

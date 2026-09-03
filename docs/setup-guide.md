@@ -12,9 +12,9 @@ No commerce plugin, page builder, or JavaScript package installation is required
 ## Install and activate
 
 1. Copy the packaged `arvan-reseller` directory into `wp-content/plugins`.
-2. Activate **Arvan Reseller**.
+2. Activate **ArvanCloud Commerce**.
 3. Activation performs versioned custom-table migrations, creates/checks Store and Portal pages idempotently, and schedules usage, reconciliation, and internal settlement jobs.
-4. Open **Arvan Reseller → Setup**.
+4. Open **ArvanCloud Commerce → Setup**.
 
 ## Setup wizard
 
@@ -26,7 +26,7 @@ Complete the wizard in order:
 4. Keep mode on **Mock** and retain the deterministic Mock region/zone for the first demo.
 5. Leave the API key blank in Mock. The field never preloads a stored key.
 6. Set reseller share between 0% and the backend maximum of 20%.
-7. Confirm the three-letter currency code and wallet thresholds/limits. The current default contract uses `IRR` at four-decimal internal precision.
+7. Confirm the three-letter currency code and wallet thresholds/limits. The current default contract uses `IRR` at four-decimal internal precision. The email checkbox controls only low-balance email; financial and service lifecycle events remain available inside the customer portal.
 8. Choose suspension and termination policies deliberately.
 9. Confirm the activation-created pages. Use **Create/check pages** only to repair missing pages; repeating it is safe.
 10. Save settings and review readiness.
@@ -35,7 +35,7 @@ Complete the wizard in order:
 
 Enable WordPress registration only if the site should allow self-registration. Otherwise create customers with normal WordPress user administration. The portal delegates login, registration, password reset, session cookies, and password storage to WordPress.
 
-Generated pages use `[arvan_reseller_store]` and `[arvan_reseller_portal]`. They work with a minimal default theme and can also be placed manually.
+Generated pages use `[arvan_reseller_store]` and `[arvan_reseller_portal]`. Recorded generated page IDs use the isolated standalone layout. A shortcode placed manually on another page stays embedded inside the host theme and does not change the document language/direction or hide theme chrome.
 
 ## Mock demonstration
 
@@ -65,4 +65,4 @@ Deactivation removes schedules/locks but retains customer and financial records.
 - Network/timeout: check WordPress REST availability and HTTPS; safe GETs may retry automatically.
 - Provisioning recovery required: run admin reconciliation; do not create a duplicate server.
 - Live key cannot be saved: enable libsodium or OpenSSL with AES-256-GCM; credential storage fails closed when authenticated encryption is unavailable.
-- Provisioned but unresolved order: leave the order in recovery state and run reconciliation; do not submit a second order.
+- Provisioned but unresolved order: leave the order in recovery state and run reconciliation; do not submit a second order. If no safe remote Resource ID exists, the order moves to explicit manual review and is not retried automatically.

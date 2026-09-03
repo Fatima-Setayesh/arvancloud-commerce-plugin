@@ -1,9 +1,12 @@
 # Project status
 
-This status describes the approved product baseline at
-`b0a0b53419bd6bff4037571d0c95c4cf53b1e888`. It separates complete Mock behavior,
-implemented but unverified Live behavior, internal-only operations, and documented
-external limitations.
+This status separates implementation scope from verification evidence. The
+verification record below applies only to the historical approved baseline at
+`b0a0b53419bd6bff4037571d0c95c4cf53b1e888`, not to the current release-polish
+branch. No test or manual runtime result has been recorded for the current branch.
+The three release-showcase commits between that baseline and the merge into `main`
+changed documentation, screenshots, and presentation assets only; this new hardening
+branch also changes runtime code and therefore requires fresh validation.
 
 | Capability | Status | Evidence or boundary |
 | --- | --- | --- |
@@ -28,7 +31,7 @@ external limitations.
 | Live adapter | **LIVE UNVERIFIED** | Code and host/operation allowlists exist; no real Machine User credential has been human-verified |
 | Commercial products | **CLOUD SERVER ONLY** | CDN and Object Storage purchase flows are intentionally absent |
 
-## Verification record
+## Historical verification record
 
 - Standalone invariant harness: **29 passed, 0 failed**.
 - PHPUnit: **11 tests, 51 assertions**.
@@ -46,11 +49,20 @@ external limitations.
   top-up, one retry creates exactly one stable resource and repeated refresh creates
   no duplicate.
 
-PHPCS currently reports **2,252 errors and 217 warnings across 34 files**. The
-findings are predominantly formatting, whitespace, alignment, naming, and CRLF
-debt. Security-adjacent samples were inspected; no known release-critical
-correctness or security finding remains. The repository is not represented as
-PHPCS-clean.
+Those results must not be treated as current-branch evidence. The current branch
+adds a future CI workflow for PHP syntax, PHPUnit, and PHPStan, but it has not been
+executed as part of this release-polish work. PHPCS is outside that CI workflow and
+the historical style-debt baseline has not been remeasured. For transparency, that
+historical baseline reported **2,252 errors and 217 warnings across 34 files**,
+primarily formatting, whitespace, alignment, naming, and CRLF debt; those counts are
+not asserted for the current branch.
+
+## Current release gate
+
+Release remains blocked until the checks in
+[docs/release-checklist.md](docs/release-checklist.md) are run and reviewed. Live
+release additionally remains blocked on an authorized, least-privilege connection
+test and separate approval before any billable provisioning.
 
 ## Live and operational limitations
 

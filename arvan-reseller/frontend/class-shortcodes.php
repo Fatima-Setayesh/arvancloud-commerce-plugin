@@ -29,7 +29,7 @@ class Arvan_Reseller_Shortcodes {
 	}
 
 	/**
-	 * Mark only shortcode product pages for scoped theme isolation.
+	 * Mark shortcode pages and distinguish generated standalone surfaces from embeds.
 	 *
 	 * @param string[] $classes Existing body classes.
 	 * @return string[]
@@ -42,6 +42,7 @@ class Arvan_Reseller_Shortcodes {
 
 		$classes[] = 'arvan-reseller-product-page';
 		$classes[] = 'arvan-reseller-' . $context . '-page';
+		$classes[] = $this->is_standalone_product_page( $context ) ? 'arvan-reseller-standalone-page' : 'arvan-reseller-embedded-page';
 		return array_values( array_unique( $classes ) );
 	}
 
@@ -57,7 +58,8 @@ class Arvan_Reseller_Shortcodes {
 			return (bool) $show;
 		}
 
-		return '' !== $this->product_page_context() ? false : (bool) $show;
+		$context = $this->product_page_context();
+		return '' !== $context && $this->is_standalone_product_page( $context ) ? false : (bool) $show;
 	}
 
 	/** Enqueue before wp_head when a generated or manually configured page contains a product shortcode. @return void */
@@ -102,5 +104,20 @@ class Arvan_Reseller_Shortcodes {
 		}
 
 		return has_shortcode( $post->post_content, 'arvan_reseller_store' ) ? 'store' : '';
+	}
+
+	/**
+	 * Determine whether setup created and recorded the current product page.
+	 *
+	 * @param string $context Product page key.
+	 * @return bool
+	 */
+	private function is_standalone_product_page( $context ) {
+		$post  = get_queried_object();
+		$pages = get_option( 'arvan_reseller_pages', array() );
+
+		return $post instanceof WP_Post
+			&& isset( $pages[ $context ] )
+			&& absint( $pages[ $context ] ) === (int) $post->ID;
 	}
 }

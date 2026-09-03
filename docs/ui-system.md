@@ -17,7 +17,7 @@ All product selectors are scoped beneath `.arvan-reseller-app`. Theme and WordPr
 - radius, elevation, typography, icon sizes, containers, z-index;
 - 160–220ms motion and shared easing.
 
-Components consume these properties instead of carrying product colors independently. A system Persian fallback stack is used because no licensed local font file was available; no font was downloaded.
+Components consume these properties instead of carrying product colors independently. The bundled `Vazirmatn.woff2` is loaded locally and covered by the adjacent SIL Open Font License in `assets/fonts/OFL.txt`; system fonts remain fallbacks and no runtime font CDN is used.
 
 ## Components
 

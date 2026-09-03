@@ -18,7 +18,7 @@ Official references:
 
 ## WordPress configuration
 
-1. Open **Arvan Reseller → Setup/Settings → API connection** over HTTPS.
+1. Open **ArvanCloud Commerce → Setup/Settings → API connection** over HTTPS.
 2. Paste the key directly into the password-style protected field.
 3. Save. Confirm only the “configured” indicator is returned; the key must not be preloaded.
 4. Keep Mock mode while completing the product demo.

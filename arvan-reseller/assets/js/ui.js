@@ -154,6 +154,11 @@
 
 	function translateDom(root) {
 		const scope = root || document;
+		const owner = scope.matches && scope.matches('.arvan-reseller-app') ? scope : (scope.closest && scope.closest('.arvan-reseller-app'));
+		if (!owner) {
+			if (scope.querySelectorAll) scope.querySelectorAll('.arvan-reseller-app').forEach((app) => translateDom(app));
+			return;
+		}
 		const language = storedLanguage();
 		const nodes = [];
 		if (scope.matches && scope.matches('[data-ar-i18n]')) nodes.push(scope);
@@ -212,26 +217,20 @@
 		if (persist) {
 			try { window.localStorage.setItem(languageStorageKey, value); } catch (error) { /* Preference remains active for this page. */ }
 		}
-		document.documentElement.dataset.arLanguage = value;
 		const apps = Array.from(document.querySelectorAll('.arvan-reseller-app'));
-		const languageEnabledApps = apps.filter((app) => !app.hasAttribute('data-ar-language-fixed'));
-		if (languageEnabledApps.length) {
-			document.documentElement.lang = value;
-			document.documentElement.dir = value === 'en' ? 'ltr' : 'rtl';
-		}
 		apps.forEach((app) => {
 			if (app.hasAttribute('data-ar-language-fixed')) {
 				app.lang = app.dataset.arLanguageFixed || 'fa'; app.dir = 'rtl'; return;
 			}
 			app.lang = value;
 			app.dir = value === 'en' ? 'ltr' : 'rtl';
+			app.querySelectorAll('[data-ar-language-value]').forEach((button) => {
+				const selected = button.dataset.arLanguageValue === value;
+				button.classList.toggle('is-selected', selected);
+				button.setAttribute('aria-pressed', String(selected));
+			});
+			translateDom(app);
 		});
-		document.querySelectorAll('[data-ar-language-value]').forEach((button) => {
-			const selected = button.dataset.arLanguageValue === value;
-			button.classList.toggle('is-selected', selected);
-			button.setAttribute('aria-pressed', String(selected));
-		});
-		translateDom(document);
 		document.dispatchEvent(new CustomEvent('arvan:language-change', { detail: { language: value, direction: value === 'en' ? 'ltr' : 'rtl' } }));
 	}
 
@@ -377,8 +376,50 @@
 		return persianDigits(match[1] + grouped + (fraction ? '.' + fraction : ''));
 	}
 
+	const exactMoney = {
+		parse(value) {
+			if (typeof value === 'bigint') return value;
+			const source = stableDigits(value === null || typeof value === 'undefined' ? '' : value).replace(/,/g, '').trim();
+			const match = source.match(/^(-?)(\d+)(?:\.(\d{0,4}))?$/);
+			if (!match) return null;
+			const fraction = (match[3] || '').padEnd(4, '0');
+			const minor = (BigInt(match[2]) * 10000n) + BigInt(fraction || '0');
+			return match[1] ? -minor : minor;
+		},
+		format(value) {
+			const minor = this.parse(value);
+			if (minor === null) return null;
+			const negative = minor < 0n; const absolute = negative ? -minor : minor;
+			return (negative ? '-' : '') + String(absolute / 10000n) + '.' + String(absolute % 10000n).padStart(4, '0');
+		},
+		fromMinor(value) {
+			const source = stableDigits(value === null || typeof value === 'undefined' ? '' : value).trim();
+			if (!/^-?\d+$/.test(source)) return null;
+			return this.format(BigInt(source));
+		},
+		add(left, right) {
+			const a = this.parse(left); const b = this.parse(right);
+			return a === null || b === null ? null : this.format(a + b);
+		},
+		sum(values) {
+			let total = 0n;
+			for (const value of values || []) {
+				const minor = this.parse(value);
+				if (minor === null) return null;
+				total += minor;
+			}
+			return this.format(total);
+		},
+		compare(left, right) {
+			const a = this.parse(left); const b = this.parse(right);
+			if (a === null || b === null) return null;
+			return a === b ? 0 : (a < b ? -1 : 1);
+		}
+	};
+
 	function money(value, currency) {
-		const amount = decimal(value, 4);
+		const fixed = exactMoney.format(value);
+		const amount = fixed === null ? '—' : decimal(fixed, 4);
 		if (amount === '—') return '<span class="ar-money ar-money--unavailable">—</span>';
 		return '<span class="ar-money"><bdi>' + escape(amount) + '</bdi> <small dir="ltr">' + escape(currency || (window.ArvanResellerRuntime.settings || {}).currency || 'IRR') + '</small></span>';
 	}
@@ -447,13 +488,21 @@
 		const root = document.querySelector('.arvan-reseller-app .ar-modal-root');
 		if (!root) return null;
 		const previousFocus = document.activeElement;
-		root.innerHTML = '<div class="ar-modal-backdrop" data-ar-modal-backdrop><section class="ar-modal" role="dialog" aria-modal="true" aria-labelledby="ar-modal-title"><div class="ar-modal__head"><div><h2 id="ar-modal-title">' + escape(options.title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button class="ar-icon-button" type="button" data-ar-modal-close aria-label="بستن">' + icon('close') + '</button></div><div class="ar-modal__body">' + (options.body || '') + '</div></section></div>';
+		const app = root.closest('.arvan-reseller-app');
+		const background = app ? Array.from(app.children).filter((node) => node !== root) : [];
+		const previousInert = background.map((node) => node.inert);
+		const previousOverflow = document.body.style.overflow;
+		background.forEach((node) => { node.inert = true; });
+		document.body.style.overflow = 'hidden';
+		root.innerHTML = '<div class="ar-modal-backdrop" data-ar-modal-backdrop><section class="ar-modal" role="dialog" aria-modal="true" aria-labelledby="ar-modal-title" tabindex="-1"><div class="ar-modal__head"><div><h2 id="ar-modal-title">' + escape(options.title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button class="ar-icon-button" type="button" data-ar-modal-close aria-label="بستن">' + icon('close') + '</button></div><div class="ar-modal__body">' + (options.body || '') + '</div></section></div>';
 		const backdrop = root.querySelector('[data-ar-modal-backdrop]');
 		const dialog = root.querySelector('.ar-modal');
 		translateDom(root);
 		const close = () => {
 			root.innerHTML = '';
 			document.removeEventListener('keydown', keyHandler);
+			background.forEach((node, index) => { node.inert = previousInert[index]; });
+			document.body.style.overflow = previousOverflow;
 			if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
 			if (typeof options.onClose === 'function') options.onClose();
 		};
@@ -461,8 +510,9 @@
 			if (event.key === 'Escape') close();
 			if (event.key === 'Tab') {
 				const focusable = Array.from(dialog.querySelectorAll('button, input, select, textarea, a[href]')).filter((node) => !node.disabled);
-				if (!focusable.length) return;
+				if (!focusable.length) { event.preventDefault(); dialog.focus(); return; }
 				const first = focusable[0]; const last = focusable[focusable.length - 1];
+				if (!dialog.contains(document.activeElement)) { event.preventDefault(); first.focus(); return; }
 				if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
 				if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 			}
@@ -597,7 +647,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, setText, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, exactMoney, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, setText, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});

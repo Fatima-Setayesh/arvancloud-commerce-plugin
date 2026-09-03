@@ -254,6 +254,17 @@ class Arvan_Reseller_REST_API {
 		);
 		register_rest_route(
 			$n,
+			'/admin/overview',
+			array_merge(
+				$admin,
+				array(
+					'methods'  => WP_REST_Server::READABLE,
+					'callback' => array( $this, 'admin_overview' ),
+				)
+			)
+		);
+		register_rest_route(
+			$n,
 			'/admin/payments',
 			array_merge(
 				$admin,
@@ -501,8 +512,11 @@ class Arvan_Reseller_REST_API {
 		$currency = $this->configured_currency();
 		$row      = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
 		if ( null === $row ) {
-			$this->wallet->create_wallet( get_current_user_id(), $currency );
+			$created = $this->wallet->create_wallet( get_current_user_id(), $currency );
 			$row = $this->database->get_wallet_by_customer_id( get_current_user_id(), $currency );
+			if ( null === $created || null === $row ) {
+				return new WP_Error( 'arvan_reseller_wallet_unavailable', __( 'The wallet is temporarily unavailable. Please try again later.', 'arvan-reseller' ), array( 'status' => 503 ) );
+			}
 		} return array(
 			'balance'   => Arvan_Reseller_Money::format( (int) $row['balance_minor'] ),
 			'threshold' => Arvan_Reseller_Money::format( (int) $row['threshold_minor'] ),
@@ -554,6 +568,9 @@ class Arvan_Reseller_REST_API {
 		return $value; }
 	public function update_settings( $request ) {
 		$p = $this->params( $request );
+		if ( array_key_exists( 'notification_enabled', $p ) && ! array_key_exists( 'email_notifications_enabled', $p ) ) {
+			$p['email_notifications_enabled'] = ! empty( $p['notification_enabled'] );
+		}
 		if ( ! empty( $p['delete_api_key'] ) && ! empty( $p['api_key'] ) ) {
 			return new WP_Error( 'arvan_reseller_conflicting_key_action', __( 'API key rotation and deletion cannot be requested together.', 'arvan-reseller' ), array( 'status' => 400 ) );
 		}
@@ -610,7 +627,7 @@ class Arvan_Reseller_REST_API {
 			),
 		); }
 	public function admin_payments( $request ) {
-		return $this->collection( $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->fetch_limit( $request ), $this->offset( $request ) ), $request ); }
+		return $this->collection( $this->payment->list_admin_payments( sanitize_key( (string) $request->get_param( 'status' ) ), absint( $request->get_param( 'customer_id' ) ), $this->fetch_limit( $request ), $this->offset( $request ), $this->search( $request ) ), $request ); }
 	public function refund_payment( $request ) {
 		return $this->payment->refund_payment( sanitize_text_field( (string) $request['reference'] ) ); }
 	public function settlements( $request ) {
@@ -662,36 +679,87 @@ class Arvan_Reseller_REST_API {
 		$row = $this->database->mark_notification_read( absint( $request['id'] ), get_current_user_id() );
 		return null === $row ? new WP_Error( 'arvan_reseller_notification_not_found', __( 'Notification not found.', 'arvan-reseller' ), array( 'status' => 404 ) ) : $this->safe_notification( $row ); }
 	public function admin_customers( $request ) {
-		return $this->collection( array_map(
-			function ( $user ) {
-				return array(
-					'id'            => (int) $user->ID,
-					'display_name'  => (string) $user->display_name,
-					'email'         => (string) $user->user_email,
-					'registered_at' => (string) $user->user_registered,
-				);
-			},
-			get_users(
-				array(
-					'number' => $this->fetch_limit( $request ),
-					'offset' => $this->offset( $request ),
-					'fields' => array( 'ID', 'display_name', 'user_email', 'user_registered' ),
-				)
-			)
-		), $request ); }
+		$rows = $this->database->get_commerce_customers( $this->configured_currency(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) );
+		return $this->collection(
+			array_map(
+				function ( $row ) {
+					$wallet = empty( $row['wallet_id'] ) ? null : array(
+						'id'          => (int) $row['wallet_id'],
+						'customer_id' => (int) $row['wallet_customer_id'],
+						'balance'     => Arvan_Reseller_Money::format( (int) $row['balance_minor'] ),
+						'threshold'   => Arvan_Reseller_Money::format( (int) $row['threshold_minor'] ),
+						'currency'    => (string) $row['wallet_currency'],
+						'status'      => (string) $row['wallet_status'],
+					);
+					return array(
+						'id'             => (int) $row['ID'],
+						'display_name'   => (string) $row['display_name'],
+						'email'          => (string) $row['user_email'],
+						'registered_at'  => (string) $row['user_registered'],
+						'wallet'         => $wallet,
+						'resource_count' => (int) $row['resource_count'],
+					);
+				},
+				$rows
+			),
+			$request
+		); }
+	public function admin_overview() {
+		$aggregates = $this->database->get_admin_overview_aggregates();
+		$resources  = array( 'active' => 0, 'suspended' => 0, 'failed' => 0 );
+		foreach ( $aggregates['resource_status_counts'] as $row ) {
+			$status = (string) $row['status'];
+			$count  = (int) $row['item_count'];
+			if ( in_array( $status, array( 'active', 'provisioned' ), true ) ) {
+				$resources['active'] += $count;
+			} elseif ( 'suspended' === $status ) {
+				$resources['suspended'] += $count;
+			} elseif ( in_array( $status, array( 'failed', 'error' ), true ) ) {
+				$resources['failed'] += $count;
+			}
+		}
+		$format_totals = static function ( $rows ) {
+			return array_map(
+				static function ( $row ) {
+					return array(
+						'currency' => (string) $row['currency'],
+						'amount'   => Arvan_Reseller_Money::format( (int) $row['amount_minor'] ),
+					);
+				},
+				$rows
+			);
+		};
+		$cron = get_option( 'arvan_reseller_cron_health', array( 'status' => 'never_run' ) );
+		return array(
+			'commerce_customer_count'       => (int) $aggregates['commerce_customer_count'],
+			'active_resource_count'         => $resources['active'],
+			'suspended_resource_count'      => $resources['suspended'],
+			'failed_resource_count'         => $resources['failed'],
+			'pending_payment_count'         => (int) $aggregates['pending_payment_count'],
+			'wallet_balances'               => $format_totals( $aggregates['wallet_balance_minor'] ),
+			'current_billed_amounts'        => $format_totals( $aggregates['current_billed_amount_minor'] ),
+			'reconciliation_warning_count' => (int) $aggregates['reconciliation_warning_count'],
+			'cron'                          => array(
+				'status'          => sanitize_key( (string) ( $cron['status'] ?? 'never_run' ) ),
+				'last_success_at' => sanitize_text_field( (string) ( $cron['last_success_at'] ?? '' ) ),
+				'last_failure_at' => sanitize_text_field( (string) ( $cron['last_failure_at'] ?? '' ) ),
+				'processed'       => absint( $cron['processed'] ?? 0 ),
+				'failed'          => absint( $cron['failed'] ?? 0 ),
+			),
+		); }
 	public function admin_wallets( $request ) {
 		return $this->collection( array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_orders( $request ) {
-		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->get_results_by( 'orders', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this->provisioning, 'serialize_order' ), $this->database->search_results( 'orders', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_resources( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->get_results_by( 'resources', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_resource' ), $this->database->search_results( 'resources', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_usage( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->get_results_by( 'usage_records', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_usage' ), $this->database->search_results( 'usage_records', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function run_reconciliation() {
 		$this->database->create_audit_log( 'manual_reconciliation_started', 'cron', 'reconciliation' );
 		return $this->cron->run_reconciliation(); }
 	public function audit_logs( $request ) {
-		return $this->collection( array_map( array( $this, 'safe_audit' ), $this->database->get_results_by( 'audit_logs', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
+		return $this->collection( array_map( array( $this, 'safe_audit' ), $this->database->search_results( 'audit_logs', array(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 
 	private function list_args() {
 		return array(
@@ -708,6 +776,11 @@ class Arvan_Reseller_REST_API {
 				'maximum'           => 1000000,
 				'default'           => 1,
 				'sanitize_callback' => 'absint',
+			),
+			'search' => array(
+				'type'              => 'string',
+				'maxLength'         => 100,
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 		); }
 	private function region_args() {
@@ -783,6 +856,7 @@ class Arvan_Reseller_REST_API {
 				'sanitize_callback' => 'absint',
 			),
 			'notification_enabled'     => array( 'type' => 'boolean' ),
+			'email_notifications_enabled' => array( 'type' => 'boolean' ),
 			'delete_data_on_uninstall' => array( 'type' => 'boolean' ),
 			'reseller_share_percent'   => $money,
 			'default_wallet_threshold' => $money,
@@ -806,6 +880,8 @@ class Arvan_Reseller_REST_API {
 		return ( $this->page( $request ) - 1 ) * $this->limit( $request ); }
 	private function fetch_limit( $request ) {
 		return $this->limit( $request ) + 1; }
+	private function search( $request ) {
+		return sanitize_text_field( (string) $request->get_param( 'search' ) ); }
 	private function collection( array $items, $request ) {
 		$limit    = $this->limit( $request );
 		$has_more = count( $items ) > $limit;

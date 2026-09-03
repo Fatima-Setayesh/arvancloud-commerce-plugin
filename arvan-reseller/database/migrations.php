@@ -20,6 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 function arvan_reseller_run_migrations() {
 	$current_version  = (string) get_option( 'arvan_reseller_db_version', '0.0.0' );
 	$required_version = defined( 'ARVAN_RESELLER_DB_VERSION' ) ? ARVAN_RESELLER_DB_VERSION : ARVAN_RESELLER_VERSION;
+	arvan_reseller_migrate_notification_setting();
 
 	if ( version_compare( $current_version, $required_version, '>=' ) ) {
 		return true;
@@ -39,6 +40,16 @@ function arvan_reseller_run_migrations() {
 	update_option( 'arvan_reseller_db_version', $required_version, false );
 
 	return true;
+}
+
+/** Preserve the legacy email preference while making its scope explicit. */
+function arvan_reseller_migrate_notification_setting() {
+	$settings = get_option( 'arvan_reseller_settings', array() );
+	if ( ! is_array( $settings ) || array_key_exists( 'email_notifications_enabled', $settings ) ) {
+		return;
+	}
+	$settings['email_notifications_enabled'] = ! isset( $settings['notification_enabled'] ) || ! empty( $settings['notification_enabled'] ) ? 1 : 0;
+	update_option( 'arvan_reseller_settings', $settings, false );
 }
 
 /**

@@ -11,6 +11,19 @@
 
 There is no frontend framework or build pipeline. The browser applications are modular vanilla JavaScript and scoped CSS.
 
+## Embedded and standalone modes
+
+The same shortcodes support two explicit presentation modes:
+
+- Activation/setup-created Storefront and Portal page IDs receive a standalone
+  body class. Only those pages hide theme chrome and apply full-page canvas/layout
+  rules.
+- A shortcode inserted manually into any other page is embedded. Its styles and
+  language behavior stay within `.arvan-reseller-app`, leaving the host theme,
+  WordPress admin bar, document language, and document direction untouched.
+
+The mode is determined from the recorded page ID, not by guessing from page content.
+
 ## REST client
 
 The client receives `rest_url()` and a `wp_rest` nonce through an inline JSON runtime object. It sends authenticated same-origin requests with `X-WP-Nonce`, JSON headers, an AbortController timeout, normalized safe errors, session-expiration events, and bounded retries for GET requests or idempotent writes only.
@@ -41,8 +54,15 @@ uses next/previous navigation instead of inventing totals. No reset/seed endpoin
 shipped: demos use normal protected Mock workflows and test harnesses, avoiding a
 production mutation surface whose only purpose would be synthetic data.
 
+Admin operation lists also accept bounded, sanitized server-side search. Customer
+lists contain only users with commerce evidence (wallet, payment, order, or resource)
+and include their configured-currency wallet balance and service count. Dashboard
+money and resource/payment totals come from the aggregate `/admin/overview` response,
+not from the currently visible table page.
+
 ## Polling and performance
 
-Only pending or recovery-relevant orders are polled. Polling stops on terminal states,
+Only pending or provisioning orders are polled. Polling stops on terminal states,
 after 15 attempts, while the page is hidden, or when navigation changes. Requests are
-bounded to 100 rows. Assets enqueue only when a shortcode or plugin admin page renders.
+bounded and list pages normally request 25 rows. Assets enqueue only when a shortcode
+or plugin admin page renders.

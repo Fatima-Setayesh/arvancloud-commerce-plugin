@@ -229,6 +229,109 @@ class Arvan_Reseller_Database {
 	}
 
 	/**
+	 * Get a bounded page with an allowlisted multi-column search.
+	 *
+	 * @param string $table Logical table key.
+	 * @param array  $where Equality conditions.
+	 * @param string $search Search term.
+	 * @param int    $limit Limit.
+	 * @param int    $offset Offset.
+	 * @return array
+	 */
+	public function search_results( $table, array $where, $search, $limit = 100, $offset = 0 ) {
+		$table_name = $this->get_table_name( $table );
+		$columns    = array(
+			'wallets'       => array( 'customer_id', 'currency', 'status' ),
+			'payments'      => array( 'payment_reference', 'customer_id', 'status', 'provider' ),
+			'orders'        => array( 'order_reference', 'customer_id', 'resource_id', 'status', 'failure_code', 'region' ),
+			'resources'     => array( 'resource_id', 'customer_id', 'region', 'status', 'remote_status' ),
+			'usage_records' => array( 'resource_id', 'customer_id', 'billing_reference', 'unit' ),
+			'settlements'   => array( 'settlement_reference', 'status', 'currency', 'adapter' ),
+			'audit_logs'    => array( 'event_type', 'object_type', 'object_id', 'request_id', 'actor_user_id', 'customer_id' ),
+		);
+
+		if ( '' === $table_name || ! isset( $columns[ $table ] ) || '' === trim( (string) $search ) ) {
+			return $this->get_results_by( $table, $where, $limit, $offset );
+		}
+
+		$args   = array();
+		$query  = "SELECT * FROM {$table_name}";
+		$query .= empty( $where ) ? '' : $this->build_where_clause( $where, $args );
+		$like   = '%' . $this->wpdb->esc_like( trim( (string) $search ) ) . '%';
+		$parts  = array();
+		foreach ( $columns[ $table ] as $column ) {
+			$parts[] = "{$column} LIKE %s";
+			$args[]  = $like;
+		}
+		$query .= ( empty( $where ) ? ' WHERE ' : ' AND ' ) . '(' . implode( ' OR ', $parts ) . ') ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[] = max( 1, absint( $limit ) );
+		$args[] = max( 0, absint( $offset ) );
+		$rows   = $this->wpdb->get_results( $this->wpdb->prepare( $query, $args ), ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Return WordPress users who participate in commerce, with page-local summaries.
+	 *
+	 * @param string $currency Wallet currency.
+	 * @param string $search Search term.
+	 * @param int    $limit Limit.
+	 * @param int    $offset Offset.
+	 * @return array
+	 */
+	public function get_commerce_customers( $currency, $search = '', $limit = 50, $offset = 0 ) {
+		$wallets   = $this->get_table_name( 'wallets' );
+		$payments  = $this->get_table_name( 'payments' );
+		$orders    = $this->get_table_name( 'orders' );
+		$resources = $this->get_table_name( 'resources' );
+		$users     = $this->wpdb->users;
+		$args      = array( $this->normalize_currency( $currency ) );
+		$query     = "SELECT u.ID, u.display_name, u.user_email, u.user_registered, w.id wallet_id, w.customer_id wallet_customer_id, w.balance_minor, w.threshold_minor, w.currency wallet_currency, w.status wallet_status, (SELECT COUNT(*) FROM {$resources} rc WHERE rc.customer_id = u.ID) resource_count FROM {$users} u INNER JOIN (SELECT customer_id FROM {$wallets} UNION SELECT customer_id FROM {$payments} UNION SELECT customer_id FROM {$orders} UNION SELECT customer_id FROM {$resources}) commerce ON commerce.customer_id = u.ID LEFT JOIN {$wallets} w ON w.customer_id = u.ID AND w.currency = %s";
+		$search    = trim( (string) $search );
+
+		if ( '' !== $search ) {
+			$like   = '%' . $this->wpdb->esc_like( $search ) . '%';
+			$query .= ' WHERE (u.display_name LIKE %s OR u.user_email LIKE %s OR u.ID LIKE %s)';
+			$args[] = $like;
+			$args[] = $like;
+			$args[] = $like;
+		}
+
+		$query .= ' ORDER BY u.ID DESC LIMIT %d OFFSET %d';
+		$args[] = max( 1, absint( $limit ) );
+		$args[] = max( 0, absint( $offset ) );
+		$rows   = $this->wpdb->get_results( $this->wpdb->prepare( $query, $args ), ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/** Return exact repository-wide aggregates for the protected admin overview. */
+	public function get_admin_overview_aggregates() {
+		$wallets   = $this->get_table_name( 'wallets' );
+		$payments  = $this->get_table_name( 'payments' );
+		$orders    = $this->get_table_name( 'orders' );
+		$resources = $this->get_table_name( 'resources' );
+		$usage     = $this->get_table_name( 'usage_records' );
+
+		$customer_count = $this->wpdb->get_var( "SELECT COUNT(*) FROM (SELECT customer_id FROM {$wallets} UNION SELECT customer_id FROM {$payments} UNION SELECT customer_id FROM {$orders} UNION SELECT customer_id FROM {$resources}) commerce" );
+		$resource_rows  = $this->wpdb->get_results( "SELECT status, COUNT(*) item_count FROM {$resources} GROUP BY status", ARRAY_A );
+		$wallet_rows    = $this->wpdb->get_results( "SELECT currency, COALESCE(SUM(balance_minor), 0) amount_minor FROM {$wallets} GROUP BY currency ORDER BY currency ASC", ARRAY_A );
+		$billed_rows    = $this->wpdb->get_results( "SELECT currency, COALESCE(SUM(total_charge_minor), 0) amount_minor FROM {$usage} GROUP BY currency ORDER BY currency ASC", ARRAY_A );
+		$pending_count  = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$payments} WHERE status = %s", 'pending' ) );
+		$warning_count  = $this->wpdb->get_var( "SELECT (SELECT COUNT(*) FROM {$orders} WHERE recovery_required = 1) + (SELECT COUNT(*) FROM {$resources} WHERE sync_failure_count > 0 OR last_error_code <> '') + (SELECT COUNT(*) FROM {$usage} WHERE uncovered_minor > 0)" );
+
+		return array(
+			'commerce_customer_count'       => (int) $customer_count,
+			'resource_status_counts'        => is_array( $resource_rows ) ? $resource_rows : array(),
+			'pending_payment_count'         => (int) $pending_count,
+			'wallet_balance_minor'          => is_array( $wallet_rows ) ? $wallet_rows : array(),
+			'current_billed_amount_minor'   => is_array( $billed_rows ) ? $billed_rows : array(),
+			'reconciliation_warning_count' => (int) $warning_count,
+		);
+	}
+
+	/**
 	 * Create or retrieve a customer wallet without a check-then-insert race.
 	 *
 	 * @param int    $customer_id Customer ID.
@@ -622,6 +725,24 @@ class Arvan_Reseller_Database {
 		return $this->get_results_by( 'resources', array( 'customer_id' => absint( $customer_id ) ), $limit, $offset );
 	}
 
+	/** Return a mutation-safe keyset page for zero-balance lifecycle policy. */
+	public function get_resources_for_balance_policy( $customer_id, $after_id = 0, $limit = 50 ) {
+		$table = $this->get_table_name( 'resources' );
+		$query = $this->wpdb->prepare(
+			"SELECT * FROM {$table} WHERE customer_id = %d AND id > %d AND status IN (%s, %s, %s, %s) ORDER BY id ASC LIMIT %d",
+			absint( $customer_id ),
+			absint( $after_id ),
+			'provisioning',
+			'active',
+			'provisioned',
+			'suspended',
+			max( 1, min( 200, absint( $limit ) ) )
+		);
+		$rows = $this->wpdb->get_results( $query, ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
 	/** @return array */
 	public function get_billable_resources( $after_id = 0, $limit = 50 ) {
 		$table = $this->get_table_name( 'resources' );
@@ -780,10 +901,6 @@ class Arvan_Reseller_Database {
 
 	/** Record one idempotent in-app lifecycle notification. @return int|false */
 	public function record_notification_event( $customer_id, $type, $reference, array $payload = array() ) {
-		$settings = get_option( 'arvan_reseller_settings', array() );
-		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
-			return false;
-		}
 		$type    = sanitize_key( (string) $type );
 		$allowed = array( 'payment_completed', 'payment_failed', 'provisioning_failed', 'suspension', 'termination' );
 		if ( absint( $customer_id ) <= 0 || ! in_array( $type, $allowed, true ) || '' === (string) $reference ) {
