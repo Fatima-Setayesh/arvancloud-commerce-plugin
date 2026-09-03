@@ -4,6 +4,9 @@ This status separates implementation scope from verification evidence. The
 verification record below applies only to the historical approved baseline at
 `b0a0b53419bd6bff4037571d0c95c4cf53b1e888`, not to the current release-polish
 branch. No test or manual runtime result has been recorded for the current branch.
+The three release-showcase commits between that baseline and the merge into `main`
+changed documentation, screenshots, and presentation assets only; this new hardening
+branch also changes runtime code and therefore requires fresh validation.
 
 | Capability | Status | Evidence or boundary |
 | --- | --- | --- |
@@ -49,7 +52,10 @@ branch. No test or manual runtime result has been recorded for the current branc
 Those results must not be treated as current-branch evidence. The current branch
 adds a future CI workflow for PHP syntax, PHPUnit, and PHPStan, but it has not been
 executed as part of this release-polish work. PHPCS is outside that CI workflow and
-the historical style-debt baseline has not been remeasured.
+the historical style-debt baseline has not been remeasured. For transparency, that
+historical baseline reported **2,252 errors and 217 warnings across 34 files**,
+primarily formatting, whitespace, alignment, naming, and CRLF debt; those counts are
+not asserted for the current branch.
 
 ## Current release gate
 
