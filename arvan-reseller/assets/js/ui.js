@@ -376,8 +376,50 @@
 		return persianDigits(match[1] + grouped + (fraction ? '.' + fraction : ''));
 	}
 
+	const exactMoney = {
+		parse(value) {
+			if (typeof value === 'bigint') return value;
+			const source = stableDigits(value === null || typeof value === 'undefined' ? '' : value).replace(/,/g, '').trim();
+			const match = source.match(/^(-?)(\d+)(?:\.(\d{0,4}))?$/);
+			if (!match) return null;
+			const fraction = (match[3] || '').padEnd(4, '0');
+			const minor = (BigInt(match[2]) * 10000n) + BigInt(fraction || '0');
+			return match[1] ? -minor : minor;
+		},
+		format(value) {
+			const minor = this.parse(value);
+			if (minor === null) return null;
+			const negative = minor < 0n; const absolute = negative ? -minor : minor;
+			return (negative ? '-' : '') + String(absolute / 10000n) + '.' + String(absolute % 10000n).padStart(4, '0');
+		},
+		fromMinor(value) {
+			const source = stableDigits(value === null || typeof value === 'undefined' ? '' : value).trim();
+			if (!/^-?\d+$/.test(source)) return null;
+			return this.format(BigInt(source));
+		},
+		add(left, right) {
+			const a = this.parse(left); const b = this.parse(right);
+			return a === null || b === null ? null : this.format(a + b);
+		},
+		sum(values) {
+			let total = 0n;
+			for (const value of values || []) {
+				const minor = this.parse(value);
+				if (minor === null) return null;
+				total += minor;
+			}
+			return this.format(total);
+		},
+		compare(left, right) {
+			const a = this.parse(left); const b = this.parse(right);
+			if (a === null || b === null) return null;
+			return a === b ? 0 : (a < b ? -1 : 1);
+		}
+	};
+
 	function money(value, currency) {
-		const amount = decimal(value, 4);
+		const fixed = exactMoney.format(value);
+		const amount = fixed === null ? '—' : decimal(fixed, 4);
 		if (amount === '—') return '<span class="ar-money ar-money--unavailable">—</span>';
 		return '<span class="ar-money"><bdi>' + escape(amount) + '</bdi> <small dir="ltr">' + escape(currency || (window.ArvanResellerRuntime.settings || {}).currency || 'IRR') + '</small></span>';
 	}
@@ -605,7 +647,7 @@
 		}, { once: true });
 	}
 
-	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, setText, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
+	window.ArvanUI = { escape, icon, mountIcons, persianDigits, decimal, money, exactMoney, date, statusLabel, status, errorMessage, pageHead, empty, error, loading, toast, modal, confirm, lineChart, t, translateOwnedText, translateDom, setText, applyLanguage, applyTheme, closeSidebar, wireLanguageControls, wireThemeControls, wireGlobalActions };
 	document.addEventListener('DOMContentLoaded', () => {
 		document.querySelectorAll('.arvan-reseller-app').forEach(wireGlobalActions);
 	});
