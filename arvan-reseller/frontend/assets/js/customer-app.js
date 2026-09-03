@@ -21,7 +21,9 @@
 		orderOperation: 'cloud-server-order-' + Date.now(),
 		accountOpen: false,
 		accountBackground: [],
-		bodyOverflow: ''
+		bodyOverflow: '',
+		collectionPages: {},
+		focusCollection: ''
 	};
 
 	const routeMeta = {
@@ -32,7 +34,15 @@
 	};
 
 	function currentMeta() { const meta = routeMeta[state.route] || routeMeta.dashboard; return [meta[1], meta[2]]; }
-	function setContent(html) { content.innerHTML = html; ui.mountIcons(content); ui.translateDom(content); }
+	function setContent(html) {
+		content.innerHTML = html; ui.mountIcons(content); ui.translateDom(content);
+		content.setAttribute('aria-busy', String(Boolean(content.querySelector('.ar-loading-state'))));
+		window.requestAnimationFrame(() => {
+			if (!state.focusCollection) return;
+			const status = content.querySelector('[data-ar-pagination-status="' + state.focusCollection + '"]');
+			if (status) { status.focus({ preventScroll: true }); state.focusCollection = ''; }
+		});
+	}
 	function numeric(value) { const number = Number(String(value || '0').replace(/,/g, '')); return Number.isFinite(number) ? number : 0; }
 	function modeLabel(mode) { return mode === 'live' ? 'زنده' : 'آزمایشی'; }
 	function title() {
@@ -58,6 +68,12 @@
 		if (!rows.length) return ui.empty(emptyText, 'وقتی داده‌ای ثبت شود، در این بخش نمایش داده می‌شود.');
 		return '<div class="ar-table-wrap"><table class="ar-table ar-responsive-table"><thead><tr>' + headers.map((header) => '<th scope="col">' + ui.escape(header) + '</th>').join('') + '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((cell, index) => '<td data-label="' + ui.escape(headers[index]) + '">' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
 	}
+
+	function collectionPage(key) { return state.collectionPages[key] || 1; }
+	function pagination(collection, key) {
+		return '<nav class="ar-pagination" aria-label="صفحه‌بندی فهرست"><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-page="' + (collection.page - 1) + '" data-ar-collection="' + key + '"' + (collection.page <= 1 ? ' disabled' : '') + '>قبلی</button><span data-ar-pagination-status="' + key + '" tabindex="-1">صفحه <strong>' + ui.persianDigits(collection.page) + '</strong></span><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-page="' + (collection.page + 1) + '" data-ar-collection="' + key + '"' + (!collection.hasMore ? ' disabled' : '') + '>بعدی</button></nav>';
+	}
+	function collectionTable(headers, collection, key, rows, emptyText) { return table(headers, rows, emptyText) + pagination(collection, key); }
 
 	function resourceCard(resource) {
 		return '<article class="ar-card ar-resource-card"><div class="ar-resource-card__head"><div style="display:flex;gap:12px"><span class="ar-resource-card__icon">' + ui.icon('server') + '</span><div><span class="ar-eyebrow">سرور ابری · ' + ui.escape(resource.region || '—') + '</span><h2 style="margin:0;font-size:17px">' + ui.escape(resource.name || 'سرور ابری') + '</h2></div></div>' + ui.status(resource.status) + '</div><div class="ar-resource-card__meta"><div><span>شناسه منبع</span><strong><code dir="ltr">' + ui.escape(resource.resource_id) + '</code></strong></div><div><span>وضعیت راه‌دور</span><strong>' + ui.status(resource.remote_status) + '</strong></div><div><span>نرخ ساعتی</span><strong>' + ui.money(resource.hourly_price, resource.currency) + '</strong></div><div><span>آخرین صورتحساب</span><strong>' + ui.date(resource.last_billed_at) + '</strong></div></div><button class="ar-button ar-button--secondary" type="button" data-resource-id="' + ui.escape(resource.id) + '">مشاهده جزئیات</button></article>';
@@ -129,15 +145,15 @@
 	async function services() {
 		setContent(ui.loading());
 		try {
-			const resources = await api.get('resources');
-			setContent(pageHead('<button class="ar-button" type="button" data-ar-route="create-server">' + ui.icon('plus') + 'ساخت سرور جدید</button>') + (resources.length ? '<section class="ar-grid ar-grid--3">' + resources.map(resourceCard).join('') + '</section>' : ui.empty('هنوز سرور ابری ندارید', 'منطقه، سیستم‌عامل و پلن را از کاتالوگ سرویس انتخاب کنید.', '<button class="ar-button" type="button" data-ar-route="create-server">شروع پیکربندی</button>')));
+			const collection = await api.getCollection('resources', { query: { limit: 24, page: collectionPage('services') } });
+			setContent(pageHead('<button class="ar-button" type="button" data-ar-route="create-server">' + ui.icon('plus') + 'ساخت سرور جدید</button>') + (collection.items.length ? '<section class="ar-grid ar-grid--3">' + collection.items.map(resourceCard).join('') + '</section>' : ui.empty('هنوز سرور ابری ندارید', 'منطقه، سیستم‌عامل و پلن را از کاتالوگ سرویس انتخاب کنید.', '<button class="ar-button" type="button" data-ar-route="create-server">شروع پیکربندی</button>')) + pagination(collection, 'services'));
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
 
 	async function resourceDetail() {
 		setContent(ui.loading());
 		try {
-			const [resource, usage, invoices, walletData] = await Promise.all([api.get('resources/' + encodeURIComponent(state.resourceId)), api.get('usage', { query: { limit: 100 } }), api.get('invoices', { query: { limit: 100 } }), api.get('wallet')]);
+			const [resource, usage, invoices, walletData] = await Promise.all([api.get('resources/' + encodeURIComponent(state.resourceId)), api.get('usage', { query: { limit: 25 } }), api.get('invoices', { query: { limit: 25 } }), api.get('wallet')]);
 			const ownUsage = usage.filter((row) => String(row.resource_id) === String(resource.resource_id));
 			const low = numeric(walletData.balance) <= numeric(walletData.threshold);
 			const usageValues = ownUsage.slice().reverse().map((row) => numeric(row.total_charge));
@@ -145,7 +161,7 @@
 				'<article class="ar-card ar-resource-hero"><div class="ar-resource-hero__identity"><span class="ar-resource-hero__icon">' + ui.icon('server') + '</span><div><span class="ar-eyebrow">سرور ابری · ' + ui.escape(resource.region || '—') + '</span><h2>' + ui.escape(resource.name || 'سرویس ابری') + '</h2><div class="ar-resource-id"><code dir="ltr">' + ui.escape(resource.resource_id) + '</code><button class="ar-icon-button" type="button" data-copy="' + ui.escape(resource.resource_id) + '" aria-label="کپی شناسه">' + ui.icon('copy') + '</button></div></div></div>' + ui.status(resource.status) + '</article>' +
 				(low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>هشدار کاهش موجودی</strong><p>موجودی کیف پول به آستانه هشدار رسیده است.</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="wallet">شارژ کیف پول</button></div>' : '') +
 				'<section class="ar-resource-strip"><article><span class="ar-icon" data-icon="region"></span><small>منطقه / ناحیه</small><strong><code dir="ltr">' + ui.escape(resource.availability_zone || resource.region || '—') + '</code></strong></article><article><span class="ar-icon" data-icon="server"></span><small>وضعیت راه‌دور</small><strong>' + ui.status(resource.remote_status) + '</strong></article><article><span class="ar-icon" data-icon="chart"></span><small>نرخ ساعتی</small><strong>' + ui.money(resource.hourly_price, resource.currency) + '</strong></article><article><span class="ar-icon" data-icon="receipt"></span><small>آخرین صورتحساب</small><strong>' + ui.date(resource.last_billed_at) + '</strong></article></section>' +
-				'<section class="ar-layout-main"><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><div><h2>مصرف و هزینه سرویس</h2><p>مقادیر قطعی ثبت‌شده برای همین شناسه منبع</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="billing">جزئیات مصرف</button></div>' + ui.lineChart(usageValues) + '</article><article class="ar-card"><div class="ar-card-head"><h2>پیکربندی ثبت‌شده</h2></div><dl class="ar-summary-list"><div><dt>تصویر</dt><dd>' + ui.escape(resource.image && (resource.image.name || resource.image.id) || 'ارائه نشده') + '</dd></div><div><dt>پلن</dt><dd>' + ui.escape(resource.flavor && (resource.flavor.name || resource.flavor.id) || 'ارائه نشده') + '</dd></div><div><dt>دیسک ریشه</dt><dd>' + (resource.root_volume_size_gb ? ui.persianDigits(resource.root_volume_size_gb) + ' گیگابایت' : 'ارائه نشده') + '</dd></div><div><dt>نشانی IP</dt><dd><code dir="ltr">' + ui.escape((resource.ip_addresses || []).join(' · ') || 'ارائه نشده') + '</code></dd></div></dl><small>فقط فیلدهای موجود در پاسخ رسمی سرویس نمایش داده می‌شوند.</small></article></div><aside class="ar-stack"><article class="ar-card ar-resource-wallet"><div class="ar-card-head"><h2>کیف پول</h2>' + ui.status(walletData.status) + '</div><strong class="ar-metric__value">' + ui.money(walletData.balance, walletData.currency) + '</strong><small>موجودی قابل استفاده حساب</small><button class="ar-button ar-button--block" type="button" data-ar-action="open-topup">شارژ کیف پول</button></article><article class="ar-card"><div class="ar-card-head"><h2>چرخه عمر</h2></div>' + provisioningTimeline(resource.status, resource.resource_id) + '</article><article class="ar-card"><div class="ar-card-head"><h2>صورتحساب‌ها</h2></div><strong class="ar-metric__value">' + ui.persianDigits(invoices.length) + '</strong><small>صورتحساب‌های حساب مشتری</small><button class="ar-button ar-button--secondary ar-button--block" type="button" data-ar-route="billing" style="margin-top:16px">مشاهده صورتحساب</button></article></aside></section>');
+				'<section class="ar-layout-main"><div class="ar-stack"><article class="ar-card"><div class="ar-card-head"><div><h2>مصرف و هزینه سرویس</h2><p>مقادیر قطعی ثبت‌شده برای همین شناسه منبع</p></div><button class="ar-button ar-button--secondary ar-button--small" type="button" data-ar-route="billing">جزئیات مصرف</button></div>' + ui.lineChart(usageValues) + '</article><article class="ar-card"><div class="ar-card-head"><h2>پیکربندی ثبت‌شده</h2></div><dl class="ar-summary-list"><div><dt>تصویر</dt><dd>' + ui.escape(resource.image && (resource.image.name || resource.image.id) || 'ارائه نشده') + '</dd></div><div><dt>پلن</dt><dd>' + ui.escape(resource.flavor && (resource.flavor.name || resource.flavor.id) || 'ارائه نشده') + '</dd></div><div><dt>دیسک ریشه</dt><dd>' + (resource.root_volume_size_gb ? ui.persianDigits(resource.root_volume_size_gb) + ' گیگابایت' : 'ارائه نشده') + '</dd></div><div><dt>نشانی IP</dt><dd><code dir="ltr">' + ui.escape((resource.ip_addresses || []).join(' · ') || 'ارائه نشده') + '</code></dd></div></dl><small>فقط فیلدهای موجود در پاسخ رسمی سرویس نمایش داده می‌شوند.</small></article></div><aside class="ar-stack"><article class="ar-card ar-resource-wallet"><div class="ar-card-head"><h2>کیف پول</h2>' + ui.status(walletData.status) + '</div><strong class="ar-metric__value">' + ui.money(walletData.balance, walletData.currency) + '</strong><small>موجودی قابل استفاده حساب</small><button class="ar-button ar-button--block" type="button" data-ar-action="open-topup">شارژ کیف پول</button></article><article class="ar-card"><div class="ar-card-head"><h2>چرخه عمر</h2></div>' + provisioningTimeline(resource.status, resource.resource_id) + '</article><article class="ar-card"><div class="ar-card-head"><h2>صورتحساب‌های اخیر</h2></div><strong class="ar-metric__value">' + ui.persianDigits(invoices.length) + '</strong><small>حداکثر ۲۵ رکورد اخیر</small><button class="ar-button ar-button--secondary ar-button--block" type="button" data-ar-route="billing" style="margin-top:16px">مشاهده صورتحساب</button></article></aside></section>');
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
 
@@ -159,11 +175,12 @@
 	async function wallet() {
 		setContent(ui.loading());
 		try {
-			const [walletData, payments, transactions] = await Promise.all([api.get('wallet'), api.get('payments', { query: { limit: 50 } }), api.get('wallet/transactions', { query: { limit: 100 } })]);
+			const [walletData, paymentsCollection, transactionsCollection] = await Promise.all([api.get('wallet'), api.getCollection('payments', { query: { limit: 25, page: collectionPage('payments') } }), api.getCollection('wallet/transactions', { query: { limit: 25, page: collectionPage('transactions') } })]);
+			const payments = paymentsCollection.items; const transactions = transactionsCollection.items;
 			const low = numeric(walletData.balance) <= numeric(walletData.threshold);
 			const paymentRows = payments.map((payment) => ['<code dir="ltr">' + ui.escape(payment.payment_reference) + '</code>', ui.money(payment.amount, payment.currency), ui.status(payment.status), ui.escape(payment.provider === 'mock' ? 'آزمایشی' : payment.provider), ui.date(payment.created_at), payment.status === 'pending' && payment.provider === 'mock' ? '<button class="ar-button ar-button--small" type="button" data-confirm-payment="' + ui.escape(payment.payment_reference) + '">تأیید پرداخت</button>' : '—']);
 			const transactionRows = transactions.map((row) => [ui.escape(ui.statusLabel(row.type)), ui.money(row.amount, row.currency), ui.escape(row.reference_type), ui.escape(row.description || '—'), ui.date(row.created_at)]);
-			setContent(pageHead('<button class="ar-button" type="button" data-ar-action="open-topup">' + ui.icon('plus') + 'شارژ کیف پول</button>') + (low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>موجودی در محدوده هشدار است</strong><p>آستانه فعلی ' + ui.money(walletData.threshold, walletData.currency) + ' است.</p></div></div>' : '') + '<section class="ar-grid ar-grid--3" style="margin-top:16px"><article class="ar-card ar-wallet-hero"><small>موجودی قابل استفاده</small><strong class="ar-wallet-balance">' + ui.money(walletData.balance, walletData.currency) + '</strong><span>' + ui.status(walletData.status) + '</span></article>' + metric('آستانه هشدار', ui.money(walletData.threshold, walletData.currency), 'warning', 'هشدار خودکار سامانه') + metric('تراکنش‌ها', ui.persianDigits(transactions.length), 'receipt', 'دفترکل تغییرناپذیر') + '</section><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>پرداخت‌ها</h2><span class="ar-env ar-env--' + ui.escape(runtime.settings.mode) + '"><span></span>' + modeLabel(runtime.settings.mode) + '</span></div>' + table(['مرجع', 'مبلغ', 'وضعیت', 'درگاه', 'زمان', 'عملیات'], paymentRows, 'پرداختی ثبت نشده است') + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>تاریخچه تراکنش</h2></div>' + table(['نوع', 'مبلغ', 'مرجع', 'شرح', 'زمان'], transactionRows, 'تراکنشی ثبت نشده است') + '</article>');
+			setContent(pageHead('<button class="ar-button" type="button" data-ar-action="open-topup">' + ui.icon('plus') + 'شارژ کیف پول</button>') + (low ? '<div class="ar-alert ar-alert--warning">' + ui.icon('warning') + '<div><strong>موجودی در محدوده هشدار است</strong><p>آستانه فعلی ' + ui.money(walletData.threshold, walletData.currency) + ' است.</p></div></div>' : '') + '<section class="ar-grid ar-grid--3" style="margin-top:16px"><article class="ar-card ar-wallet-hero"><small>موجودی قابل استفاده</small><strong class="ar-wallet-balance">' + ui.money(walletData.balance, walletData.currency) + '</strong><span>' + ui.status(walletData.status) + '</span></article>' + metric('آستانه هشدار', ui.money(walletData.threshold, walletData.currency), 'warning', 'هشدار خودکار سامانه') + metric('تراکنش‌های این صفحه', ui.persianDigits(transactions.length), 'receipt', 'دفترکل تغییرناپذیر') + '</section><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>پرداخت‌ها</h2><span class="ar-env ar-env--' + ui.escape(runtime.settings.mode) + '"><span></span>' + modeLabel(runtime.settings.mode) + '</span></div>' + collectionTable(['مرجع', 'مبلغ', 'وضعیت', 'درگاه', 'زمان', 'عملیات'], paymentsCollection, 'payments', paymentRows, 'پرداختی ثبت نشده است') + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>تاریخچه تراکنش</h2></div>' + collectionTable(['نوع', 'مبلغ', 'مرجع', 'شرح', 'زمان'], transactionsCollection, 'transactions', transactionRows, 'تراکنشی ثبت نشده است') + '</article>');
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
 
@@ -274,9 +291,10 @@
 	async function orders() {
 		setContent(ui.loading());
 		try {
-			const ordersData = await api.get('orders', { query: { limit: 100 } });
+			const collection = await api.getCollection('orders', { query: { limit: 25, page: collectionPage('orders') } });
+			const ordersData = collection.items;
 			const rows = ordersData.map((order) => ['<code dir="ltr">' + ui.escape(order.order_reference) + '</code>', '<strong>' + ui.escape(order.configuration && order.configuration.name || 'سرور ابری') + '</strong><br><small><code dir="ltr">' + ui.escape(order.configuration && order.configuration.flavorId || '—') + '</code></small>', ui.status(order.status), order.quote && order.quote.total_charge ? ui.money(order.quote.total_charge, order.quote.currency) : '—', order.payment && order.payment.status ? ui.status(order.payment.status) : '—', order.recovery_required ? ui.status('failed').replace('ناموفق', 'نیازمند بازیابی') : (order.failure_code ? '<code dir="ltr">' + ui.escape(order.failure_code) + '</code>' : '<code dir="ltr">' + ui.escape(order.resource_id || '—') + '</code>'), ui.date(order.created_at)]);
-			setContent(pageHead('<button class="ar-button" type="button" data-ar-route="create-server">سفارش جدید</button>') + '<article class="ar-card ar-card--flush">' + table(['مرجع سفارش', 'پیکربندی', 'وضعیت', 'برآورد ۲۴ساعته', 'پرداخت سفارش', 'منبع/بازیابی', 'ثبت'], rows, 'سفارشی ثبت نشده است') + '</article>');
+			setContent(pageHead('<button class="ar-button" type="button" data-ar-route="create-server">سفارش جدید</button>') + '<article class="ar-card ar-card--flush">' + collectionTable(['مرجع سفارش', 'پیکربندی', 'وضعیت', 'برآورد ۲۴ساعته', 'پرداخت سفارش', 'منبع/بازیابی', 'ثبت'], collection, 'orders', rows, 'سفارشی ثبت نشده است') + '</article>');
 			const pending = ordersData.some((order) => ['pending', 'provisioning'].includes(order.status)); if (pending) schedulePoll(); else state.pollAttempts = 0;
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
@@ -291,11 +309,12 @@
 	async function billing() {
 		setContent(ui.loading());
 		try {
-			const [usage, invoices] = await Promise.all([api.get('usage', { query: { limit: 100 } }), api.get('invoices', { query: { limit: 100 } })]);
+			const [usageCollection, invoiceCollection] = await Promise.all([api.getCollection('usage', { query: { limit: 25, page: collectionPage('usage') } }), api.getCollection('invoices', { query: { limit: 25, page: collectionPage('invoices') } })]);
+			const usage = usageCollection.items; const invoices = invoiceCollection.items;
 			const total = usage.reduce((sum, row) => sum + numeric(row.total_charge), 0).toFixed(4); const uncovered = usage.reduce((sum, row) => sum + numeric(row.uncovered), 0).toFixed(4);
 			const usageRows = usage.map((row) => ['<code dir="ltr">' + ui.escape(row.resource_id) + '</code>', ui.decimal(row.usage_amount) + ' ' + ui.escape(row.unit), ui.money(row.base_cost, row.currency), ui.money(row.reseller_share, row.currency), ui.money(row.charged, row.currency), ui.money(row.uncovered, row.currency), ui.date(row.usage_start) + '<br>' + ui.date(row.usage_end)]);
 			const invoiceRows = invoices.map((invoice) => ['<code dir="ltr">' + ui.escape(invoice.invoice_reference) + '</code>', ui.date(invoice.period_start), ui.date(invoice.period_end), ui.money(invoice.total, invoice.currency), ui.status(invoice.status)]);
-			setContent(pageHead() + '<section class="ar-grid ar-grid--3">' + metric('هزینه ثبت‌شده', ui.money(total, runtime.settings.currency), 'chart', 'نه برآورد مرورگر') + metric('پوشش‌نیافته', ui.money(uncovered, runtime.settings.currency), 'warning', 'کسری کیف پول') + metric('صورت‌حساب‌ها', ui.persianDigits(invoices.length), 'receipt', 'رکوردهای ثبت‌شده') + '</section><article class="ar-card" style="margin-top:16px"><div class="ar-card-head"><h2>روند مصرف</h2></div>' + ui.lineChart(usage.slice().reverse().map((row) => numeric(row.total_charge))) + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>جدول دسترس‌پذیر مصرف</h2></div>' + table(['منبع', 'مقدار', 'هزینه پایه', 'سهم فروشنده', 'دریافت‌شده', 'پوشش‌نیافته', 'بازه'], usageRows, 'هنوز مصرفی ثبت نشده است') + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>صورتحساب‌ها</h2></div>' + table(['مرجع', 'شروع', 'پایان', 'جمع', 'وضعیت'], invoiceRows, 'صورتحسابی ثبت نشده است') + '</article>');
+			setContent(pageHead() + '<section class="ar-grid ar-grid--3">' + metric('هزینه این صفحه', ui.money(total, runtime.settings.currency), 'chart', 'نه برآورد مرورگر') + metric('پوشش‌نیافته این صفحه', ui.money(uncovered, runtime.settings.currency), 'warning', 'کسری کیف پول') + metric('صورت‌حساب‌های این صفحه', ui.persianDigits(invoices.length), 'receipt', 'رکوردهای صفحه جاری') + '</section><article class="ar-card" style="margin-top:16px"><div class="ar-card-head"><h2>روند مصرف</h2></div>' + ui.lineChart(usage.slice().reverse().map((row) => numeric(row.total_charge))) + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>جدول دسترس‌پذیر مصرف</h2></div>' + collectionTable(['منبع', 'مقدار', 'هزینه پایه', 'سهم فروشنده', 'دریافت‌شده', 'پوشش‌نیافته', 'بازه'], usageCollection, 'usage', usageRows, 'هنوز مصرفی ثبت نشده است') + '</article><article class="ar-card ar-card--flush" style="margin-top:16px"><div class="ar-card-head" style="padding:20px 20px 0"><h2>صورتحساب‌ها</h2></div>' + collectionTable(['مرجع', 'شروع', 'پایان', 'جمع', 'وضعیت'], invoiceCollection, 'invoices', invoiceRows, 'صورتحسابی ثبت نشده است') + '</article>');
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
 
@@ -307,9 +326,10 @@
 	async function notifications() {
 		setContent(ui.loading());
 		try {
-			const items = await api.get('notifications', { query: { limit: 100 } });
+			const collection = await api.getCollection('notifications', { query: { limit: 25, page: collectionPage('notifications') } });
+			const items = collection.items;
 			const unread = items.filter((item) => !item.is_read).length;
-			setContent(pageHead('<span class="ar-status ar-status--info">' + ui.persianDigits(unread) + ' خوانده‌نشده</span>') + '<section class="ar-stack">' + (items.length ? items.map((item) => '<article class="ar-card"' + (!item.is_read ? ' style="border-color:var(--ar-color-primary)"' : '') + '><div class="ar-card-head"><div style="display:flex;gap:12px"><span class="ar-metric__icon">' + ui.icon(item.status === 'failed' ? 'warning' : 'bell') + '</span><div><h2>' + notificationLabel(item.type) + '</h2><p>' + ui.date(item.created_at) + '</p></div></div><div style="display:flex;gap:8px;align-items:center">' + (!item.is_read ? '<button class="ar-button ar-button--secondary ar-button--small" type="button" data-notification-read="' + ui.escape(item.id) + '">خواندم</button>' : '<span class="ar-status ar-status--success">خوانده‌شده</span>') + ui.status(item.status) + '</div></div><dl class="ar-summary-list"><div><dt>کانال</dt><dd>' + ui.escape(item.channel) + '</dd></div><div><dt>ارسال</dt><dd>' + ui.date(item.sent_at) + '</dd></div>' + (item.read_at ? '<div><dt>خوانده‌شدن</dt><dd>' + ui.date(item.read_at) + '</dd></div>' : '') + (item.error_code ? '<div><dt>کد امن</dt><dd><code dir="ltr">' + ui.escape(item.error_code) + '</code></dd></div>' : '') + '</dl></article>').join('') : ui.empty('اعلانی وجود ندارد', 'هشدارهای صورتحساب و چرخه سرویس اینجا ثبت می‌شوند.')) + '</section>');
+			setContent(pageHead('<span class="ar-status ar-status--info">' + ui.persianDigits(unread) + ' خوانده‌نشده در این صفحه</span>') + '<section class="ar-stack">' + (items.length ? items.map((item) => '<article class="ar-card"' + (!item.is_read ? ' style="border-color:var(--ar-color-primary)"' : '') + '><div class="ar-card-head"><div style="display:flex;gap:12px"><span class="ar-metric__icon">' + ui.icon(item.status === 'failed' ? 'warning' : 'bell') + '</span><div><h2>' + notificationLabel(item.type) + '</h2><p>' + ui.date(item.created_at) + '</p></div></div><div style="display:flex;gap:8px;align-items:center">' + (!item.is_read ? '<button class="ar-button ar-button--secondary ar-button--small" type="button" data-notification-read="' + ui.escape(item.id) + '">خواندم</button>' : '<span class="ar-status ar-status--success">خوانده‌شده</span>') + ui.status(item.status) + '</div></div><dl class="ar-summary-list"><div><dt>کانال</dt><dd>' + ui.escape(item.channel) + '</dd></div><div><dt>ارسال</dt><dd>' + ui.date(item.sent_at) + '</dd></div>' + (item.read_at ? '<div><dt>خوانده‌شدن</dt><dd>' + ui.date(item.read_at) + '</dd></div>' : '') + (item.error_code ? '<div><dt>کد امن</dt><dd><code dir="ltr">' + ui.escape(item.error_code) + '</code></dd></div>' : '') + '</dl></article>').join('') : ui.empty('اعلانی وجود ندارد', 'هشدارهای صورتحساب و چرخه سرویس اینجا ثبت می‌شوند.')) + pagination(collection, 'notifications') + '</section>');
 		} catch (error) { setContent(pageHead() + ui.error(error, 'retry-route')); }
 	}
 
@@ -329,6 +349,8 @@
 		if (event.target.matches('[data-config-option]')) { state.config[event.target.dataset.configOption] = event.target.checked; state.estimate = null; state.orderOperation = 'cloud-server-order-' + Date.now(); }
 	});
 	app.addEventListener('click', async (event) => {
+		const pageButton = event.target.closest('[data-ar-page][data-ar-collection]');
+		if (pageButton && !pageButton.disabled) { state.collectionPages[pageButton.dataset.arCollection] = Math.max(1, Number(pageButton.dataset.arPage) || 1); state.focusCollection = pageButton.dataset.arCollection; await (state.route === 'wallet' ? wallet() : (state.route === 'billing' ? billing() : (state.route === 'notifications' ? notifications() : (state.route === 'orders' ? orders() : services())))); return; }
 		const accountAction = event.target.closest('[data-ar-action="toggle-account"], [data-ar-action="close-account"]');
 		if (accountAction) {
 			event.preventDefault();
