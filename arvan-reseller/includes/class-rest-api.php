@@ -662,23 +662,31 @@ class Arvan_Reseller_REST_API {
 		$row = $this->database->mark_notification_read( absint( $request['id'] ), get_current_user_id() );
 		return null === $row ? new WP_Error( 'arvan_reseller_notification_not_found', __( 'Notification not found.', 'arvan-reseller' ), array( 'status' => 404 ) ) : $this->safe_notification( $row ); }
 	public function admin_customers( $request ) {
-		return $this->collection( array_map(
-			function ( $user ) {
-				return array(
-					'id'            => (int) $user->ID,
-					'display_name'  => (string) $user->display_name,
-					'email'         => (string) $user->user_email,
-					'registered_at' => (string) $user->user_registered,
-				);
-			},
-			get_users(
-				array(
-					'number' => $this->fetch_limit( $request ),
-					'offset' => $this->offset( $request ),
-					'fields' => array( 'ID', 'display_name', 'user_email', 'user_registered' ),
-				)
-			)
-		), $request ); }
+		$rows = $this->database->get_commerce_customers( $this->configured_currency(), $this->search( $request ), $this->fetch_limit( $request ), $this->offset( $request ) );
+		return $this->collection(
+			array_map(
+				function ( $row ) {
+					$wallet = empty( $row['wallet_id'] ) ? null : array(
+						'id'          => (int) $row['wallet_id'],
+						'customer_id' => (int) $row['wallet_customer_id'],
+						'balance'     => Arvan_Reseller_Money::format( (int) $row['balance_minor'] ),
+						'threshold'   => Arvan_Reseller_Money::format( (int) $row['threshold_minor'] ),
+						'currency'    => (string) $row['wallet_currency'],
+						'status'      => (string) $row['wallet_status'],
+					);
+					return array(
+						'id'             => (int) $row['ID'],
+						'display_name'   => (string) $row['display_name'],
+						'email'          => (string) $row['user_email'],
+						'registered_at'  => (string) $row['user_registered'],
+						'wallet'         => $wallet,
+						'resource_count' => (int) $row['resource_count'],
+					);
+				},
+				$rows
+			),
+			$request
+		); }
 	public function admin_wallets( $request ) {
 		return $this->collection( array_map( array( $this, 'safe_wallet' ), $this->database->get_results_by( 'wallets', array(), $this->fetch_limit( $request ), $this->offset( $request ) ) ), $request ); }
 	public function admin_orders( $request ) {

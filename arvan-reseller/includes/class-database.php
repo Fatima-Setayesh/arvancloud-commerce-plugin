@@ -272,6 +272,41 @@ class Arvan_Reseller_Database {
 	}
 
 	/**
+	 * Return WordPress users who participate in commerce, with page-local summaries.
+	 *
+	 * @param string $currency Wallet currency.
+	 * @param string $search Search term.
+	 * @param int    $limit Limit.
+	 * @param int    $offset Offset.
+	 * @return array
+	 */
+	public function get_commerce_customers( $currency, $search = '', $limit = 50, $offset = 0 ) {
+		$wallets   = $this->get_table_name( 'wallets' );
+		$payments  = $this->get_table_name( 'payments' );
+		$orders    = $this->get_table_name( 'orders' );
+		$resources = $this->get_table_name( 'resources' );
+		$users     = $this->wpdb->users;
+		$args      = array( $this->normalize_currency( $currency ) );
+		$query     = "SELECT u.ID, u.display_name, u.user_email, u.user_registered, w.id wallet_id, w.customer_id wallet_customer_id, w.balance_minor, w.threshold_minor, w.currency wallet_currency, w.status wallet_status, (SELECT COUNT(*) FROM {$resources} rc WHERE rc.customer_id = u.ID) resource_count FROM {$users} u INNER JOIN (SELECT customer_id FROM {$wallets} UNION SELECT customer_id FROM {$payments} UNION SELECT customer_id FROM {$orders} UNION SELECT customer_id FROM {$resources}) commerce ON commerce.customer_id = u.ID LEFT JOIN {$wallets} w ON w.customer_id = u.ID AND w.currency = %s";
+		$search    = trim( (string) $search );
+
+		if ( '' !== $search ) {
+			$like   = '%' . $this->wpdb->esc_like( $search ) . '%';
+			$query .= ' WHERE (u.display_name LIKE %s OR u.user_email LIKE %s OR u.ID LIKE %s)';
+			$args[] = $like;
+			$args[] = $like;
+			$args[] = $like;
+		}
+
+		$query .= ' ORDER BY u.ID DESC LIMIT %d OFFSET %d';
+		$args[] = max( 1, absint( $limit ) );
+		$args[] = max( 0, absint( $offset ) );
+		$rows   = $this->wpdb->get_results( $this->wpdb->prepare( $query, $args ), ARRAY_A );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Create or retrieve a customer wallet without a check-then-insert race.
 	 *
 	 * @param int    $customer_id Customer ID.
