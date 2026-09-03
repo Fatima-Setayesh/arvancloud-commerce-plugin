@@ -1,23 +1,23 @@
-/* Theme isolation is intentionally limited to pages containing product shortcodes. */
-body.arvan-reseller-product-page { margin: 0; --wp--style--root--padding-left: 0; --wp--style--root--padding-right: 0; }
-body.arvan-reseller-product-page .wp-site-blocks { padding-inline: 0 !important; }
-body.arvan-reseller-product-page .wp-site-blocks > header,
-body.arvan-reseller-product-page .wp-site-blocks > footer,
-body.arvan-reseller-product-page > .site > .site-header,
-body.arvan-reseller-product-page > .site > .site-footer,
-body.arvan-reseller-product-page .site > header.site-header,
-body.arvan-reseller-product-page .site > footer.site-footer { display: none !important; }
-body.arvan-reseller-product-page .wp-site-blocks > main,
-body.arvan-reseller-product-page .site-content,
-body.arvan-reseller-product-page .content-area,
-body.arvan-reseller-product-page .site-main,
-body.arvan-reseller-product-page article.page,
-body.arvan-reseller-product-page .entry-content,
-body.arvan-reseller-product-page .wp-block-post-content { margin: 0 !important; max-width: none !important; padding: 0 !important; width: 100% !important; }
-body.arvan-reseller-product-page .wp-block-post-title,
-body.arvan-reseller-product-page article.page > .entry-header,
-body.arvan-reseller-product-page article.page > .page-header,
-body.arvan-reseller-product-page main > .page-header { display: none !important; }
+/* Only setup-generated standalone pages isolate the application from theme chrome. */
+body.arvan-reseller-standalone-page { margin: 0; --wp--style--root--padding-left: 0; --wp--style--root--padding-right: 0; }
+body.arvan-reseller-standalone-page .wp-site-blocks { padding-inline: 0 !important; }
+body.arvan-reseller-standalone-page .wp-site-blocks > header,
+body.arvan-reseller-standalone-page .wp-site-blocks > footer,
+body.arvan-reseller-standalone-page > .site > .site-header,
+body.arvan-reseller-standalone-page > .site > .site-footer,
+body.arvan-reseller-standalone-page .site > header.site-header,
+body.arvan-reseller-standalone-page .site > footer.site-footer { display: none !important; }
+body.arvan-reseller-standalone-page .wp-site-blocks > main,
+body.arvan-reseller-standalone-page .site-content,
+body.arvan-reseller-standalone-page .content-area,
+body.arvan-reseller-standalone-page .site-main,
+body.arvan-reseller-standalone-page article.page,
+body.arvan-reseller-standalone-page .entry-content,
+body.arvan-reseller-standalone-page .wp-block-post-content { margin: 0 !important; max-width: none !important; padding: 0 !important; width: 100% !important; }
+body.arvan-reseller-standalone-page .wp-block-post-title,
+body.arvan-reseller-standalone-page article.page > .entry-header,
+body.arvan-reseller-standalone-page article.page > .page-header,
+body.arvan-reseller-standalone-page main > .page-header { display: none !important; }
 body.arvan-reseller-product-page .arvan-reseller-app { isolation: isolate; }
 
 .ar-storefront,
