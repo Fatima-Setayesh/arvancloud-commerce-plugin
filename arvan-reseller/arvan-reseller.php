@@ -1,10 +1,11 @@
 <?php
 /**
- * Plugin Name: Arvan Reseller
- * Plugin URI: https://github.com/
- * Description: A standalone reseller plugin for Arvan Cloud products.
+ * Plugin Name: ArvanCloud Commerce
+ * Plugin URI: https://github.com/Fatima-Setayesh/arvancloud-commerce-plugin
+ * Description: A standalone WordPress Cloud Server reseller plugin for ArvanCloud.
  * Version: 1.1.0
- * Author: Fatima Team
+ * Author: Fatima Setayesh
+ * Author URI: https://github.com/Fatima-Setayesh
  * License: GPL-2.0+
  * Requires PHP: 8.2
  * Text Domain: arvan-reseller

@@ -1,6 +1,6 @@
 === ArvanCloud Commerce Plugin ===
 Contributors: fatima-setayesh
-Tags: arvancloud, cloud-server, wallet, billing
+Tags: arvancloud, cloud-server, reseller, wallet, billing
 Requires at least: 6.4
 Requires PHP: 8.2
 Stable tag: 1.1.0
