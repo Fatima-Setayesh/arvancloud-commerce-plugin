@@ -69,6 +69,7 @@ Admin routes require `manage_arvan_reseller`:
 | POST | `/admin/cron/run` | Run protected usage billing |
 | POST | `/admin/reconciliation/run` | Run protected resource reconciliation |
 | GET | `/admin/health` | Mode, schema, schedules and last job health |
+| GET | `/admin/overview` | Exact aggregate operations totals and sanitized job state |
 | GET | `/admin/customers` | Safe customer directory |
 | GET | `/admin/wallets` | Wallet balances without ledger mutation data |
 | GET | `/admin/payments` | Filtered payment records |
@@ -84,8 +85,18 @@ removes it. Responses expose only `api_key_configured`, never key material.
 
 Admin settings accept the documented company fields, logo URL/attachment ID, `mock` or
 `live` mode, validated region/zone, three-letter currency, decimal-string wallet/share
-values, suspend/termination/notification controls, and the two explicit key actions.
-Sending rotation and deletion together is rejected.
+values, suspend/termination controls, and the two explicit key actions.
+`email_notifications_enabled` controls low-balance email only. The legacy
+`notification_enabled` key remains accepted and is migrated/mirrored for compatibility;
+in-app financial and service lifecycle records are always retained. Sending credential
+rotation and deletion together is rejected.
+
+Admin operation collections accept the same bounded pagination parameters plus a
+bounded sanitized `search` value where documented by the route. The customer directory
+contains commerce participants only and includes configured-currency wallet balance and
+service count. `/admin/overview` supplies full-dataset resource/payment/customer counts,
+per-currency wallet/billed totals, reconciliation warnings, and sanitized Cron state so
+the dashboard does not infer totals from a page of rows.
 
 Successful routes return the safe object/array described above. Errors use WordPress'
 standard REST envelope with a stable `code`, localized `message`, and HTTP status only.
@@ -127,7 +138,11 @@ threshold. A zero balance evaluates every resource owned by only that customer.
 Provisioning persists a pending local order before a remote call. If remote creation
 succeeds but local mapping fails, or if the remote outcome is ambiguous, the order is
 flagged for reconciliation. A known remote ID can be mapped safely without creating
-another server; ambiguous outcomes remain an explicit manual-recovery condition.
+another server. A queued record without a usable remote ID is removed from automatic
+retry, marked with stable failure code `manual_review_missing_resource_id`, and surfaced
+to both administrator and customer while its debit/evidence remains intact. Processing
+continues with later queued records; no remote create, lookup without an ID, or automatic
+refund is attempted for that record.
 
 Termination policies are `disabled` (default), `immediate`, or `grace`; repeated runs
 are safe because terminated resources are excluded. Suspension uses the documented
