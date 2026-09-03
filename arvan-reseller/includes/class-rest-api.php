@@ -568,6 +568,9 @@ class Arvan_Reseller_REST_API {
 		return $value; }
 	public function update_settings( $request ) {
 		$p = $this->params( $request );
+		if ( array_key_exists( 'notification_enabled', $p ) && ! array_key_exists( 'email_notifications_enabled', $p ) ) {
+			$p['email_notifications_enabled'] = ! empty( $p['notification_enabled'] );
+		}
 		if ( ! empty( $p['delete_api_key'] ) && ! empty( $p['api_key'] ) ) {
 			return new WP_Error( 'arvan_reseller_conflicting_key_action', __( 'API key rotation and deletion cannot be requested together.', 'arvan-reseller' ), array( 'status' => 400 ) );
 		}
@@ -853,6 +856,7 @@ class Arvan_Reseller_REST_API {
 				'sanitize_callback' => 'absint',
 			),
 			'notification_enabled'     => array( 'type' => 'boolean' ),
+			'email_notifications_enabled' => array( 'type' => 'boolean' ),
 			'delete_data_on_uninstall' => array( 'type' => 'boolean' ),
 			'reseller_share_percent'   => $money,
 			'default_wallet_threshold' => $money,

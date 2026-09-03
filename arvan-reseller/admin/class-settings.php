@@ -109,7 +109,7 @@ class Arvan_Reseller_Settings {
 		$this->register_field( 'termination_policy', 'Termination Policy (disabled/immediate/grace)', 'text', 'arvan_reseller_wallet_section' );
 		$this->register_field( 'termination_grace_hours', 'Termination Grace Hours', 'number', 'arvan_reseller_wallet_section' );
 		$this->register_field( 'suspend_policy', 'Suspend Policy (zero_balance/disabled)', 'text', 'arvan_reseller_wallet_section' );
-		$this->register_field( 'notification_enabled', 'Low-balance Email (1/0)', 'number', 'arvan_reseller_wallet_section' );
+		$this->register_field( 'email_notifications_enabled', 'Low-balance Email (1/0)', 'number', 'arvan_reseller_wallet_section' );
 		$this->register_field( 'delete_data_on_uninstall', 'Delete Data on Uninstall (1/0)', 'number', 'arvan_reseller_wallet_section' );
 	}
 
@@ -188,7 +188,8 @@ class Arvan_Reseller_Settings {
 			'suspend_policy'           => in_array( $suspend_policy, array( 'zero_balance', 'disabled' ), true ) ? $suspend_policy : 'zero_balance',
 			'termination_policy'       => in_array( $policy, array( 'disabled', 'immediate', 'grace' ), true ) ? $policy : 'disabled',
 			'termination_grace_hours'  => max( 1, min( 8760, absint( $this->get_input_value( $input, 'termination_grace_hours' ) ) ) ),
-			'notification_enabled'     => empty( $input['notification_enabled'] ) ? 0 : 1,
+			'notification_enabled'     => empty( $input['email_notifications_enabled'] ) ? 0 : 1,
+			'email_notifications_enabled' => empty( $input['email_notifications_enabled'] ) ? 0 : 1,
 			'delete_data_on_uninstall' => empty( $input['delete_data_on_uninstall'] ) ? 0 : 1,
 			'reseller_share_percent'   => Arvan_Reseller_Money::format( $share_minor ),
 			'default_wallet_threshold' => Arvan_Reseller_Money::format( $threshold_minor ),
@@ -317,8 +318,12 @@ class Arvan_Reseller_Settings {
 	 */
 	public function get_settings() {
 		$settings = get_option( $this->option_name, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		if ( ! array_key_exists( 'email_notifications_enabled', $settings ) ) {
+			$settings['email_notifications_enabled'] = ! isset( $settings['notification_enabled'] ) || ! empty( $settings['notification_enabled'] ) ? 1 : 0;
+		}
 
-		return wp_parse_args( is_array( $settings ) ? $settings : array(), $this->get_defaults() );
+		return wp_parse_args( $settings, $this->get_defaults() );
 	}
 
 	/**
@@ -344,6 +349,7 @@ class Arvan_Reseller_Settings {
 			'termination_policy'       => 'disabled',
 			'termination_grace_hours'  => 72,
 			'notification_enabled'     => 1,
+			'email_notifications_enabled' => 1,
 			'delete_data_on_uninstall' => 0,
 			'reseller_share_percent'   => 0,
 			'default_wallet_threshold' => 0,

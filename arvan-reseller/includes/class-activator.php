@@ -40,6 +40,9 @@ class Arvan_Reseller_Activator {
 	 */
 	private static function create_default_options() {
 		$settings = get_option( 'arvan_reseller_settings', array() );
+		if ( ! array_key_exists( 'email_notifications_enabled', $settings ) ) {
+			$settings['email_notifications_enabled'] = ! isset( $settings['notification_enabled'] ) || ! empty( $settings['notification_enabled'] ) ? 1 : 0;
+		}
 		$defaults = array(
 			'version'                  => ARVAN_RESELLER_VERSION,
 			'mode'                     => 'mock',
@@ -56,6 +59,7 @@ class Arvan_Reseller_Activator {
 			'termination_grace_hours'  => 72,
 			'suspend_policy'           => 'zero_balance',
 			'notification_enabled'     => 1,
+			'email_notifications_enabled' => 1,
 			'delete_data_on_uninstall' => 0,
 		);
 

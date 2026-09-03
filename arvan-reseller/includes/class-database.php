@@ -901,10 +901,6 @@ class Arvan_Reseller_Database {
 
 	/** Record one idempotent in-app lifecycle notification. @return int|false */
 	public function record_notification_event( $customer_id, $type, $reference, array $payload = array() ) {
-		$settings = get_option( 'arvan_reseller_settings', array() );
-		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
-			return false;
-		}
 		$type    = sanitize_key( (string) $type );
 		$allowed = array( 'payment_completed', 'payment_failed', 'provisioning_failed', 'suspension', 'termination' );
 		if ( absint( $customer_id ) <= 0 || ! in_array( $type, $allowed, true ) || '' === (string) $reference ) {

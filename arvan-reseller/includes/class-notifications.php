@@ -11,10 +11,13 @@ class Arvan_Reseller_Notifications {
 	/** Send at most one low-balance email until the wallet is recharged above threshold. */
 	public function maybe_send_low_balance( $customer_id, $currency = '' ) {
 		$settings = get_option( 'arvan_reseller_settings', array() );
-		if ( isset( $settings['notification_enabled'] ) && empty( $settings['notification_enabled'] ) ) {
+		$email_enabled = array_key_exists( 'email_notifications_enabled', $settings )
+			? ! empty( $settings['email_notifications_enabled'] )
+			: ! isset( $settings['notification_enabled'] ) || ! empty( $settings['notification_enabled'] );
+		if ( ! $email_enabled ) {
 			return array(
 				'skipped' => true,
-				'reason'  => 'disabled',
+				'reason'  => 'email_disabled',
 			);
 		}
 		$currency = $this->normalize_currency( $currency );
