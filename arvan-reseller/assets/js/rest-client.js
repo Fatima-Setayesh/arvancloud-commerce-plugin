@@ -37,6 +37,10 @@
 			return this.request(path, Object.assign({}, options, { method: 'GET' }));
 		}
 
+		getCollection(path, options) {
+			return this.request(path, Object.assign({}, options, { method: 'GET', collection: true }));
+		}
+
 		post(path, body, options) {
 			return this.request(path, Object.assign({}, options, { method: 'POST', body: body || {} }));
 		}
@@ -137,6 +141,17 @@
 					window.dispatchEvent(new CustomEvent('arvan:session-expired', { detail: normalized }));
 				}
 				throw normalized;
+			}
+
+			if (options.collection) {
+				const page = Number(response.headers.get('X-Arvan-Page') || 1);
+				const perPage = Number(response.headers.get('X-Arvan-Per-Page') || 0);
+				return {
+					items: Array.isArray(payload) ? payload : [],
+					page: Number.isInteger(page) && page > 0 ? page : 1,
+					perPage: Number.isInteger(perPage) && perPage > 0 ? perPage : (Array.isArray(payload) ? payload.length : 0),
+					hasMore: String(response.headers.get('X-Arvan-Has-More') || '').toLowerCase() === 'true'
+				};
 			}
 
 			return payload;
